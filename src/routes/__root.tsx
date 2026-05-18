@@ -9,9 +9,9 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { PortalStoreProvider } from "@/lib/portal-store";
+import { CarwashStoreProvider } from "@/lib/carwash-store";
 import { Toaster } from "@/components/ui/sonner";
-import { PortalShell } from "@/components/portal-shell";
+import { CarwashShell } from "@/components/carwash-shell";
 
 function NotFoundComponent() {
   return (
@@ -116,10 +116,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <PortalStoreProvider>
-        <PortalShell />
+      <CarwashStoreProvider>
+        <CarwashShell />
         <Toaster richColors position="top-right" />
-      </PortalStoreProvider>
+      </CarwashStoreProvider>
     </QueryClientProvider>
   );
 }

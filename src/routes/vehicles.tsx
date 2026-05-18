@@ -47,7 +47,7 @@ function VehiclesPage() {
       <div className="mx-auto w-full max-w-4xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">My vehicles</h1>
+            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">My vehicles</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Save your vehicles for faster check-in at every wash.
             </p>
@@ -63,7 +63,7 @@ function VehiclesPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/40 text-muted-foreground">
               <Car className="h-6 w-6" />
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">No vehicles yet — add your first one.</p>
+            <p className="mt-3 text-sm text-muted-foreground">No vehicles yet - add your first one.</p>
           </div>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -72,7 +72,7 @@ function VehiclesPage() {
               return (
                 <div
                   key={v.id}
-                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/40"
+                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -110,18 +110,22 @@ function VehiclesPage() {
         editing={editing}
         onClose={() => setEditing(null)}
         onSave={(data) => {
-          if (editing === "new") {
-            addVehicle(data);
-            toast.success("Vehicle added");
-          } else if (editing) {
-            updateVehicle(editing.id, data);
-            toast.success("Vehicle updated");
+          try {
+            if (editing === "new") {
+              addVehicle(data);
+              toast.success("Vehicle added");
+            } else if (editing) {
+              updateVehicle(editing.id, data);
+              toast.success("Vehicle updated");
+            }
+            setEditing(null);
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Unable to save vehicle.");
           }
-          setEditing(null);
         }}
       />
 
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
+      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove this vehicle?</AlertDialogTitle>
@@ -133,9 +137,15 @@ function VehiclesPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deleteId) {
-                  deleteVehicle(deleteId);
+                if (!deleteId) {
+                  return;
+                }
+
+                const result = deleteVehicle(deleteId);
+                if (result.ok) {
                   toast.success("Vehicle removed");
+                } else {
+                  toast.error(result.error);
                 }
                 setDeleteId(null);
               }}
@@ -180,13 +190,19 @@ function VehicleDialog({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brandModel.trim()) return toast.error("Enter brand & model");
-    if (plate.trim().length < 4) return toast.error("Plate looks too short");
+    if (!brandModel.trim()) {
+      toast.error("Enter brand & model");
+      return;
+    }
+    if (plate.trim().length < 4) {
+      toast.error("Plate looks too short");
+      return;
+    }
     onSave({ brandModel: brandModel.trim(), plate: plate.trim().toUpperCase(), type });
   };
 
   return (
-    <Dialog open={editing !== null} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={editing !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{v ? "Edit vehicle" : "Add vehicle"}</DialogTitle>
@@ -196,7 +212,9 @@ function VehicleDialog({
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <Label htmlFor="vbrand" className="mb-1.5 block">Brand & model</Label>
+            <Label htmlFor="vbrand" className="mb-1.5 block">
+              Brand & model
+            </Label>
             <Input
               id="vbrand"
               value={brandModel}
@@ -205,7 +223,9 @@ function VehicleDialog({
             />
           </div>
           <div>
-            <Label htmlFor="vplate" className="mb-1.5 block">License plate</Label>
+            <Label htmlFor="vplate" className="mb-1.5 block">
+              License plate
+            </Label>
             <Input
               id="vplate"
               value={plate}

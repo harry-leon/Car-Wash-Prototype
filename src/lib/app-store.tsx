@@ -1,0 +1,27 @@
+import { useCarwashStore, NotificationType } from "@/lib/carwash-store";
+
+export type Role = "Admin" | "Staff";
+export type NotifType = NotificationType;
+
+export function useAppStore() {
+  const store = useCarwashStore();
+  return {
+    role: store.role === "Customer" ? "Staff" : store.role,
+    setRole: (role: Role) => store.setRole(role),
+    notifications: store.notifications,
+    pushNotification: store.pushNotification,
+    adjustments: store.adjustments,
+    addAdjustment: store.addAdjustment,
+  };
+}
+
+export function formatRelative(d: Date) {
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}

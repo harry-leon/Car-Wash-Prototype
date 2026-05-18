@@ -9,11 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WashSessionRouteImport } from './routes/wash-session'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as VehiclesRouteImport } from './routes/vehicles'
+import { Route as TransactionsRouteImport } from './routes/transactions'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as LoyaltyRouteImport } from './routes/loyalty'
+import { Route as ConfirmationRouteImport } from './routes/confirmation'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as BookingsRouteImport } from './routes/bookings'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StaffCheckInRouteImport } from './routes/staff.check-in'
+import { Route as BookingsTrackerRouteImport } from './routes/bookings.tracker'
+import { Route as BookingsNewRouteImport } from './routes/bookings.new'
+import { Route as AdminTiersRouteImport } from './routes/admin.tiers'
+import { Route as AdminTierHistoryRouteImport } from './routes/admin.tier-history'
+import { Route as AdminRbacRouteImport } from './routes/admin.rbac'
+import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
+import { Route as AdminPointsAuditRouteImport } from './routes/admin.points-audit'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 
+const WashSessionRoute = WashSessionRouteImport.update({
+  id: '/wash-session',
+  path: '/wash-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -24,9 +46,44 @@ const VehiclesRoute = VehiclesRouteImport.update({
   path: '/vehicles',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransactionsRoute = TransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoyaltyRoute = LoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmationRoute = ConfirmationRouteImport.update({
+  id: '/confirmation',
+  path: '/confirmation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsRoute = BookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -34,43 +91,225 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffCheckInRoute = StaffCheckInRouteImport.update({
+  id: '/staff/check-in',
+  path: '/staff/check-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsTrackerRoute = BookingsTrackerRouteImport.update({
+  id: '/tracker',
+  path: '/tracker',
+  getParentRoute: () => BookingsRoute,
+} as any)
+const BookingsNewRoute = BookingsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => BookingsRoute,
+} as any)
+const AdminTiersRoute = AdminTiersRouteImport.update({
+  id: '/admin/tiers',
+  path: '/admin/tiers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTierHistoryRoute = AdminTierHistoryRouteImport.update({
+  id: '/admin/tier-history',
+  path: '/admin/tier-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRbacRoute = AdminRbacRouteImport.update({
+  id: '/admin/rbac',
+  path: '/admin/rbac',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPromotionsRoute = AdminPromotionsRouteImport.update({
+  id: '/admin/promotions',
+  path: '/admin/promotions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPointsAuditRoute = AdminPointsAuditRouteImport.update({
+  id: '/admin/points-audit',
+  path: '/admin/points-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRouteWithChildren
+  '/checkout': typeof CheckoutRoute
+  '/confirmation': typeof ConfirmationRoute
+  '/loyalty': typeof LoyaltyRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
+  '/wash-session': typeof WashSessionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/points-audit': typeof AdminPointsAuditRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/rbac': typeof AdminRbacRoute
+  '/admin/tier-history': typeof AdminTierHistoryRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/bookings/new': typeof BookingsNewRoute
+  '/bookings/tracker': typeof BookingsTrackerRoute
+  '/staff/check-in': typeof StaffCheckInRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRouteWithChildren
+  '/checkout': typeof CheckoutRoute
+  '/confirmation': typeof ConfirmationRoute
+  '/loyalty': typeof LoyaltyRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
+  '/wash-session': typeof WashSessionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/points-audit': typeof AdminPointsAuditRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/rbac': typeof AdminRbacRoute
+  '/admin/tier-history': typeof AdminTierHistoryRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/bookings/new': typeof BookingsNewRoute
+  '/bookings/tracker': typeof BookingsTrackerRoute
+  '/staff/check-in': typeof StaffCheckInRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRouteWithChildren
+  '/checkout': typeof CheckoutRoute
+  '/confirmation': typeof ConfirmationRoute
+  '/loyalty': typeof LoyaltyRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/register': typeof RegisterRoute
+  '/transactions': typeof TransactionsRoute
   '/vehicles': typeof VehiclesRoute
   '/verify': typeof VerifyRoute
+  '/wash-session': typeof WashSessionRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/points-audit': typeof AdminPointsAuditRoute
+  '/admin/promotions': typeof AdminPromotionsRoute
+  '/admin/rbac': typeof AdminRbacRoute
+  '/admin/tier-history': typeof AdminTierHistoryRoute
+  '/admin/tiers': typeof AdminTiersRoute
+  '/bookings/new': typeof BookingsNewRoute
+  '/bookings/tracker': typeof BookingsTrackerRoute
+  '/staff/check-in': typeof StaffCheckInRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/vehicles' | '/verify'
+  fullPaths:
+    | '/'
+    | '/bookings'
+    | '/checkout'
+    | '/confirmation'
+    | '/loyalty'
+    | '/notifications'
+    | '/profile'
+    | '/register'
+    | '/transactions'
+    | '/vehicles'
+    | '/verify'
+    | '/wash-session'
+    | '/admin/analytics'
+    | '/admin/points-audit'
+    | '/admin/promotions'
+    | '/admin/rbac'
+    | '/admin/tier-history'
+    | '/admin/tiers'
+    | '/bookings/new'
+    | '/bookings/tracker'
+    | '/staff/check-in'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/vehicles' | '/verify'
-  id: '__root__' | '/' | '/profile' | '/vehicles' | '/verify'
+  to:
+    | '/'
+    | '/bookings'
+    | '/checkout'
+    | '/confirmation'
+    | '/loyalty'
+    | '/notifications'
+    | '/profile'
+    | '/register'
+    | '/transactions'
+    | '/vehicles'
+    | '/verify'
+    | '/wash-session'
+    | '/admin/analytics'
+    | '/admin/points-audit'
+    | '/admin/promotions'
+    | '/admin/rbac'
+    | '/admin/tier-history'
+    | '/admin/tiers'
+    | '/bookings/new'
+    | '/bookings/tracker'
+    | '/staff/check-in'
+  id:
+    | '__root__'
+    | '/'
+    | '/bookings'
+    | '/checkout'
+    | '/confirmation'
+    | '/loyalty'
+    | '/notifications'
+    | '/profile'
+    | '/register'
+    | '/transactions'
+    | '/vehicles'
+    | '/verify'
+    | '/wash-session'
+    | '/admin/analytics'
+    | '/admin/points-audit'
+    | '/admin/promotions'
+    | '/admin/rbac'
+    | '/admin/tier-history'
+    | '/admin/tiers'
+    | '/bookings/new'
+    | '/bookings/tracker'
+    | '/staff/check-in'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BookingsRoute: typeof BookingsRouteWithChildren
+  CheckoutRoute: typeof CheckoutRoute
+  ConfirmationRoute: typeof ConfirmationRoute
+  LoyaltyRoute: typeof LoyaltyRoute
+  NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
+  RegisterRoute: typeof RegisterRoute
+  TransactionsRoute: typeof TransactionsRoute
   VehiclesRoute: typeof VehiclesRoute
   VerifyRoute: typeof VerifyRoute
+  WashSessionRoute: typeof WashSessionRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminPointsAuditRoute: typeof AdminPointsAuditRoute
+  AdminPromotionsRoute: typeof AdminPromotionsRoute
+  AdminRbacRoute: typeof AdminRbacRoute
+  AdminTierHistoryRoute: typeof AdminTierHistoryRoute
+  AdminTiersRoute: typeof AdminTiersRoute
+  StaffCheckInRoute: typeof StaffCheckInRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wash-session': {
+      id: '/wash-session'
+      path: '/wash-session'
+      fullPath: '/wash-session'
+      preLoaderRoute: typeof WashSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -85,11 +324,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VehiclesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/transactions': {
+      id: '/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof TransactionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loyalty': {
+      id: '/loyalty'
+      path: '/loyalty'
+      fullPath: '/loyalty'
+      preLoaderRoute: typeof LoyaltyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmation': {
+      id: '/confirmation'
+      path: '/confirmation'
+      fullPath: '/confirmation'
+      preLoaderRoute: typeof ConfirmationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings': {
+      id: '/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof BookingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,15 +387,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/check-in': {
+      id: '/staff/check-in'
+      path: '/staff/check-in'
+      fullPath: '/staff/check-in'
+      preLoaderRoute: typeof StaffCheckInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings/tracker': {
+      id: '/bookings/tracker'
+      path: '/tracker'
+      fullPath: '/bookings/tracker'
+      preLoaderRoute: typeof BookingsTrackerRouteImport
+      parentRoute: typeof BookingsRoute
+    }
+    '/bookings/new': {
+      id: '/bookings/new'
+      path: '/new'
+      fullPath: '/bookings/new'
+      preLoaderRoute: typeof BookingsNewRouteImport
+      parentRoute: typeof BookingsRoute
+    }
+    '/admin/tiers': {
+      id: '/admin/tiers'
+      path: '/admin/tiers'
+      fullPath: '/admin/tiers'
+      preLoaderRoute: typeof AdminTiersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/tier-history': {
+      id: '/admin/tier-history'
+      path: '/admin/tier-history'
+      fullPath: '/admin/tier-history'
+      preLoaderRoute: typeof AdminTierHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/rbac': {
+      id: '/admin/rbac'
+      path: '/admin/rbac'
+      fullPath: '/admin/rbac'
+      preLoaderRoute: typeof AdminRbacRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/promotions': {
+      id: '/admin/promotions'
+      path: '/admin/promotions'
+      fullPath: '/admin/promotions'
+      preLoaderRoute: typeof AdminPromotionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/points-audit': {
+      id: '/admin/points-audit'
+      path: '/admin/points-audit'
+      fullPath: '/admin/points-audit'
+      preLoaderRoute: typeof AdminPointsAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface BookingsRouteChildren {
+  BookingsNewRoute: typeof BookingsNewRoute
+  BookingsTrackerRoute: typeof BookingsTrackerRoute
+}
+
+const BookingsRouteChildren: BookingsRouteChildren = {
+  BookingsNewRoute: BookingsNewRoute,
+  BookingsTrackerRoute: BookingsTrackerRoute,
+}
+
+const BookingsRouteWithChildren = BookingsRoute._addFileChildren(
+  BookingsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BookingsRoute: BookingsRouteWithChildren,
+  CheckoutRoute: CheckoutRoute,
+  ConfirmationRoute: ConfirmationRoute,
+  LoyaltyRoute: LoyaltyRoute,
+  NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
+  RegisterRoute: RegisterRoute,
+  TransactionsRoute: TransactionsRoute,
   VehiclesRoute: VehiclesRoute,
   VerifyRoute: VerifyRoute,
+  WashSessionRoute: WashSessionRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminPointsAuditRoute: AdminPointsAuditRoute,
+  AdminPromotionsRoute: AdminPromotionsRoute,
+  AdminRbacRoute: AdminRbacRoute,
+  AdminTierHistoryRoute: AdminTierHistoryRoute,
+  AdminTiersRoute: AdminTiersRoute,
+  StaffCheckInRoute: StaffCheckInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

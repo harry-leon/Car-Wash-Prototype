@@ -13,7 +13,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 const TIER_GRADIENT: Record<string, string> = {
-  Bronze: "from-amber-700 via-amber-500 to-orange-400",
+  Member: "from-amber-700 via-amber-500 to-orange-400",
   Silver: "from-slate-500 via-slate-400 to-zinc-300",
   Gold: "from-yellow-500 via-amber-400 to-yellow-300",
   Platinum: "from-indigo-500 via-violet-500 to-fuchsia-400",
@@ -35,19 +35,21 @@ function ProfilePage() {
   }, [profile]);
 
   if (!profile) {
-    return (
-      <div className="p-10 text-center text-muted-foreground">No profile loaded.</div>
-    );
+    return <div className="p-10 text-center text-muted-foreground">No profile loaded.</div>;
   }
 
   const tierInfo = nextTierInfo(profile.points, profile.tier);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return toast.error("Name cannot be empty");
-    if (!/^\d{8,11}$/.test(phone.trim())) return toast.error("Phone must be 8–11 digits");
+    if (!name.trim()) {
+      return toast.error("Name cannot be empty");
+    }
+    if (!/^\d{8,11}$/.test(phone.trim())) {
+      return toast.error("Phone must be 8-11 digits");
+    }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((resolve) => setTimeout(resolve, 600));
     updateProfile({ name: name.trim(), phone: phone.trim(), countryCode });
     setSaving(false);
     toast.success("Profile updated");
@@ -56,16 +58,17 @@ function ProfilePage() {
   return (
     <div className="px-4 py-8 md:p-10">
       <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Your account</h1>
+        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Your account</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Manage personal details and track your loyalty progress.
         </p>
 
-        {/* Tier card */}
-        <div className={cn(
-          "relative mt-6 overflow-hidden rounded-2xl bg-gradient-to-br p-6 text-white shadow-lg",
-          TIER_GRADIENT[profile.tier] ?? TIER_GRADIENT.Silver,
-        )}>
+        <div
+          className={cn(
+            "relative mt-6 overflow-hidden rounded-2xl bg-gradient-to-br p-6 text-white shadow-lg",
+            TIER_GRADIENT[profile.tier] ?? TIER_GRADIENT.Member,
+          )}
+        >
           <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-16 -left-10 h-48 w-48 rounded-full bg-black/10 blur-2xl" />
 
@@ -86,12 +89,14 @@ function ProfilePage() {
           <div className="relative mt-6">
             {tierInfo.next ? (
               <>
-                <div className="flex items-center justify-between text-xs opacity-90 mb-2">
+                <div className="mb-2 flex items-center justify-between text-xs opacity-90">
                   <span className="inline-flex items-center gap-1">
                     <TrendingUp className="h-3.5 w-3.5" />
                     {tierInfo.needed} pts to <span className="font-semibold">{tierInfo.next}</span>
                   </span>
-                  <span>{profile.points} / {tierInfo.target}</span>
+                  <span>
+                    {profile.points} / {tierInfo.target}
+                  </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/25">
                   <div
@@ -108,19 +113,22 @@ function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile form */}
         <form onSubmit={handleSave} className="mt-6 rounded-2xl border border-border bg-card shadow-sm">
           <div className="p-6">
             <h2 className="text-sm font-semibold tracking-tight">Personal information</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Update your name and contact number.</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Update your name and contact number.</p>
 
-            <div className="mt-5 grid sm:grid-cols-2 gap-4">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="pname" className="mb-1.5 block">Full name</Label>
+                <Label htmlFor="pname" className="mb-1.5 block">
+                  Full name
+                </Label>
                 <Input id="pname" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="pphone" className="mb-1.5 block">Phone</Label>
+                <Label htmlFor="pphone" className="mb-1.5 block">
+                  Phone
+                </Label>
                 <div className="flex gap-2">
                   <select
                     value={countryCode}
@@ -142,12 +150,12 @@ function ProfilePage() {
               </div>
             </div>
           </div>
-          <div className="border-t border-border bg-accent/20 p-5 flex justify-end">
+          <div className="flex justify-end border-t border-border bg-accent/20 p-5">
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving…
+                  Saving...
                 </>
               ) : (
                 "Save Changes"

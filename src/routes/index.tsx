@@ -1,183 +1,174 @@
-import * as React from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Car, CarFront, Truck, Bike, Phone, User, ArrowRight, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  Bell,
+  CarFront,
+  ClipboardList,
+  Gift,
+  LayoutDashboard,
+  ReceiptText,
+  ShieldCheck,
+  Sparkles,
+  UserPlus,
+  Wrench,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { usePortal, VEHICLE_TYPES, VehicleType } from "@/lib/portal-store";
+import { Card } from "@/components/ui/card";
+import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/")({
-  component: RegisterPage,
+  component: OverviewPage,
 });
 
-const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }>> = {
-  Sedan: Car,
-  SUV: CarFront,
-  Truck: Truck,
-  Motorbike: Bike,
-};
-
-function RegisterPage() {
-  const { setPending, pending } = usePortal();
-  const navigate = useNavigate();
-
-  const [name, setName] = React.useState(pending?.name ?? "");
-  const [countryCode, setCountryCode] = React.useState(pending?.countryCode ?? "+84");
-  const [phone, setPhone] = React.useState(pending?.phone ?? "");
-  const [brandModel, setBrandModel] = React.useState(pending?.vehicle.brandModel ?? "");
-  const [plate, setPlate] = React.useState(pending?.vehicle.plate ?? "");
-  const [type, setType] = React.useState<VehicleType>(pending?.vehicle.type ?? "Sedan");
-  const [submitting, setSubmitting] = React.useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return toast.error("Please enter your full name.");
-    if (!/^\d{8,11}$/.test(phone.trim())) return toast.error("Phone must be 8–11 digits.");
-    if (!brandModel.trim()) return toast.error("Please enter your vehicle brand & model.");
-    if (plate.trim().length < 4) return toast.error("License plate looks too short.");
-
-    setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setPending({
-      name: name.trim(),
-      phone: phone.trim(),
-      countryCode,
-      vehicle: { brandModel: brandModel.trim(), plate: plate.trim().toUpperCase(), type },
-    });
-    setSubmitting(false);
-    toast.success("Verification code sent!");
-    navigate({ to: "/verify" });
-  };
+function OverviewPage() {
+  const { customers, bookings, transactions, notifications, role } = useCarwashStore();
+  const activeCustomer = customers[0];
 
   return (
-    <div className="min-h-screen px-4 py-8 md:p-10">
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-6 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5" /> Step 1 of 2 · Create account
+    <div className="p-6 md:p-10">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-primary">
+            <Sparkles className="h-4 w-4" /> Unified prototype ready for demo
+          </div>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Carwash main flow hub</h1>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Registration, booking, staff check-in, wash session, checkout, loyalty, notification
+            and admin flows are now linked through one shared business state.
+          </p>
         </div>
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to ShinePass</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Register in under a minute to start earning loyalty points on every wash.
-        </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 rounded-2xl border border-border bg-card shadow-sm overflow-hidden"
-        >
-          <div className="p-6 space-y-5">
-            <div>
-              <Label htmlFor="name" className="mb-1.5 block">Full name</Label>
-              <div className="relative">
-                <User className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex Nguyen"
-                  className="pl-9"
-                />
-              </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <StatCard label="Customers" value={String(customers.length)} />
+          <StatCard
+            label="Active Bookings"
+            value={String(
+              bookings.filter(
+                (item) => item.status !== "Completed" && item.status !== "Cancelled",
+              ).length,
+            )}
+          />
+          <StatCard label="Transactions" value={String(transactions.length)} />
+          <StatCard label="Notifications" value={String(notifications.length)} />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="p-6 lg:col-span-2">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <LayoutDashboard className="h-4 w-4 text-primary" />
+              Main flow shortcuts
             </div>
-
-            <div>
-              <Label htmlFor="phone" className="mb-1.5 block">Phone number</Label>
-              <div className="flex gap-2">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-transparent px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="+84">🇻🇳 +84</option>
-                  <option value="+1">🇺🇸 +1</option>
-                  <option value="+44">🇬🇧 +44</option>
-                  <option value="+65">🇸🇬 +65</option>
-                </select>
-                <div className="relative flex-1">
-                  <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    inputMode="numeric"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="987654321"
-                    className="pl-9"
-                  />
-                </div>
-              </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <FlowLink
+                to="/register"
+                icon={UserPlus}
+                title="1. Register"
+                text="Create account, verify OTP and seed first vehicle."
+              />
+              <FlowLink
+                to="/bookings/new"
+                icon={ClipboardList}
+                title="2. Book wash"
+                text="Create a booking using current customer vehicles."
+              />
+              <FlowLink
+                to="/staff/check-in"
+                icon={Wrench}
+                title="3. Staff check-in"
+                text="Check in booked customers or handle walk-ins."
+              />
+              <FlowLink
+                to="/wash-session"
+                icon={CarFront}
+                title="4. Wash session"
+                text="Prepare services before checkout."
+              />
+              <FlowLink
+                to="/checkout"
+                icon={ReceiptText}
+                title="5. Checkout"
+                text="Apply tier discount, promotion and point redemption."
+              />
+              <FlowLink
+                to="/loyalty"
+                icon={Gift}
+                title="6. Loyalty"
+                text="View points, tier progress and reward redemption."
+              />
+              <FlowLink
+                to="/notifications"
+                icon={Bell}
+                title="7. Notifications"
+                text="Review booking and loyalty notifications."
+              />
+              <FlowLink
+                to="/admin/tiers"
+                icon={ShieldCheck}
+                title="8. Admin rules"
+                text="Manage tier rules, promotions and governance screens."
+              />
             </div>
+          </Card>
 
-            <div className="rounded-xl border border-dashed border-border bg-accent/30 p-4">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                Primary vehicle
+          <Card className="p-6">
+            <div className="text-sm font-semibold">Current demo state</div>
+            <div className="mt-4 space-y-3 text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Active customer</div>
+                <div className="font-medium">{activeCustomer?.name}</div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="brand" className="mb-1.5 block">Brand & model</Label>
-                  <Input
-                    id="brand"
-                    value={brandModel}
-                    onChange={(e) => setBrandModel(e.target.value)}
-                    placeholder="Toyota Vios"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="plate" className="mb-1.5 block">License plate</Label>
-                  <Input
-                    id="plate"
-                    value={plate}
-                    onChange={(e) => setPlate(e.target.value)}
-                    placeholder="51G-123.45"
-                    className="font-mono uppercase tracking-wider"
-                  />
+              <div>
+                <div className="text-xs text-muted-foreground">Tier / points</div>
+                <div className="font-medium">
+                  {activeCustomer?.tier} · {activeCustomer?.points} pts
                 </div>
               </div>
-              <div className="mt-4">
-                <Label className="mb-2 block">Vehicle type</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {VEHICLE_TYPES.map((t) => {
-                    const Icon = TYPE_ICONS[t];
-                    const active = type === t;
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setType(t)}
-                        className={cn(
-                          "flex flex-col items-center gap-1 rounded-lg border p-3 transition-all",
-                          active
-                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                            : "border-border hover:border-primary/40 hover:bg-accent/40",
-                        )}
-                      >
-                        <Icon className={cn("h-5 w-5", active ? "text-primary" : "text-muted-foreground")} />
-                        <span className="text-xs font-medium">{t}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Workspace role</div>
+                <div className="font-medium">{role}</div>
               </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border bg-accent/20 p-5 flex justify-end">
-            <Button type="submit" size="lg" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
-                  Sending…
-                </>
-              ) : (
-                <>
-                  Send Verification Code
+              <Button asChild className="mt-3 w-full">
+                <Link to="/bookings/new">
+                  Continue Main Flow
                   <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+                </Link>
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="p-5">
+      <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-2 text-3xl font-semibold">{value}</div>
+    </Card>
+  );
+}
+
+function FlowLink({
+  to,
+  icon: Icon,
+  title,
+  text,
+}: {
+  to: string;
+  icon: typeof Sparkles;
+  title: string;
+  text: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="rounded-xl border border-border bg-accent/20 p-4 transition-colors hover:bg-accent/40"
+    >
+      <Icon className="h-5 w-5 text-primary" />
+      <div className="mt-3 text-sm font-semibold">{title}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{text}</div>
+    </Link>
   );
 }

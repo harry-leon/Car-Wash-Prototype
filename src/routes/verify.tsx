@@ -22,7 +22,9 @@ function VerifyPage() {
   const refs = React.useRef<(HTMLInputElement | null)[]>([]);
 
   React.useEffect(() => {
-    if (seconds === 0) return;
+    if (seconds === 0) {
+      return;
+    }
     const t = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, [seconds]);
@@ -33,41 +35,61 @@ function VerifyPage() {
   const handleChange = (i: number, v: string) => {
     const ch = v.replace(/\D/g, "").slice(-1);
     setDigits((prev) => {
-      const n = [...prev];
-      n[i] = ch;
-      return n;
+      const next = [...prev];
+      next[i] = ch;
+      return next;
     });
-    if (ch && i < LENGTH - 1) refs.current[i + 1]?.focus();
+    if (ch && i < LENGTH - 1) {
+      refs.current[i + 1]?.focus();
+    }
   };
 
   const handleKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !digits[i] && i > 0) refs.current[i - 1]?.focus();
-    if (e.key === "ArrowLeft" && i > 0) refs.current[i - 1]?.focus();
-    if (e.key === "ArrowRight" && i < LENGTH - 1) refs.current[i + 1]?.focus();
+    if (e.key === "Backspace" && !digits[i] && i > 0) {
+      refs.current[i - 1]?.focus();
+    }
+    if (e.key === "ArrowLeft" && i > 0) {
+      refs.current[i - 1]?.focus();
+    }
+    if (e.key === "ArrowRight" && i < LENGTH - 1) {
+      refs.current[i + 1]?.focus();
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, LENGTH);
-    if (!text) return;
+    if (!text) {
+      return;
+    }
     e.preventDefault();
     const next = Array(LENGTH).fill("");
-    for (let i = 0; i < text.length; i++) next[i] = text[i];
+    for (let i = 0; i < text.length; i += 1) {
+      next[i] = text[i];
+    }
     setDigits(next);
     refs.current[Math.min(text.length, LENGTH - 1)]?.focus();
   };
 
   const handleVerify = async () => {
-    if (!ready) return;
+    if (!ready) {
+      return;
+    }
+
     setVerifying(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setVerifying(false);
-    if (pending) {
-      completeRegistration();
-      toast.success("Phone verified — welcome aboard!");
+    await new Promise((resolve) => setTimeout(resolve, 900));
+
+    try {
+      if (pending) {
+        completeRegistration();
+        toast.success("Phone verified - welcome aboard!");
+      } else {
+        toast.success("Phone verified");
+      }
       navigate({ to: "/profile" });
-    } else {
-      toast.success("Phone verified");
-      navigate({ to: "/profile" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to complete registration.");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -78,12 +100,14 @@ function VerifyPage() {
     toast("New verification code sent");
   };
 
-  const masked = pending ? `${pending.countryCode} ${pending.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1•••$3")}` : "your phone";
+  const masked = pending
+    ? `${pending.countryCode} ${pending.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1***$3")}`
+    : "your phone";
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-border bg-card shadow-sm p-6 md:p-8">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
           <div className="flex items-center justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ShieldCheck className="h-6 w-6" />
@@ -107,9 +131,9 @@ function VerifyPage() {
                 inputMode="numeric"
                 maxLength={1}
                 className={cn(
-                  "h-12 w-10 sm:h-14 sm:w-12 rounded-lg border text-center text-xl font-semibold shadow-sm transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary",
-                  d ? "border-primary bg-primary/5" : "border-border bg-background",
+                  "h-12 w-10 rounded-lg border bg-background text-center text-xl font-semibold shadow-sm transition-all sm:h-14 sm:w-12",
+                  "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40",
+                  d ? "border-primary bg-primary/5" : "border-border",
                 )}
               />
             ))}
@@ -117,7 +141,9 @@ function VerifyPage() {
 
           <div className="mt-5 text-center text-sm text-muted-foreground">
             {seconds > 0 ? (
-              <>Resend code in <span className="font-medium text-foreground">{seconds}s</span></>
+              <>
+                Resend code in <span className="font-medium text-foreground">{seconds}s</span>
+              </>
             ) : (
               <button
                 type="button"
@@ -138,7 +164,7 @@ function VerifyPage() {
             {verifying ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Verifying…
+                Verifying...
               </>
             ) : (
               "Verify & Complete"
@@ -147,7 +173,7 @@ function VerifyPage() {
 
           <div className="mt-4 text-center">
             <Link
-              to="/"
+              to="/register"
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to registration
