@@ -22,11 +22,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/analytics")({
-  component: AnalyticsPage,
+  component: () => <AnalyticsPage />,
 });
 
 const tiers = [
-  { name: "Member", pct: 44, color: "bg-amber-700", count: 2128 },
+  { name: "Member", pct: 44, color: "bg-amber-600", count: 2128 },
   { name: "Silver", pct: 28, color: "bg-slate-400", count: 1354 },
   { name: "Gold", pct: 18, color: "bg-yellow-500", count: 870 },
   { name: "Platinum", pct: 10, color: "bg-fuchsia-500", count: 484 },
@@ -55,156 +55,164 @@ function AnalyticsPage() {
 
   if (!canAccess(role, ["Admin"])) {
     return (
-      <AccessDenied
-        title="Analytics are restricted"
-        description="Only Admin can access executive analytics dashboards."
-        role={role}
-      />
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Analytics are restricted"
+          description="Only Admin can access executive analytics dashboards."
+          role={role}
+        />
+      </div>
     );
   }
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Executive Analytics</h1>
-          <p className="text-sm text-muted-foreground">
-            Weekly performance snapshot across revenue, bookings and loyalty.
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs">
-          <CalendarRange className="h-3.5 w-3.5 text-muted-foreground" />
-          May 12 - May 18, 2026
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi icon={BadgeDollarSign} label="Total Revenue" value="$48,290" delta="+12.4%" up />
-        <Kpi icon={CalendarRange} label="Active Bookings" value="342" delta="+5.1%" up />
-        <Kpi icon={Tag} label="Claimed Coupons" value="3,441" delta="+18.7%" up />
-        <Kpi icon={TrendingUp} label="Avg Ticket Value" value="$24.10" delta="-1.2%" up={false} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-5">
-          <div className="mb-1 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Membership Tier Demographics</h2>
-            <span className="text-[11px] text-muted-foreground">4,836 members</span>
+    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Executive Analytics</h1>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              Weekly performance snapshot across revenue, bookings and loyalty.
+            </p>
           </div>
-          <p className="mb-5 text-xs text-muted-foreground">
-            Concentration of active members across loyalty tiers.
-          </p>
+          <div className="inline-flex items-center gap-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-md px-4 py-2 text-sm font-bold shadow-sm">
+            <CalendarRange className="h-4 w-4 text-primary" />
+            May 12 - May 18, 2026
+          </div>
+        </div>
 
-          <div className="flex h-8 w-full overflow-hidden rounded-md border border-border">
-            {tiers.map((t) => (
-              <div
-                key={t.name}
-                className={cn("flex items-center justify-center text-[10px] font-semibold text-white", t.color)}
-                style={{ width: `${t.pct}%` }}
-              >
-                {t.pct}%
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Kpi icon={BadgeDollarSign} label="Total Revenue" value="$48,290" delta="+12.4%" up />
+          <Kpi icon={CalendarRange} label="Active Bookings" value="342" delta="+5.1%" up />
+          <Kpi icon={Tag} label="Claimed Coupons" value="3,441" delta="+18.7%" up />
+          <Kpi icon={TrendingUp} label="Avg Ticket Value" value="$24.10" delta="-1.2%" up={false} />
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Card className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 p-6 sm:p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+            <div className="relative z-10">
+              <div className="mb-6 flex items-center justify-between border-b border-border/50 pb-4">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Membership Demographics</h2>
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary shadow-sm">4,836 members</span>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-4 space-y-3">
-            {tiers.map((t) => (
-              <div key={t.name}>
-                <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 rounded-full", t.color)} />
-                    <span className="font-medium">{t.name}</span>
-                  </span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {t.count.toLocaleString()} members / {t.pct}%
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div className={cn("h-full", t.color)} style={{ width: `${t.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <div className="mb-1 flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Promotion Efficiency</h2>
-            <span className="text-[11px] text-muted-foreground">Top 5 codes</span>
-          </div>
-          <p className="mb-5 text-xs text-muted-foreground">
-            Hover a bar for revenue impact and redemption rate.
-          </p>
-          <TooltipProvider delayDuration={100}>
-            <div className="space-y-3">
-              {promos.map((p) => (
-                <div key={p.code}>
-                  <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-mono font-medium">{p.code}</span>
-                    <span className="tabular-nums text-muted-foreground">{p.uses} uses</span>
-                  </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all hover:bg-primary/80"
-                          style={{ width: `${(p.uses / maxPromo) * 100}%` }}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="text-xs">
-                        <div className="font-semibold">{p.code}</div>
-                        <div>Redemptions: {p.uses.toLocaleString()}</div>
-                        <div>Revenue impact: ${p.revenue.toLocaleString()}</div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              ))}
-            </div>
-          </TooltipProvider>
-        </Card>
-      </div>
-
-      <Card className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-          <h2 className="text-sm font-semibold">Recent Transactions</h2>
-          <span className="text-[11px] text-muted-foreground">Last 5 entries</span>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-background text-left text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-4 py-2 font-medium">Txn</th>
-              <th className="px-4 py-2 font-medium">Customer</th>
-              <th className="px-4 py-2 font-medium">Package</th>
-              <th className="px-4 py-2 font-medium">Amount</th>
-              <th className="px-4 py-2 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {transactions.map((t) => (
-              <tr key={t.id} className="hover:bg-muted/30">
-                <td className="px-4 py-2.5 font-mono text-xs">{t.id}</td>
-                <td className="px-4 py-2.5 text-xs font-medium">{t.customer}</td>
-                <td className="px-4 py-2.5 text-xs text-muted-foreground">{t.package}</td>
-                <td className="px-4 py-2.5 text-xs tabular-nums">${t.amount.toFixed(2)}</td>
-                <td className="px-4 py-2.5 text-xs">
-                  <span
-                    className={cn(
-                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                      t.status === "Paid"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-                        : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-                    )}
+              <div className="flex h-12 w-full overflow-hidden rounded-xl border border-border/50 shadow-inner">
+                {tiers.map((t) => (
+                  <div
+                    key={t.name}
+                    className={cn("flex items-center justify-center text-xs font-bold text-white transition-all hover:opacity-90", t.color)}
+                    style={{ width: `${t.pct}%` }}
                   >
-                    {t.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+                    {t.pct}%
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 space-y-5">
+                {tiers.map((t) => (
+                  <div key={t.name} className="group">
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-3">
+                        <span className={cn("h-3 w-3 rounded-full shadow-sm", t.color)} />
+                        <span className="font-bold">{t.name}</span>
+                      </span>
+                      <span className="tabular-nums font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                        {t.count.toLocaleString()} members <span className="opacity-50">/</span> {t.pct}%
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted/50 shadow-inner">
+                      <div className={cn("h-full transition-all duration-1000 ease-out", t.color)} style={{ width: `${t.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 p-6 sm:p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
+            <div className="relative z-10">
+              <div className="mb-6 flex items-center justify-between border-b border-border/50 pb-4">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Promotion Efficiency</h2>
+                <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-600 shadow-sm">Top 5 codes</span>
+              </div>
+              <TooltipProvider delayDuration={100}>
+                <div className="space-y-6">
+                  {promos.map((p) => (
+                    <div key={p.code} className="group">
+                      <div className="mb-2 flex items-center justify-between text-sm">
+                        <span className="font-mono font-bold bg-background/50 px-2 py-1 rounded-md border border-border/50">{p.code}</span>
+                        <span className="tabular-nums font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{p.uses.toLocaleString()} uses</span>
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="h-3.5 w-full overflow-hidden rounded-full bg-muted/50 shadow-inner cursor-pointer">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all duration-1000 ease-out hover:bg-primary/80"
+                              style={{ width: `${(p.uses / maxPromo) * 100}%` }}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-xl border-border/50 bg-card/90 backdrop-blur-xl p-4 shadow-xl">
+                          <div className="text-sm space-y-1.5">
+                            <div className="font-black text-primary border-b border-border/50 pb-1.5 mb-1.5">{p.code}</div>
+                            <div className="flex justify-between gap-4 font-medium"><span className="text-muted-foreground">Redemptions:</span> <span>{p.uses.toLocaleString()}</span></div>
+                            <div className="flex justify-between gap-4 font-medium"><span className="text-muted-foreground">Revenue:</span> <span className="text-emerald-500 font-bold">${p.revenue.toLocaleString()}</span></div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  ))}
+                </div>
+              </TooltipProvider>
+            </div>
+          </Card>
+        </div>
+
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-xl overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between border-b border-border/50 bg-accent/20 px-6 sm:px-8 py-5">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">Recent Transactions</h2>
+            <span className="rounded-full bg-background/80 px-3 py-1 text-xs font-semibold text-muted-foreground shadow-sm border border-border/50">Last 5 entries</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Txn</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Customer</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Package</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Amount</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {transactions.map((t) => (
+                  <tr key={t.id} className="hover:bg-primary/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{t.id}</span>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-foreground">{t.customer}</td>
+                    <td className="px-6 py-4 font-medium text-muted-foreground">{t.package}</td>
+                    <td className="px-6 py-4 font-bold tabular-nums">${t.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm",
+                          t.status === "Paid"
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-600 border border-rose-500/20",
+                        )}
+                      >
+                        {t.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -223,25 +231,28 @@ function Kpi({
   up: boolean;
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
+    <Card className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 p-6 backdrop-blur-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-sm transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+            <Icon className="h-6 w-6" />
+          </div>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shadow-sm",
+              up
+                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                : "bg-rose-500/10 text-rose-600 border border-rose-500/20",
+            )}
+          >
+            {up ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+            {delta}
+          </span>
         </div>
-        <span
-          className={cn(
-            "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
-            up
-              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-              : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-          )}
-        >
-          {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {delta}
-        </span>
+        <div className="mt-5 text-3xl font-black tabular-nums tracking-tight text-foreground">{value}</div>
+        <div className="mt-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
       </div>
-      <div className="mt-3 text-2xl font-semibold tabular-nums">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
     </Card>
   );
 }

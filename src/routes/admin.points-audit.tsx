@@ -17,11 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ClipboardList, Lock, Plus, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ClipboardList, Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/points-audit")({
-  component: AuditPage,
+  component: () => <AuditPage />,
 });
 
 function AuditPage() {
@@ -29,84 +29,92 @@ function AuditPage() {
 
   if (!canAccess(role, ["Admin"])) {
     return (
-      <AccessDenied
-        title="Points audit is restricted"
-        description="Only Admin can open the manual points adjustment audit log."
-        role={role}
-      />
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Points audit is restricted"
+          description="Only Admin can open the manual points adjustment audit log."
+          role={role}
+        />
+      </div>
     );
   }
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            Points Adjustment Audit Log
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-              <ShieldCheck className="h-3 w-3" /> Admin
-            </span>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Immutable ledger of manual point corrections issued by authorized personnel.
-          </p>
-        </div>
-        <AdjustDialog onSubmit={addAdjustment} />
-      </div>
-
-      <Card className="overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold">Ledger ({adjustments.length})</h2>
+    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+              Points Audit Log
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary shadow-sm">
+                <ShieldCheck className="h-4 w-4" /> Admin
+              </span>
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              Immutable ledger of manual point corrections issued by authorized personnel.
+            </p>
           </div>
-          <span className="text-[11px] text-muted-foreground">Read-only · cryptographically sealed</span>
+          <AdjustDialog onSubmit={addAdjustment} />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-background text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Timestamp</th>
-                <th className="px-4 py-2 font-medium">Authorized Executive</th>
-                <th className="px-4 py-2 font-medium">Target Customer</th>
-                <th className="px-4 py-2 font-medium">Adjustment</th>
-                <th className="px-4 py-2 font-medium">System Reason</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {adjustments.map((a) => (
-                <tr key={a.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-3 align-top">
-                    <div className="text-xs font-medium">
-                      {a.timestamp.toLocaleDateString()}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {formatRelative(a.timestamp)}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 align-top text-xs">{a.executive}</td>
-                  <td className="px-4 py-3 align-top text-xs font-medium">{a.customer}</td>
-                  <td className="px-4 py-3 align-top">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold tabular-nums",
-                        a.delta > 0
-                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-                          : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
-                      )}
-                    >
-                      {a.delta > 0 ? "+" : ""}
-                      {a.delta} pts
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 align-top text-xs text-muted-foreground">
-                    {a.reason}
-                  </td>
+
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-xl overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between border-b border-border/50 bg-accent/20 px-6 sm:px-8 py-5">
+            <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-wider text-foreground">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-inner text-primary">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              Ledger ({adjustments.length})
+            </div>
+            <span className="rounded-full bg-background/80 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground shadow-sm border border-border/50">
+              Read-only · Sealed
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Timestamp</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Authorized Executive</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Target Customer</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">Adjustment</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">System Reason</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {adjustments.map((a) => (
+                  <tr key={a.id} className="hover:bg-primary/5 transition-colors">
+                    <td className="px-6 py-4 align-top">
+                      <div className="text-sm font-bold text-foreground">
+                        {a.timestamp.toLocaleDateString()}
+                      </div>
+                      <div className="text-xs font-medium text-muted-foreground mt-0.5">
+                        {formatRelative(a.timestamp)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 align-top text-sm font-medium">{a.executive}</td>
+                    <td className="px-6 py-4 align-top text-sm font-bold">{a.customer}</td>
+                    <td className="px-6 py-4 align-top">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-md px-2.5 py-1 text-xs font-bold tabular-nums shadow-sm",
+                          a.delta > 0
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-600 border border-rose-500/20",
+                        )}
+                      >
+                        {a.delta > 0 ? "+" : ""}
+                        {a.delta} pts
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 align-top text-sm font-medium text-muted-foreground">
+                      {a.reason}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -139,53 +147,56 @@ function AdjustDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-1.5">
-          <Plus className="h-4 w-4" />
+        <Button size="lg" className="h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+          <Plus className="mr-2 h-5 w-5" />
           Manually Adjust Points
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Manual Points Adjustment</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-border/50 bg-card/95 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="px-8 pt-8 pb-4 bg-accent/30 border-b border-border/50">
+          <DialogTitle className="text-xl font-bold">Manual Points Adjustment</DialogTitle>
+          <DialogDescription className="text-sm font-medium mt-1">
             Applies immediately to customer balance and writes an immutable ledger entry.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="customer">Target Customer</Label>
+        <div className="space-y-5 px-8 py-6">
+          <div className="space-y-2">
+            <Label htmlFor="customer" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Customer</Label>
             <Input
               id="customer"
               placeholder="e.g. Jane Smith"
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
+              className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="delta">Adjustment (positive or negative)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="delta" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Adjustment (positive or negative)</Label>
             <Input
               id="delta"
               type="number"
               placeholder="e.g. 50 or -100"
               value={delta}
               onChange={(e) => setDelta(e.target.value)}
+              className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="reason">System Reason</Label>
+          <div className="space-y-2">
+            <Label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">System Reason</Label>
             <Textarea
               id="reason"
               placeholder="Goodwill, dispute resolution, refund offset…"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              className="rounded-xl bg-background/50 border-border/60 font-medium transition-all focus-visible:ring-primary/30 min-h-[100px] resize-none"
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="px-8 pb-8 pt-4 border-t border-border/50 bg-accent/10">
+          <Button variant="ghost" onClick={() => setOpen(false)} className="rounded-xl font-bold hover:bg-background/80">
             Cancel
           </Button>
-          <Button onClick={submit}>Record Adjustment</Button>
+          <Button onClick={submit} className="rounded-xl font-bold shadow-md shadow-primary/20 hover:shadow-lg">Record Adjustment</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

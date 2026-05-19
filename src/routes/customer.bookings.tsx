@@ -1,8 +1,8 @@
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
-import { CustomerBookingsContent } from "@/routes/bookings";
+import { CustomerBookingsContent } from "@/pages/customer-bookings-page";
 
 export const Route = createFileRoute("/customer/bookings")({
-  component: CustomerBookingsPage,
+  component: () => <CustomerBookingsPage />,
 });
 
 function CustomerBookingsPage() {

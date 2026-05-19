@@ -13,10 +13,6 @@ import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 import { GUEST, fmtMoney, useWashStore } from "@/lib/wash-store";
 
-export const Route = createFileRoute("/wash-session")({
-  component: () => <RouteRedirect to="/staff/wash-session" />,
-});
-
 const VEHICLES = [
   { id: "Sedan", label: "Sedan", icon: Car },
   { id: "SUV", label: "SUV", icon: CarFront },

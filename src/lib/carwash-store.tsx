@@ -20,6 +20,7 @@ export interface Vehicle {
   brandModel: string;
   plate: string;
   type: VehicleType;
+  color?: string;
 }
 
 export interface CustomerRecord {
@@ -224,7 +225,7 @@ interface Store {
   pendingRegistration: PendingRegistration | null;
   setPendingRegistration: (value: PendingRegistration | null) => void;
   completeRegistration: () => void;
-  updateCurrentProfile: (patch: Partial<Pick<CustomerRecord, "name" | "phone" | "countryCode">>) => void;
+  updateCurrentProfile: (patch: Partial<Pick<CustomerRecord, "name" | "email" | "phone" | "countryCode" | "status">>) => void;
   addVehicle: (vehicle: Omit<Vehicle, "id">) => void;
   updateVehicle: (id: string, vehicle: Omit<Vehicle, "id">) => void;
   deleteVehicle: (id: string) => { ok: boolean; error?: string };
@@ -499,7 +500,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const updateCurrentProfile = React.useCallback(
-    (patch: Partial<Pick<CustomerRecord, "name" | "phone" | "countryCode">>) => {
+    (patch: Partial<Pick<CustomerRecord, "name" | "email" | "phone" | "countryCode" | "status">>) => {
       setCustomers((prev) => prev.map((customer) => (customer.id === currentCustomerId ? { ...customer, ...patch } : customer)));
     },
     [currentCustomerId],

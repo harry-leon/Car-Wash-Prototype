@@ -25,10 +25,6 @@ import { Transaction, fmtMoney, useWashStore } from "@/lib/wash-store";
 import { PageHeader, TierBadge } from "@/components/shared";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/transactions")({
-  component: () => <RouteRedirect to="/customer/transactions" />,
-});
-
 export function HistoryPage() {
   const { role } = useCarwashStore();
   const { transactions } = useWashStore();

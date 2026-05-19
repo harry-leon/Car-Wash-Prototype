@@ -18,10 +18,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/notifications")({
-  component: () => <RouteRedirect to="/staff/notifications" />,
-});
-
 const typeMeta: Record<NotifType, { label: string; icon: typeof Bell; classes: string; dot: string }> = {
   Booking: {
     label: "Success: Booking",

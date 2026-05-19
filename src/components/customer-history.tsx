@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
   const { bookings, transactions, updateStatus, setSelectedBookingId } = useBookings();
@@ -44,59 +45,66 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
     const trackable = booking.status !== "Cancelled";
 
     return (
-      <Card key={booking.id} className="p-5 transition-all hover:shadow-md">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
+      <Card key={booking.id} className="group relative overflow-hidden rounded-[1.5rem] border-border/50 bg-card/60 p-6 backdrop-blur-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
+          <div className="flex items-start gap-5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-gradient-to-br from-primary/10 to-indigo-500/10 text-primary shadow-inner transition-transform duration-300 group-hover:scale-105">
               <Car className="h-6 w-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-base">#{booking.id}</span>
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-lg text-foreground">#{booking.id}</span>
                 <span
-                  className={`rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[booking.status]}`}
+                  className={cn(
+                    "rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm",
+                    STATUS_STYLES[booking.status]
+                  )}
                 >
                   {booking.status}
                 </span>
               </div>
-              <div className="mt-1 text-sm">
-                {booking.vehicleName} / {booking.vehiclePlate}
+              <div className="mt-2 font-medium text-foreground">
+                {booking.vehicleName} <span className="mx-1 text-muted-foreground">/</span> <span className="font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded">{booking.vehiclePlate}</span>
               </div>
-              <div className="text-sm text-muted-foreground">{booking.services.join(", ")}</div>
-              <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" /> {booking.scheduledAt}
+              <div className="mt-1.5 text-sm font-medium text-muted-foreground">{booking.services.join(", ")}</div>
+              <div className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-accent/30 px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 text-primary" /> {booking.scheduledAt}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="mr-3 text-right">
-              <div className="text-xs text-muted-foreground">Total</div>
-              <div className="font-bold">{fmtBookingMoney(booking.totalPrice)}</div>
+          <div className="flex flex-col sm:items-end gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="text-left sm:text-right w-full sm:w-auto flex justify-between sm:block border-b border-border/50 pb-3 sm:border-0 sm:pb-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total</div>
+              <div className="text-xl font-bold text-primary">{fmtBookingMoney(booking.totalPrice)}</div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setDetailId(booking.id)}>
-              <Eye className="mr-1 h-4 w-4" /> View
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSelectedBookingId(booking.id);
-                onTrack();
-              }}
-              disabled={!trackable}
-            >
-              Track
-            </Button>
-            {cancellable && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCancelId(booking.id)}
-                className="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-              >
-                <X className="mr-1 h-4 w-4" /> Cancel
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <Button variant="outline" size="sm" onClick={() => setDetailId(booking.id)} className="rounded-xl font-semibold hover:bg-accent hover:text-foreground">
+                <Eye className="mr-1.5 h-4 w-4" /> View
               </Button>
-            )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  setSelectedBookingId(booking.id);
+                  onTrack();
+                }}
+                disabled={!trackable}
+                className="rounded-xl font-bold shadow-md shadow-primary/20"
+              >
+                Track
+              </Button>
+              {cancellable && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCancelId(booking.id)}
+                  className="rounded-xl border-rose-200/50 text-rose-600 font-semibold hover:bg-rose-500/10 hover:text-rose-700 hover:border-rose-300"
+                >
+                  <X className="mr-1.5 h-4 w-4" /> Cancel
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </Card>
@@ -104,38 +112,38 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Upcoming ({upcoming.length})
+        <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Upcoming <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">{upcoming.length}</span>
         </h3>
-        <div className="space-y-3">
-          {upcoming.length === 0 && <p className="text-sm text-muted-foreground">No upcoming bookings.</p>}
+        <div className="space-y-4">
+          {upcoming.length === 0 && <p className="text-sm font-medium text-muted-foreground italic pl-4 border-l-2 border-border">No upcoming bookings.</p>}
           {upcoming.map(renderCard)}
         </div>
       </div>
       <div>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          History ({past.length})
+        <h3 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" /> History <span className="bg-accent px-2 py-0.5 rounded-full text-foreground">{past.length}</span>
         </h3>
-        <div className="space-y-3">
-          {past.length === 0 && <p className="text-sm text-muted-foreground">No booking history yet.</p>}
+        <div className="space-y-4">
+          {past.length === 0 && <p className="text-sm font-medium text-muted-foreground italic pl-4 border-l-2 border-border">No booking history yet.</p>}
           {past.map(renderCard)}
         </div>
       </div>
 
       <AlertDialog open={!!cancelId} onOpenChange={(open) => !open && setCancelId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[2rem] border-border/50 bg-card/90 backdrop-blur-2xl shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl">Cancel this booking?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
               This will permanently cancel booking #{cancelId}. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+          <AlertDialogFooter className="mt-6 gap-2">
+            <AlertDialogCancel className="rounded-xl font-semibold">Keep Booking</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-rose-600 hover:bg-rose-700"
+              className="rounded-xl font-bold bg-rose-600 hover:bg-rose-700 shadow-md shadow-rose-600/20"
               onClick={() => {
                 if (!cancelId) return;
 
@@ -156,24 +164,27 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
       </AlertDialog>
 
       <Dialog open={!!detailId} onOpenChange={(open) => !open && setDetailId(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl rounded-[2rem] border-border/50 bg-card/95 backdrop-blur-2xl shadow-2xl p-0">
           {detailBooking && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Booking #{detailBooking.id}</DialogTitle>
-                <DialogDescription>
-                  {detailBooking.vehicleName} / {detailBooking.vehiclePlate}
+            <div className="p-8">
+              <DialogHeader className="mb-6 border-b border-border/50 pb-6">
+                <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+                  Booking <span className="text-primary">#{detailBooking.id}</span>
+                </DialogTitle>
+                <DialogDescription className="text-base font-medium mt-2 flex items-center gap-2">
+                  <Car className="h-4 w-4" />
+                  {detailBooking.vehicleName} <span className="opacity-50">/</span> <span className="font-mono bg-accent px-1.5 py-0.5 rounded">{detailBooking.vehiclePlate}</span>
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-5 text-sm">
-                <section className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-2">
+              <div className="space-y-6 text-sm">
+                <section className="grid gap-4 rounded-2xl border border-border/50 bg-background/50 p-5 sm:grid-cols-2 shadow-sm">
                   <Info label="Status" value={detailBooking.status} badgeClass={STATUS_STYLES[detailBooking.status]} />
                   <Info label="Scheduled" value={detailBooking.scheduledAt} />
                   <Info label="Services" value={detailBooking.services.join(", ")} />
-                  <Info label="Booking total" value={fmtBookingMoney(detailBooking.totalPrice)} />
+                  <Info label="Booking total" value={fmtBookingMoney(detailBooking.totalPrice)} highlight />
                 </section>
 
-                <section className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-2">
+                <section className="grid gap-4 rounded-2xl border border-border/50 bg-background/50 p-5 sm:grid-cols-2 shadow-sm">
                   <Info
                     label="Check-in time"
                     value={detailBooking.checkInAt ? new Date(detailBooking.checkInAt).toLocaleString() : "Not checked in"}
@@ -186,14 +197,15 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
                   <Info label="Payment method" value={detailBooking.checkoutPaymentMethod ?? "Not paid"} />
                 </section>
 
-                <section className="rounded-lg border border-border p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <section className="rounded-2xl border border-border/50 bg-accent/10 p-5 shadow-sm">
+                  <div className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
                     Checkout Summary
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <Info label="Transaction" value={detailBooking.checkoutTransactionId ?? "Pending"} />
                     <Info
                       label="Final amount"
+                      highlight
                       value={
                         typeof detailBooking.checkoutAmount === "number"
                           ? fmtBookingMoney(detailBooking.checkoutAmount)
@@ -206,23 +218,23 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
                   </div>
                 </section>
 
-                <section className="rounded-lg border border-border p-4">
-                  <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <section className="rounded-2xl border border-border/50 bg-accent/10 p-5 shadow-sm">
+                  <div className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-border/50 pb-2">
                     Payment Transaction
                   </div>
                   {detailTransaction ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-2">
                       <Info label="Receipt ID" value={detailTransaction.id} />
                       <Info label="Paid at" value={new Date(detailTransaction.date).toLocaleString()} />
                       <Info label="Subtotal" value={fmtBookingMoney(detailTransaction.subtotal)} />
-                      <Info label="Total paid" value={fmtBookingMoney(detailTransaction.finalAmount)} />
+                      <Info label="Total paid" value={fmtBookingMoney(detailTransaction.finalAmount)} highlight />
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No transaction recorded yet.</p>
+                    <p className="text-sm font-medium text-muted-foreground italic py-2">No transaction recorded yet.</p>
                   )}
                 </section>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -234,20 +246,22 @@ function Info({
   label,
   value,
   badgeClass,
+  highlight
 }: {
   label: string;
   value: string;
   badgeClass?: string;
+  highlight?: boolean;
 }) {
   return (
     <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
       {badgeClass ? (
-        <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${badgeClass}`}>
+        <span className={cn("mt-1.5 inline-flex rounded-md border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm", badgeClass)}>
           {value}
         </span>
       ) : (
-        <div className="mt-1 font-medium">{value}</div>
+        <div className={cn("mt-1.5 font-medium", highlight ? "text-lg font-bold text-primary" : "text-foreground")}>{value}</div>
       )}
     </div>
   );

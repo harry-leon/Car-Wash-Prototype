@@ -5,10 +5,6 @@ import { LiveTracker } from "@/components/live-tracker";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
-export const Route = createFileRoute("/bookings/tracker")({
-  component: () => <RouteRedirect to="/customer/bookings/tracker" />,
-});
-
 export function BookingTrackerPage() {
   const { role } = useCarwashStore();
 

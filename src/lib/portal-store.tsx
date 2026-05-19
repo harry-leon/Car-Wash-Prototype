@@ -1,13 +1,15 @@
-import { useCarwashStore, Vehicle, VehicleType, Tier } from "@/lib/carwash-store";
+import { useCarwashStore, Vehicle, VehicleType, Tier, CustomerStatus } from "@/lib/carwash-store";
 
 export type { Vehicle, VehicleType, Tier };
 
 export interface Profile {
   name: string;
+  email: string;
   phone: string;
   countryCode: string;
   tier: Tier;
   points: number;
+  status: CustomerStatus;
 }
 
 export function nextTierInfo(points: number, tier: Tier) {
@@ -33,13 +35,15 @@ export function usePortal() {
   const customer = store.customers.find((item) => item.id === store.currentCustomerId);
 
   return {
-    profile: customer
+        profile: customer
       ? {
           name: customer.name,
+          email: customer.email,
           phone: customer.phone,
           countryCode: customer.countryCode,
           tier: customer.tier,
           points: customer.points,
+          status: customer.status,
         }
       : null,
     vehicles: store.vehiclesByCustomer[store.currentCustomerId] ?? [],

@@ -11,7 +11,7 @@ import { usePortal } from "@/lib/portal-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/verify")({
-  component: VerifyPage,
+  component: () => <VerifyPage />,
 });
 
 const LENGTH = 6;

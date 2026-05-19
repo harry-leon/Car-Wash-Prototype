@@ -5,10 +5,6 @@ import { CustomerBookingForm } from "@/components/customer-booking-form";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
-export const Route = createFileRoute("/bookings/new")({
-  component: () => <RouteRedirect to="/customer/bookings/new" />,
-});
-
 export function NewBookingPage() {
   const navigate = useNavigate();
   const { role } = useCarwashStore();

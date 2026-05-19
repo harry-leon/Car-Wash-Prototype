@@ -20,10 +20,6 @@ import { getHomePath } from "@/lib/auth";
 import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/")({
-  component: () => <HomeRedirectPage />,
-});
-
 function HomeRedirectPage() {
   const navigate = useNavigate();
   const { isAuthenticated, role } = useCarwashStore();

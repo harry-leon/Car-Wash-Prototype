@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, any> = { Droplets, Sparkles, Wind };
 const SLOTS = [
@@ -116,21 +117,21 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card className="p-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg">
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
               Loading booking options
             </h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium text-muted-foreground">
               Preparing available vehicles, services, and booking slots.
             </p>
           </Card>
         </div>
         <div className="lg:col-span-1">
-          <Card className="p-6">
-            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg">
+            <h3 className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
               Summary
             </h3>
-            <p className="text-sm text-muted-foreground">Loading current booking draft...</p>
+            <p className="text-sm font-medium text-muted-foreground">Loading current booking draft...</p>
           </Card>
         </div>
       </div>
@@ -138,44 +139,47 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="space-y-6 lg:col-span-2">
-        <Card className="p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            1. Select Vehicle
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="space-y-8 lg:col-span-2">
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+          <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">1</span>
+            Select Vehicle
           </h3>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {vehicles.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setVehicleId(item.id)}
-                className={`flex items-center gap-3 rounded-lg border-2 p-4 text-left transition-all ${
+                className={cn(
+                  "group flex items-center gap-4 rounded-[1.2rem] border-2 p-5 text-left transition-all duration-300",
                   vehicleId === item.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/40"
-                }`}
+                    ? "border-primary bg-primary/5 shadow-md shadow-primary/10 scale-[1.02]"
+                    : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40"
+                )}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-secondary">
-                  <Car className="h-5 w-5" />
+                <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors", vehicleId === item.id ? "bg-primary text-primary-foreground shadow-inner" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary")}>
+                  <Car className="h-6 w-6" />
                 </div>
-                <div className="flex-1">
-                  <div className="font-semibold">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {item.type} / {item.plate}
+                <div className="flex-1 min-w-0">
+                  <div className={cn("font-bold truncate", vehicleId === item.id ? "text-primary" : "text-foreground")}>{item.name}</div>
+                  <div className="text-xs font-semibold text-muted-foreground mt-1 truncate">
+                    {item.type} <span className="mx-1 opacity-50">/</span> <span className="font-mono bg-background px-1 rounded border border-border/50">{item.plate}</span>
                   </div>
                 </div>
-                {vehicleId === item.id && <Check className="h-5 w-5 text-primary" />}
+                {vehicleId === item.id && <Check className="h-5 w-5 text-primary shrink-0 drop-shadow-sm" />}
               </button>
             ))}
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            2. Choose Services
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+          <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">2</span>
+            Choose Services
           </h3>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => {
               const Icon = ICONS[service.icon] ?? Sparkles;
               const active = serviceIds.includes(service.id);
@@ -184,41 +188,53 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                   key={service.id}
                   type="button"
                   onClick={() => toggleService(service.id)}
-                  className={`rounded-lg border-2 p-4 text-left transition-all ${
+                  className={cn(
+                    "group flex flex-col rounded-[1.2rem] border-2 p-5 text-left transition-all duration-300 relative overflow-hidden",
                     active
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/40"
-                  }`}
+                      ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                      : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40 hover:-translate-y-0.5"
+                  )}
                 >
-                  <Icon className="mb-2 h-6 w-6 text-primary" />
-                  <div className="font-semibold">{service.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {fmtBookingMoney(service.price)}
+                  <div className={cn("absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity duration-300", active ? "opacity-100" : "group-hover:opacity-50")} />
+                  <div className="relative z-10 flex flex-col items-start">
+                    <div className={cn("mb-3 flex h-10 w-10 items-center justify-center rounded-xl shadow-inner transition-colors", active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary group-hover:bg-primary/20")}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className={cn("font-bold", active ? "text-primary" : "text-foreground")}>{service.name}</div>
+                    <div className="mt-1 text-sm font-semibold text-muted-foreground">
+                      {fmtBookingMoney(service.price)}
+                    </div>
                   </div>
+                  {active && <Check className="absolute top-5 right-5 h-4 w-4 text-primary" />}
                 </button>
               );
             })}
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            3. Pick Date & Time
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+          <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">3</span>
+            Pick Date & Time
           </h3>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="flex justify-center">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="flex justify-center rounded-[1.2rem] border border-border/50 bg-background/50 p-4 shadow-sm">
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="rounded-md border"
+                className="w-full max-w-[280px]"
+                classNames={{
+                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
+                  day_today: "bg-accent text-accent-foreground font-bold",
+                }}
               />
             </div>
-            <div>
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                <CalIcon className="h-4 w-4" /> Available time slots
+            <div className="flex flex-col">
+              <div className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                <CalIcon className="h-4 w-4 text-primary" /> Available slots
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3 flex-1">
                 {SLOTS.map((item) => {
                   const unavailable = blockedSlots.has(item);
                   return (
@@ -227,13 +243,14 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                       type="button"
                       disabled={unavailable}
                       onClick={() => setSlot(item)}
-                      className={`rounded-md border py-2.5 text-sm font-medium transition-all ${
+                      className={cn(
+                        "rounded-xl border-2 py-3 text-sm font-bold transition-all duration-300",
                         unavailable
-                          ? "cursor-not-allowed bg-muted text-muted-foreground/50 line-through"
+                          ? "cursor-not-allowed border-border/50 bg-muted/50 text-muted-foreground/40 line-through"
                           : slot === item
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-background hover:bg-secondary"
-                      }`}
+                            ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                            : "border-border/60 bg-background/50 text-foreground hover:border-primary/40 hover:bg-accent/40"
+                      )}
                     >
                       {item}
                     </button>
@@ -241,7 +258,7 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                 })}
               </div>
               {!firstAvailableSlot && (
-                <div className="mt-3 text-xs text-rose-600">
+                <div className="mt-4 flex items-center gap-2 rounded-lg bg-rose-500/10 p-3 text-sm font-semibold text-rose-600 border border-rose-200/50">
                   No valid slots remain for this vehicle on the selected date.
                 </div>
               )}
@@ -251,47 +268,50 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
       </div>
 
       <div className="lg:col-span-1">
-        <Card className="sticky top-6 p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <Card className="sticky top-6 rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-xl transition-all hover:shadow-2xl">
+          <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Summary
           </h3>
-          <div className="space-y-3 text-sm">
-            <div>
-              <div className="text-xs text-muted-foreground">Vehicle</div>
-              <div className="font-medium">
-                {vehicle?.name} / {vehicle?.plate}
+          <div className="space-y-5 text-sm">
+            <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Vehicle</div>
+              <div className="font-bold text-base text-foreground truncate">
+                {vehicle?.name}
               </div>
+              <div className="font-mono text-primary mt-0.5 text-sm">{vehicle?.plate}</div>
             </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Scheduled</div>
-              <div className="font-medium">
+            <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Scheduled</div>
+              <div className="font-bold text-base text-foreground">
                 {date?.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
-                })}{" "}
-                / {slot}
+                })}
+              </div>
+              <div className="font-bold text-primary mt-0.5">{slot}</div>
+            </div>
+            <div className="rounded-xl border border-border/50 bg-accent/20 p-4 shadow-sm">
+              <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">Services</div>
+              {selectedServices.length === 0 && (
+                <div className="italic text-muted-foreground font-medium text-xs">None selected</div>
+              )}
+              <div className="space-y-2">
+                {selectedServices.map((service) => (
+                  <div key={service.id} className="flex justify-between items-center text-sm">
+                    <span className="font-semibold text-foreground/90">{service.name}</span>
+                    <span className="font-bold text-muted-foreground">{fmtBookingMoney(service.price)}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="border-t pt-3">
-              <div className="mb-2 text-xs text-muted-foreground">Services</div>
-              {selectedServices.length === 0 && (
-                <div className="italic text-muted-foreground">None selected</div>
-              )}
-              {selectedServices.map((service) => (
-                <div key={service.id} className="flex justify-between py-1">
-                  <span>{service.name}</span>
-                  <span>{fmtBookingMoney(service.price)}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between border-t pt-3 text-base font-bold">
-              <span>Total</span>
-              <span>{fmtBookingMoney(total)}</span>
+            <div className="flex justify-between items-end border-t border-border/50 pt-5 px-1 text-base">
+              <span className="font-bold text-foreground">Total</span>
+              <span className="text-2xl font-black text-primary tracking-tight">{fmtBookingMoney(total)}</span>
             </div>
           </div>
           <Button
-            className="mt-6 w-full"
+            className="mt-8 w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:-translate-y-0.5"
             size="lg"
             onClick={confirm}
             disabled={!vehicle || !date || !slot || serviceIds.length === 0 || !firstAvailableSlot}

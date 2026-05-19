@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Sparkles, Hexagon } from "lucide-react";
+import { Hexagon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function GuestLayout({
@@ -30,9 +30,10 @@ export function GuestLayout({
           
           <div className="relative z-10">
             <Link to="/login" className="inline-flex items-center gap-3 group">
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg transition-transform group-hover:scale-105">
-                <Hexagon className="absolute h-14 w-14 opacity-20 rotate-90" />
-                <Sparkles className="h-6 w-6 relative z-10" />
+              <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg transition-transform group-hover:scale-105 overflow-hidden p-0.5">
+                <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-gradient-to-br from-primary to-indigo-600 text-primary-foreground">
+                  <Hexagon className="h-7 w-7" />
+                </div>
               </div>
               <div>
                 <div className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">AutoWash Pro</div>
@@ -84,8 +85,10 @@ export function GuestLayout({
           {/* Mobile Header */}
           <div className="mb-8 flex lg:hidden items-center justify-between">
              <Link to="/login" className="inline-flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white shadow-md">
-                <Sparkles className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-md overflow-hidden p-0.5">
+                <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-primary to-indigo-600 text-primary-foreground">
+                  <Hexagon className="h-5 w-5" />
+                </div>
               </div>
               <div>
                 <div className="font-bold tracking-tight">AutoWash Pro</div>

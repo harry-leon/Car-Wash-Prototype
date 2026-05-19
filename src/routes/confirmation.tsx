@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Check, Gift, Printer, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Gift, Printer, ArrowRight, Sparkles, Receipt } from "lucide-react";
 import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
 import { canAccess } from "@/lib/access-control";
@@ -9,6 +9,7 @@ import { fmtMoney, useWashStore } from "@/lib/wash-store";
 import { toast } from "sonner";
 import { PageHeader, TierBadge } from "@/components/shared";
 import { RouteRedirect } from "@/components/route-redirect";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/confirmation")({
   component: () => <RouteRedirect to="/staff/confirmation" />,
@@ -33,11 +34,11 @@ export function ConfirmationPage() {
 
   if (!lastTransaction) {
     return (
-      <div className="mx-auto max-w-xl p-10 text-center">
+      <div className="mx-auto max-w-xl p-10 text-center animate-in fade-in zoom-in-95 duration-500">
         <PageHeader title="No recent transaction" subtitle="Complete a checkout to see the receipt." />
-        <Button asChild className="mt-6">
+        <Button asChild className="mt-8 rounded-xl font-bold px-8 shadow-md transition-all hover:shadow-lg hover:-translate-y-1">
           <Link to="/staff/dashboard">
-            Start a new wash <ArrowRight className="h-4 w-4" />
+            Start a new wash <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </Button>
       </div>
@@ -49,89 +50,113 @@ export function ConfirmationPage() {
     tx.customer.id !== "guest" ? customers.find((customer) => customer.id === tx.customer.id) : null;
 
   return (
-    <div className="mx-auto max-w-3xl p-6 md:p-10">
-      <div className="flex flex-col items-center text-center">
-        <div className="relative">
+    <div className="mx-auto max-w-4xl p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col items-center text-center mb-10">
+        <div className="relative mb-6">
           <div className="absolute inset-0 rounded-full bg-emerald-400/30 blur-2xl animate-pulse" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg animate-in zoom-in duration-500">
-            <Check className="h-10 w-10" strokeWidth={3} />
+          <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-xl animate-in zoom-in duration-500 hover:scale-105 transition-transform">
+            <Check className="h-12 w-12" strokeWidth={3} />
           </div>
         </div>
-        <h1 className="mt-6 text-3xl font-bold tracking-tight">Payment Successful</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Transaction <span className="font-mono">{tx.id}</span> / paid via {tx.paymentMethod}
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Payment Successful</h1>
+        <p className="mt-3 text-sm font-medium text-muted-foreground bg-background/50 px-4 py-1.5 rounded-full border border-border/50 shadow-sm">
+          Transaction <span className="font-mono text-foreground font-bold tracking-wider">{tx.id}</span> • Paid via <span className="text-foreground font-bold">{tx.paymentMethod}</span>
         </p>
       </div>
 
-      <div className="mt-10 grid gap-6 md:grid-cols-5">
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm md:col-span-3">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-tight">Receipt</h3>
-            <TierBadge tier={tx.customer.tier} />
-          </div>
-          <div className="mb-4 space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Customer</span><span>{tx.customer.name}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Vehicle</span><span>{tx.vehicleType} / <span className="font-mono">{tx.plate}</span></span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span>{new Date(tx.date).toLocaleString()}</span></div>
-          </div>
-          <div className="space-y-1.5 border-t border-border pt-4 text-sm">
-            {tx.services.map((service) => (
-              <div key={service.id} className="flex justify-between">
-                <span>{service.name}</span>
-                <span>{fmtMoney(service.price)}</span>
+      <div className="grid gap-8 md:grid-cols-5 items-start">
+        <div className="md:col-span-3 rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="relative z-10">
+            <div className="mb-6 flex items-center justify-between border-b border-border/50 pb-4">
+              <h3 className="text-lg font-bold uppercase tracking-wider flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-primary" />
+                Receipt
+              </h3>
+              <TierBadge tier={tx.customer.tier} />
+            </div>
+            
+            <div className="mb-6 space-y-3 text-sm">
+              <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Customer</span>
+                <span className="font-bold text-foreground text-base">{tx.customer.name}</span>
               </div>
-            ))}
-          </div>
-          <div className="mt-4 space-y-1.5 border-t border-border pt-4 text-sm">
-            <Line label="Subtotal" value={fmtMoney(tx.subtotal)} />
-            {tx.tierDiscount > 0 && <Line label={`Tier discount (${tx.customer.discountPct}%)`} value={`-${fmtMoney(tx.tierDiscount)}`} emerald />}
-            {tx.promoDiscount > 0 && <Line label={`Promo ${tx.promoCode}`} value={`-${fmtMoney(tx.promoDiscount)}`} emerald />}
-            {tx.pointsValue > 0 && <Line label={`Points used (${tx.pointsRedeemed})`} value={`-${fmtMoney(tx.pointsValue)}`} emerald />}
-          </div>
-          <div className="mt-4 flex items-end justify-between border-t border-border pt-4">
-            <span className="text-sm text-muted-foreground">Final paid</span>
-            <span className="text-3xl font-bold tracking-tight">{fmtMoney(tx.finalAmount)}</span>
+              <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Vehicle</span>
+                <span className="font-bold text-foreground">{tx.vehicleType} / <span className="font-mono tracking-wider">{tx.plate}</span></span>
+              </div>
+              <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Date</span>
+                <span className="font-medium text-foreground">{new Date(tx.date).toLocaleString()}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-2 border-t border-border/50 pt-6 text-sm">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Services</div>
+              {tx.services.map((service) => (
+                <div key={service.id} className="flex justify-between items-center px-2">
+                  <span className="font-medium">{service.name}</span>
+                  <span className="font-bold">{fmtMoney(service.price)}</span>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 space-y-2 border-t border-border/50 pt-6 text-sm bg-background/30 p-4 rounded-xl">
+              <Line label="Subtotal" value={fmtMoney(tx.subtotal)} />
+              {tx.tierDiscount > 0 && <Line label={`Tier discount (${tx.customer.discountPct}%)`} value={`-${fmtMoney(tx.tierDiscount)}`} emerald />}
+              {tx.promoDiscount > 0 && <Line label={`Promo ${tx.promoCode}`} value={`-${fmtMoney(tx.promoDiscount)}`} emerald />}
+              {tx.pointsValue > 0 && <Line label={`Points used (${tx.pointsRedeemed})`} value={`-${fmtMoney(tx.pointsValue)}`} emerald />}
+            </div>
+            
+            <div className="mt-6 flex items-end justify-between border-t border-border/50 pt-6">
+              <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-1">Final paid</span>
+              <span className="text-4xl font-bold tracking-tight text-emerald-600">{fmtMoney(tx.finalAmount)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4 md:col-span-2">
-          <div className="rounded-xl bg-gradient-to-br from-primary to-indigo-700 p-6 text-primary-foreground shadow-lg">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-wider opacity-90">
-              <Sparkles className="h-3.5 w-3.5" /> Loyalty
-            </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <Gift className="h-6 w-6" />
-              <span className="text-4xl font-bold">+{tx.pointsEarned}</span>
-              <span className="text-sm opacity-80">pts earned</span>
-            </div>
-            <div className="mt-4 border-t border-white/20 pt-4 text-sm">
-              {tx.customer.id === "guest" ? (
-                <span className="opacity-80">Sign up to start earning points!</span>
-              ) : (
-                <div className="flex justify-between">
-                  <span className="opacity-80">New balance</span>
-                  <span className="font-semibold">{current?.points ?? 0} pts</span>
-                </div>
-              )}
+        <div className="space-y-6 md:col-span-2">
+          <div className="rounded-[1.5rem] bg-gradient-to-br from-primary to-indigo-700 p-8 text-primary-foreground shadow-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 transition-transform duration-700 group-hover:scale-150" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider opacity-90 mb-4">
+                <Sparkles className="h-4 w-4" /> Loyalty Rewards
+              </div>
+              <div className="mt-2 flex items-baseline gap-3">
+                <Gift className="h-8 w-8 opacity-90" />
+                <span className="text-5xl font-bold tracking-tight">+{tx.pointsEarned}</span>
+                <span className="text-sm font-bold uppercase tracking-wider opacity-80">pts</span>
+              </div>
+              <div className="mt-6 border-t border-white/20 pt-5 text-sm">
+                {tx.customer.id === "guest" ? (
+                  <span className="opacity-90 font-medium">Sign up to start earning points!</span>
+                ) : (
+                  <div className="flex justify-between items-center bg-black/10 rounded-lg p-3 backdrop-blur-sm">
+                    <span className="opacity-90 font-bold uppercase tracking-wider text-xs">New balance</span>
+                    <span className="font-bold text-lg">{current?.points ?? 0} pts</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              toast.success("Receipt sent to printer");
-              if (typeof window !== "undefined") window.print();
-            }}
-          >
-            <Printer className="h-4 w-4" /> Print Receipt
-          </Button>
-          <Button className="w-full" onClick={() => navigate({ to: getHomePath(role) })}>
-            Back to Dashboard <ArrowRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" className="w-full" asChild>
-            <Link to="/customer/transactions">View History</Link>
-          </Button>
+          <div className="rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl p-6 shadow-lg space-y-4">
+            <Button
+              className="w-full h-14 rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all"
+              onClick={() => {
+                toast.success("Receipt sent to printer");
+                if (typeof window !== "undefined") window.print();
+              }}
+            >
+              <Printer className="mr-2 h-5 w-5" /> Print Receipt
+            </Button>
+            <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-secondary/50 hover:bg-secondary shadow-sm transition-all" onClick={() => navigate({ to: getHomePath(role) })}>
+              Back to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button variant="outline" className="w-full h-12 rounded-xl font-bold border-border/50 hover:bg-background shadow-sm transition-all" asChild>
+              <Link to="/customer/transactions">View History</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -140,9 +165,9 @@ export function ConfirmationPage() {
 
 function Line({ label, value, emerald }: { label: string; value: string; emerald?: boolean }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={emerald ? "font-medium text-emerald-700" : "font-medium"}>{value}</span>
+    <div className="flex justify-between items-center py-1">
+      <span className="text-muted-foreground font-medium">{label}</span>
+      <span className={cn("font-bold", emerald ? "text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20" : "text-foreground")}>{value}</span>
     </div>
   );
 }

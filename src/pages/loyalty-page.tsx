@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   Sparkles,
   Wind,
@@ -21,10 +21,6 @@ import { useCarwashStore } from "@/lib/carwash-store";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useLoyalty, tierGradient, tierBadgeClass, Reward } from "@/lib/loyalty-store";
-
-export const Route = createFileRoute("/customer/loyalty")({
-  component: () => <LoyaltyPage />,
-});
 
 const REWARD_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Wind,

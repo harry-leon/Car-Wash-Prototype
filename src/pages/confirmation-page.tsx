@@ -1,5 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, Gift, Printer, ArrowRight, Sparkles, Receipt } from "lucide-react";
 import { AccessDenied } from "@/components/access-denied";
 import { Button } from "@/components/ui/button";
@@ -11,10 +10,6 @@ import { toast } from "sonner";
 import { PageHeader, TierBadge } from "@/components/shared";
 import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
-
-export const Route = createFileRoute("/staff/confirmation")({
-  component: () => <ConfirmationPage />,
-});
 
 export function ConfirmationPage() {
   const { role } = useCarwashStore();

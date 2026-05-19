@@ -23,10 +23,6 @@ import { toast } from "sonner";
 import { PageHeader, TierBadge } from "@/components/shared";
 import { RouteRedirect } from "@/components/route-redirect";
 
-export const Route = createFileRoute("/checkout")({
-  component: () => <RouteRedirect to="/staff/checkout" />,
-});
-
 const PAYMENT_METHODS = [
   { id: "cash", label: "Cash", icon: Banknote },
   { id: "card", label: "Credit Card", icon: CreditCard },

@@ -5,10 +5,6 @@ import { CustomerHistory } from "@/components/customer-history";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
-export const Route = createFileRoute("/bookings")({
-  component: () => <BookingListPage />,
-});
-
 export function BookingListPage() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });

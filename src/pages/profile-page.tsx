@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { Crown, Loader2, Sparkles, TrendingUp, User, Phone, Mail, Calendar, ShieldCheck, MessageSquare, History, Edit2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,6 @@ import { nextTierInfo, usePortal } from "@/lib/portal-store";
 import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-export const Route = createFileRoute("/customer/profile")({
-  component: () => <ProfilePage />,
-});
 
 const TIER_GRADIENT: Record<string, string> = {
   Member: "from-amber-700 via-amber-600 to-orange-500",

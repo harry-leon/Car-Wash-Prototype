@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useLoyalty, TierRule, TierName, tierBadgeClass } from "@/lib/loyalty-store";
 
 export const Route = createFileRoute("/admin/tiers")({
-  component: TierRulesPage,
+  component: () => <TierRulesPage />,
 });
 
 const TIER_ICONS: Record<TierName, React.ComponentType<{ className?: string }>> = {
@@ -48,11 +48,13 @@ function TierRulesPage() {
 
   if (!canAccess(role, ["Admin"])) {
     return (
-      <AccessDenied
-        title="Tier rules are restricted"
-        description="Only Admin can change membership thresholds and multipliers."
-        role={role}
-      />
+      <div className="p-6 md:p-10">
+        <AccessDenied
+          title="Tier rules are restricted"
+          description="Only Admin can change membership thresholds and multipliers."
+          role={role}
+        />
+      </div>
     );
   }
 
@@ -78,73 +80,89 @@ function TierRulesPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tier Rules Configuration</h1>
-          <p className="text-sm text-muted-foreground">
-            Adjust thresholds and accrual multipliers. Changes apply instantly to all customers.
-          </p>
+    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Tier Rules Configuration</h1>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+              Adjust thresholds and accrual multipliers. Changes apply instantly to all customers.
+            </p>
+          </div>
+          <Button onClick={handleSave} size="lg" className="rounded-xl shadow-lg shadow-primary/20 font-bold hover:shadow-xl hover:-translate-y-0.5 transition-all">
+            <Save className="mr-2 h-4 w-4" /> Save & Update Rules
+          </Button>
         </div>
-        <Button onClick={handleSave} size="lg">
-          <Save className="h-4 w-4" /> Save & Update Rules
-        </Button>
-      </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        {draft.map((t, i) => {
-          const Icon = TIER_ICONS[t.name];
-          const memberCount = customers.filter((c) => c.tier === t.name).length;
-          return (
-            <Card key={t.name} className="overflow-hidden">
-              <div className={cn("h-2 w-full bg-gradient-to-r", tierStripeClass(t.name))} />
-              <CardContent className="space-y-4 p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                      <Icon className="h-5 w-5" />
+        <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-4">
+          {draft.map((t, i) => {
+            const Icon = TIER_ICONS[t.name];
+            const memberCount = customers.filter((c) => c.tier === t.name).length;
+            return (
+              <Card key={t.name} className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+                <div className={cn("absolute inset-x-0 top-0 h-1.5 w-full bg-gradient-to-r", tierStripeClass(t.name))} />
+                <div className={cn("absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-10 blur-3xl bg-gradient-to-r", tierStripeClass(t.name))} />
+                
+                <CardContent className="space-y-6 p-6 sm:p-8">
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background/80 shadow-inner">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <Badge className={cn("border shadow-sm px-3 py-1 font-bold tracking-wider", tierBadgeClass(t.name))}>{t.name}</Badge>
                     </div>
-                    <Badge className={cn("border", tierBadgeClass(t.name))}>{t.name}</Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground">{memberCount} members</div>
-                </div>
 
-                <div className="space-y-1.5">
-                  <Label>Minimum Point Threshold</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={t.threshold}
-                    onChange={(e) => update(i, { threshold: Number(e.target.value) })}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label>Point Accrual Multiplier</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step={0.1}
-                      min={0.1}
-                      value={t.multiplier}
-                      onChange={(e) => update(i, { multiplier: Number(e.target.value) })}
-                    />
-                    <span className="text-sm text-muted-foreground">x</span>
+                  <div className="inline-flex items-center gap-2 rounded-lg bg-accent/30 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+                    </span>
+                    {memberCount} Active Members
                   </div>
-                </div>
 
-                <div className="space-y-1.5">
-                  <Label>Custom Perks Description</Label>
-                  <Textarea
-                    rows={3}
-                    value={t.perks}
-                    onChange={(e) => update(i, { perks: e.target.value })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Minimum Point Threshold</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={t.threshold}
+                        onChange={(e) => update(i, { threshold: Number(e.target.value) })}
+                        className="h-11 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Point Accrual Multiplier</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          type="number"
+                          step={0.1}
+                          min={0.1}
+                          value={t.multiplier}
+                          onChange={(e) => update(i, { multiplier: Number(e.target.value) })}
+                          className="h-11 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 font-semibold text-lg text-primary text-center w-24"
+                        />
+                        <span className="text-lg font-bold text-muted-foreground">x</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Perks Description</Label>
+                      <Textarea
+                        rows={4}
+                        value={t.perks}
+                        onChange={(e) => update(i, { perks: e.target.value })}
+                        className="rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 resize-none font-medium leading-relaxed"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

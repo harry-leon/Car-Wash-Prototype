@@ -5,7 +5,7 @@ import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/staff/check-in")({
-  component: StaffCheckInPage,
+  component: () => <StaffCheckInPage />,
 });
 
 export function StaffCheckInPage() {
@@ -24,11 +24,11 @@ export function StaffCheckInPage() {
   }
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Staff check-in</h1>
-          <p className="text-sm text-muted-foreground">
+        <div className="mb-8 border-b border-border/50 pb-6">
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Staff check-in</h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Check in confirmed bookings or register walk-ins before wash session processing.
           </p>
         </div>

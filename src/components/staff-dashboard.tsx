@@ -69,158 +69,184 @@ export function StaffDashboard() {
   };
 
   return (
-    <Tabs defaultValue="arrivals" className="w-full">
-      <TabsList className="grid w-full max-w-md grid-cols-2">
-        <TabsTrigger value="arrivals">Pre-booked Arrivals</TabsTrigger>
-        <TabsTrigger value="walkin">Walk-in Registration</TabsTrigger>
+    <Tabs defaultValue="arrivals" className="w-full animate-in fade-in duration-500">
+      <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl bg-muted/40 p-1 border border-border/50 shadow-sm backdrop-blur-md">
+        <TabsTrigger value="arrivals" className="rounded-lg font-bold data-[state=active]:shadow-sm">Pre-booked Arrivals</TabsTrigger>
+        <TabsTrigger value="walkin" className="rounded-lg font-bold data-[state=active]:shadow-sm">Walk-in Registration</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="arrivals" className="mt-6 space-y-4">
+      <TabsContent value="arrivals" className="mt-6 space-y-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by license plate or booking ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-10 rounded-xl border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all focus:bg-background h-12"
           />
         </div>
-        <Card className="overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-left">
-                <th className="p-4 font-medium">Booking</th>
-                <th className="p-4 font-medium">Vehicle</th>
-                <th className="p-4 font-medium">Services</th>
-                <th className="p-4 font-medium">Time</th>
-                <th className="p-4 font-medium">Status</th>
-                <th className="p-4 text-right font-medium">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No matching bookings.
-                  </td>
+        <Card className="overflow-hidden rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30">
+                <tr className="text-left">
+                  <th className="p-4 pl-6 font-bold uppercase tracking-wider text-xs border-b border-border/50">Booking</th>
+                  <th className="p-4 font-bold uppercase tracking-wider text-xs border-b border-border/50">Vehicle</th>
+                  <th className="p-4 font-bold uppercase tracking-wider text-xs border-b border-border/50">Services</th>
+                  <th className="p-4 font-bold uppercase tracking-wider text-xs border-b border-border/50">Time</th>
+                  <th className="p-4 font-bold uppercase tracking-wider text-xs border-b border-border/50">Status</th>
+                  <th className="p-4 pr-6 text-right font-bold uppercase tracking-wider text-xs border-b border-border/50">Action</th>
                 </tr>
-              )}
-              {filtered.map((booking) => (
-                <tr key={booking.id} className="border-t transition-colors hover:bg-muted/30">
-                  <td className="p-4 font-mono font-semibold">#{booking.id}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Car className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div>{booking.vehicleName}</div>
-                        <div className="text-xs text-muted-foreground">{booking.vehiclePlate}</div>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-16 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/50 shadow-inner">
+                          <Search className="h-8 w-8 opacity-40" />
+                        </div>
+                        <div className="text-sm font-medium">No matching bookings.</div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="p-4">{booking.services.join(", ")}</td>
-                  <td className="p-4">{booking.scheduledAt}</td>
-                  <td className="p-4">
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[booking.status]}`}
-                    >
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <Button
-                      size="sm"
-                      disabled={processingBookingId === booking.id}
-                      onClick={() => {
-                        try {
-                          setProcessingBookingId(booking.id);
-                          prepareSessionForBooking(booking.id);
-                          toast.success(`${booking.id} checked in`);
-                          navigate({ to: "/staff/wash-session" });
-                        } catch (error) {
-                          toast.error(error instanceof Error ? error.message : "Unable to check in booking.");
-                        } finally {
-                          setProcessingBookingId(null);
-                        }
-                      }}
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <CheckCircle2 className="mr-1 h-4 w-4" /> {processingBookingId === booking.id ? "Checking in..." : "Check-In"}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                )}
+                {filtered.map((booking) => (
+                  <tr key={booking.id} className="transition-colors hover:bg-primary/5">
+                    <td className="p-4 pl-6 font-mono font-bold text-muted-foreground">#{booking.id}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-inner">
+                          <Car className="h-5 w-5 text-primary/70" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-foreground">{booking.vehicleName}</div>
+                          <div className="text-xs font-mono font-medium text-muted-foreground">{booking.vehiclePlate}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 font-medium">{booking.services.join(", ")}</td>
+                    <td className="p-4 font-medium">{booking.scheduledAt}</td>
+                    <td className="p-4">
+                      <span
+                        className={`rounded-full border px-3 py-1 text-xs font-bold shadow-sm ${STATUS_STYLES[booking.status]}`}
+                      >
+                        {booking.status}
+                      </span>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                      <Button
+                        size="sm"
+                        disabled={processingBookingId === booking.id}
+                        onClick={() => {
+                          try {
+                            setProcessingBookingId(booking.id);
+                            prepareSessionForBooking(booking.id);
+                            toast.success(`${booking.id} checked in`);
+                            navigate({ to: "/staff/wash-session" });
+                          } catch (error) {
+                            toast.error(error instanceof Error ? error.message : "Unable to check in booking.");
+                          } finally {
+                            setProcessingBookingId(null);
+                          }
+                        }}
+                        className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 shadow-sm border border-emerald-500/20 rounded-lg font-bold transition-all"
+                      >
+                        <CheckCircle2 className="mr-1.5 h-4 w-4" /> {processingBookingId === booking.id ? "Checking in..." : "Check-In"}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </TabsContent>
 
       <TabsContent value="walkin" className="mt-6">
-        <Card className="max-w-2xl p-6">
-          <div className="mb-6 flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">New Walk-in Customer</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <Label>License Plate</Label>
-              <Input
-                placeholder="e.g. 51A-999.88"
-                value={plate}
-                onChange={(e) => setPlate(e.target.value)}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label>Vehicle Type</Label>
-              <Select value={vType} onValueChange={(value: "Sedan" | "SUV") => setVType(value)}>
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Sedan">Sedan</SelectItem>
-                  <SelectItem value="SUV">SUV</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Services</Label>
-              <div className="mt-1.5 grid grid-cols-3 gap-2">
-                {servicesCatalog.map((service) => {
-                  const active = serviceIds.includes(service.id);
-                  return (
-                    <button
-                      key={service.id}
-                      type="button"
-                      onClick={() =>
-                        setServiceIds((prev) =>
-                          prev.includes(service.id)
-                            ? prev.filter((id) => id !== service.id)
-                            : [...prev, service.id],
-                        )
-                      }
-                      className={`rounded-md border-2 p-3 text-left text-sm transition-all ${
-                        active
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      <div className="font-medium">{service.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {fmtBookingMoney(service.price)}
-                      </div>
-                    </button>
-                  );
-                })}
+        <Card className="max-w-2xl p-6 sm:p-8 rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+          <div className="relative z-10">
+            <div className="mb-8 flex items-center gap-3 border-b border-border/50 pb-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-background shadow-inner text-primary">
+                <UserPlus className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold tracking-tight">New Walk-in Customer</h3>
+                <p className="text-sm text-muted-foreground mt-0.5">Register a vehicle without a prior booking.</p>
               </div>
             </div>
-            <Button
-              onClick={submitWalkIn}
-              disabled={submittingWalkIn}
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
-              size="lg"
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> {submittingWalkIn ? "Creating..." : "Create & Check-In"}
-            </Button>
+            
+            <div className="space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider">License Plate</Label>
+                  <Input
+                    placeholder="e.g. 51A-999.88"
+                    value={plate}
+                    onChange={(e) => setPlate(e.target.value)}
+                    className="rounded-xl border-border/50 bg-background/50 backdrop-blur-sm h-12 font-mono text-sm shadow-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider">Vehicle Type</Label>
+                  <Select value={vType} onValueChange={(value: "Sedan" | "SUV") => setVType(value)}>
+                    <SelectTrigger className="rounded-xl border-border/50 bg-background/50 backdrop-blur-sm h-12 font-medium shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-border/50">
+                      <SelectItem value="Sedan" className="rounded-lg font-medium">Sedan</SelectItem>
+                      <SelectItem value="SUV" className="rounded-lg font-medium">SUV</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="text-xs font-bold uppercase tracking-wider">Select Services</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {servicesCatalog.map((service) => {
+                    const active = serviceIds.includes(service.id);
+                    return (
+                      <button
+                        key={service.id}
+                        type="button"
+                        onClick={() =>
+                          setServiceIds((prev) =>
+                            prev.includes(service.id)
+                              ? prev.filter((id) => id !== service.id)
+                              : [...prev, service.id],
+                          )
+                        }
+                        className={`flex items-center justify-between rounded-xl border p-4 text-left transition-all duration-300 ${
+                          active
+                            ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
+                            : "border-border/50 bg-background/50 hover:border-primary/40 hover:bg-background"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-5 w-5 items-center justify-center rounded-md border ${active ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+                            {active && <CheckCircle2 className="h-3.5 w-3.5" />}
+                          </div>
+                          <div className="font-bold">{service.name}</div>
+                        </div>
+                        <div className="text-sm font-semibold text-primary">
+                          {fmtBookingMoney(service.price)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <Button
+                onClick={submitWalkIn}
+                disabled={submittingWalkIn}
+                className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all hover:shadow-lg h-12 text-base font-bold"
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" /> {submittingWalkIn ? "Creating..." : "Create & Check-In"}
+              </Button>
+            </div>
           </div>
         </Card>
       </TabsContent>

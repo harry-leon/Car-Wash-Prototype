@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { Car, CarFront, Truck, Bike, Pencil, Trash2, Plus, X, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,6 @@ import {
 import { usePortal, VEHICLE_TYPES, Vehicle, VehicleType } from "@/lib/portal-store";
 import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
-
-export const Route = createFileRoute("/customer/vehicles")({
-  component: () => <VehiclesPage />,
-});
 
 const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }>> = {
   Sedan: Car,

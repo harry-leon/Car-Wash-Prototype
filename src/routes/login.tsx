@@ -12,7 +12,7 @@ import { type Role, useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
-  component: LoginPage,
+  component: () => <LoginPage />,
 });
 
 const LOGIN_ROLES: { role: Role; icon: React.ElementType; label: string }[] = [

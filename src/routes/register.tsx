@@ -11,7 +11,7 @@ import { usePortal, VEHICLE_TYPES, VehicleType } from "@/lib/portal-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/register")({
-  component: RegisterPage,
+  component: () => <RegisterPage />,
 });
 
 const TYPE_ICONS: Record<VehicleType, React.ComponentType<{ className?: string }>> = {

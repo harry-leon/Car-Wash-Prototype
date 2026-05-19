@@ -75,86 +75,105 @@ export function LoyaltyPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mx-auto max-w-7xl space-y-8">
         <div
           className={cn(
-            "relative overflow-hidden rounded-2xl bg-gradient-to-br p-6 shadow-lg sm:p-8",
-            tierGradient(customer.tier),
+            "relative overflow-hidden rounded-2xl bg-gradient-to-r p-6 sm:p-8 text-white shadow-xl ring-1 ring-white/10",
+            tierGradient(customer.tier)
           )}
         >
-          <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -bottom-16 -left-10 h-56 w-56 rounded-full bg-black/10 blur-3xl" />
-          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-90">
-                <Crown className="h-4 w-4" />
-                {customer.tier} Member
+          {/* Decorative glows */}
+          <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-white/10 blur-3xl mix-blend-overlay" />
+          <div className="absolute -bottom-16 -left-10 h-64 w-64 rounded-full bg-black/10 blur-3xl mix-blend-overlay" />
+
+          <div className="relative z-10 grid gap-6 sm:grid-cols-2 lg:flex lg:items-start lg:justify-between">
+            {/* Col 1 */}
+            <div className="flex-1 lg:border-r border-white/20 lg:pr-6">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-white/80">
+                <Crown className="h-3.5 w-3.5" /> MEMBER
               </div>
-              <div className="mt-2 text-3xl font-bold sm:text-4xl">{customer.name}</div>
-              <div className="mt-1 text-sm opacity-90">{customer.email}</div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">{customer.tier} Member</div>
+              <div className="mt-1 text-xs font-medium text-white/70">Since 15/02/2025</div>
             </div>
-            <div className="text-left sm:text-right">
-              <div className="text-xs uppercase tracking-widest opacity-90">Point Balance</div>
-              <div className="mt-1 text-5xl font-bold tabular-nums">
-                {customer.points.toLocaleString()}
+
+            {/* Col 2 */}
+            <div className="flex-1 lg:border-r border-white/20 lg:px-6">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">CURRENT POINTS</div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">
+                {customer.points.toLocaleString()} <span className="text-lg font-medium">pts</span>
               </div>
-              <div className="mt-1 text-xs opacity-90">Active points · Valid 12 months</div>
+              <div className="mt-1 text-xs font-medium text-white/70">≈ {(customer.points * 100).toLocaleString()} VND</div>
+            </div>
+
+            {/* Col 3 */}
+            <div className="flex-1 lg:border-r border-white/20 lg:px-6">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">NEXT TIER</div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold text-amber-300 drop-shadow-sm tracking-tight">{nextTier?.name ?? "Max"}</div>
+              <div className="mt-1 text-xs font-medium text-white/70">
+                {nextTier ? `${(target - customer.points).toLocaleString()} pts remaining` : "Top tier reached"}
+              </div>
+            </div>
+
+            {/* Col 4 */}
+            <div className="flex-1 lg:pl-6">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">POINTS EXPIRY</div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">31/12/2026</div>
+              <div className="mt-1 text-xs font-medium text-white/70">138 days left</div>
             </div>
           </div>
 
-          <div className="relative mt-6">
+          <div className="relative z-10 mt-10">
             {nextTier ? (
               <>
-                <div className="flex items-center justify-between text-xs opacity-90">
-                  <span>{customer.tier}</span>
-                  <span>
-                    {target - customer.points} pts to {nextTier.name}
-                  </span>
-                  <span>{nextTier.name}</span>
+                <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-white/90">
+                  <span>Progress to {nextTier.name} tier</span>
+                  <span>{customer.points.toLocaleString()} / {target.toLocaleString()} pts</span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/20">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-black/20 p-0.5">
                   <div
-                    className="h-full bg-white/90 transition-all duration-500"
+                    className="h-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.4)] transition-all duration-1000 ease-out"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
               </>
             ) : (
-              <div className="text-xs opacity-90">
-                You have reached the top tier. Enjoy Platinum perks.
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs font-bold shadow-sm backdrop-blur-md">
+                <Sparkles className="h-4 w-4" /> Platinum perks unlocked
               </div>
             )}
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-3 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Rewards Marketplace</h2>
-              <span className="text-xs text-muted-foreground">{rewards.length} perks available</span>
+          <div className="space-y-4 lg:col-span-2">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">Rewards Marketplace</h2>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{rewards.length} perks available</span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {rewards.map((reward) => {
                 const Icon = REWARD_ICONS[reward.icon] ?? Gift;
                 const affordable = customer.points >= reward.cost;
                 return (
-                  <Card key={reward.id} className="group relative overflow-hidden transition-all hover:shadow-md">
-                    <CardContent className="p-5">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Icon className="h-6 w-6" />
+                  <Card key={reward.id} className="group relative overflow-hidden rounded-[1.5rem] border-border/50 bg-card/60 p-1 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <CardContent className="relative z-10 p-5">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-gradient-to-br from-primary/10 to-indigo-500/10 text-primary shadow-inner group-hover:scale-105 transition-transform duration-300">
+                        <Icon className="h-7 w-7" />
                       </div>
-                      <div className="mt-4 text-sm font-semibold">{reward.name}</div>
-                      <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Sparkles className="h-3 w-3" /> {reward.cost} pts
+                      <div className="mt-5 text-base font-bold text-foreground">{reward.name}</div>
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                        <Sparkles className="h-3.5 w-3.5" /> {reward.cost} pts
                       </div>
                       <Button
                         size="sm"
-                        className="mt-4 w-full"
+                        className="mt-6 w-full rounded-xl font-bold shadow-sm transition-all"
+                        variant={affordable ? "default" : "secondary"}
                         disabled={!affordable}
                         onClick={() => handleRedeem(reward)}
                       >
-                        {affordable ? "Redeem" : "Not enough points"}
+                        {affordable ? "Redeem Reward" : "Not enough points"}
                       </Button>
                     </CardContent>
                   </Card>
@@ -163,67 +182,77 @@ export function LoyaltyPage() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Point Ledger</h2>
-            <Card>
-              <CardContent className="p-0">
-                <ul className="divide-y divide-border">
-                  {customerLedger.length === 0 && (
-                    <li className="p-6 text-sm text-muted-foreground">No activity yet.</li>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground px-2">Your Perks</h2>
+              <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg">
+                <CardContent className="p-6">
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Current Benefits</div>
+                  <Badge className={cn("px-3 py-1 text-sm font-bold shadow-sm", tierBadgeClass(customer.tier))}>
+                    {customer.tier} Tier
+                  </Badge>
+                  <p className="mt-4 text-sm font-medium leading-relaxed text-foreground/90">
+                    {tiers.find((tier) => tier.name === customer.tier)?.perks}
+                  </p>
+                  <div className="mt-5 flex items-center gap-2 rounded-xl bg-accent/30 p-3 text-sm font-semibold">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Earning rate ×{tiers.find((tier) => tier.name === customer.tier)?.multiplier}
+                  </div>
+                  {nextTier && (
+                    <div className="mt-5">
+                      <div className="flex justify-between text-xs font-medium text-muted-foreground mb-2">
+                        <span>Progress to {nextTier.name}</span>
+                        <span>{pct}%</span>
+                      </div>
+                      <Progress value={pct} className="h-2 bg-accent/50" />
+                    </div>
                   )}
-                  {customerLedger.map((entry) => (
-                    <li key={entry.id} className="flex items-center gap-3 p-4">
-                      <div
-                        className={cn(
-                          "flex h-9 w-9 items-center justify-center rounded-full",
-                          entry.delta > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600",
-                        )}
-                      >
-                        {entry.delta > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium">{entry.description}</div>
-                        <div className="text-xs text-muted-foreground">{entry.date}</div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground px-2">Point Ledger</h2>
+              <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden">
+                <CardContent className="p-0">
+                  <ul className="divide-y divide-border/50">
+                    {customerLedger.length === 0 && (
+                      <li className="p-8 text-center text-sm font-medium text-muted-foreground">No activity yet.</li>
+                    )}
+                    {customerLedger.map((entry) => (
+                      <li key={entry.id} className="flex items-center gap-4 p-5 transition-colors hover:bg-accent/20">
+                        <div
                           className={cn(
-                            "text-sm font-semibold tabular-nums",
-                            entry.delta > 0 ? "text-emerald-600" : "text-rose-600",
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-inner",
+                            entry.delta > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600",
                           )}
                         >
-                          {entry.delta > 0 ? "+" : ""}
-                          {entry.delta}
-                        </span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {entry.type}
-                        </Badge>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-xs font-medium text-muted-foreground">Your tier perks</div>
-                <Badge className={cn("mt-2 border", tierBadgeClass(customer.tier))}>
-                  {customer.tier}
-                </Badge>
-                <p className="mt-2 text-sm text-foreground">
-                  {tiers.find((tier) => tier.name === customer.tier)?.perks}
-                </p>
-                <div className="mt-3 text-xs text-muted-foreground">
-                  Earning rate ×{tiers.find((tier) => tier.name === customer.tier)?.multiplier}
-                </div>
-                {nextTier && (
-                  <div className="mt-3">
-                    <Progress value={pct} className="h-1.5" />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                          {entry.delta > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-bold text-foreground">{entry.description}</div>
+                          <div className="mt-1 text-xs font-medium text-muted-foreground">{entry.date}</div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span
+                            className={cn(
+                              "text-base font-bold tabular-nums tracking-tight",
+                              entry.delta > 0 ? "text-emerald-600" : "text-rose-600",
+                            )}
+                          >
+                            {entry.delta > 0 ? "+" : ""}
+                            {entry.delta}
+                          </span>
+                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider bg-background/50">
+                            {entry.type}
+                          </Badge>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
