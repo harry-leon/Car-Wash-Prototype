@@ -56,8 +56,8 @@ export function StaffDashboard() {
 
     try {
       setSubmittingWalkIn(true);
-      const id = createWalkInBooking({ plate, vehicleType: vType, serviceIds });
-      toast.success(`Walk-in ${id} checked in!`);
+      const { id, staffName } = createWalkInBooking({ plate, vehicleType: vType, serviceIds });
+      toast.success(`Walk-in ${id} checked in! Assigned to ${staffName}.`);
       setPlate("");
       setServiceIds(servicesCatalog[0] ? [servicesCatalog[0].id] : []);
       navigate({ to: "/staff/wash-session" });
@@ -69,7 +69,9 @@ export function StaffDashboard() {
   };
 
   return (
-    <Tabs defaultValue="arrivals" className="w-full animate-in fade-in duration-500">
+    <div className="grid gap-8 lg:grid-cols-3 items-start">
+      <div className="lg:col-span-2">
+        <Tabs defaultValue="arrivals" className="w-full animate-in fade-in duration-500">
       <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl bg-muted/40 p-1 border border-border/50 shadow-sm backdrop-blur-md">
         <TabsTrigger value="arrivals" className="rounded-lg font-bold data-[state=active]:shadow-sm">Pre-booked Arrivals</TabsTrigger>
         <TabsTrigger value="walkin" className="rounded-lg font-bold data-[state=active]:shadow-sm">Walk-in Registration</TabsTrigger>
@@ -141,8 +143,8 @@ export function StaffDashboard() {
                         onClick={() => {
                           try {
                             setProcessingBookingId(booking.id);
-                            prepareSessionForBooking(booking.id);
-                            toast.success(`${booking.id} checked in`);
+                            const staffName = prepareSessionForBooking(booking.id);
+                            toast.success(`${booking.id} checked in! Assigned to ${staffName}.`);
                             navigate({ to: "/staff/wash-session" });
                           } catch (error) {
                             toast.error(error instanceof Error ? error.message : "Unable to check in booking.");
@@ -250,6 +252,63 @@ export function StaffDashboard() {
           </div>
         </Card>
       </TabsContent>
-    </Tabs>
+        </Tabs>
+      </div>
+      <div className="lg:col-span-1">
+        <StaffLoadCard />
+      </div>
+    </div>
+  );
+}
+
+function StaffLoadCard() {
+  const { staffMembers, washSessions } = useCarwashStore();
+
+  const staffWithLoad = staffMembers
+    .filter((s) => s.status === "Active")
+    .map((s) => {
+      const activeCount = washSessions.filter(
+        (session) => session.staffId === s.id && session.status !== "Completed"
+      ).length;
+      return { ...s, activeCount };
+    });
+
+  return (
+    <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl p-6 shadow-lg relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        Staff Schedule Load
+      </h3>
+      <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+        System automatically assigns check-ins to active staff members with the least schedule load (0 active sessions preferred).
+      </p>
+      <div className="space-y-4">
+        {staffWithLoad.map((staff) => (
+          <div
+            key={staff.id}
+            className="flex items-center justify-between rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm transition-all hover:bg-background/80"
+          >
+            <div>
+              <div className="font-bold text-sm text-foreground">{staff.name}</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">
+                Staff ID: {staff.id}
+              </div>
+            </div>
+            <div className="text-right">
+              {staff.activeCount === 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-600 border border-emerald-500/20 shadow-sm">
+                  Free
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 border border-amber-500/20 shadow-sm">
+                  {staff.activeCount} Active Wash{staff.activeCount > 1 ? "es" : ""}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

@@ -319,9 +319,9 @@ interface Store {
   createBookingFromLegacy: (input: Omit<Booking, "id" | "customerId" | "createdAt" | "timeSlot">) => string;
   updateBookingStatus: (id: string, status: BookingStatus) => void;
   setSelectedBookingId: (id: string | null) => void;
-  createWalkInBooking: (input: { plate: string; vehicleType: VehicleType; serviceIds: string[] }) => string;
+  createWalkInBooking: (input: { plate: string; vehicleType: VehicleType; serviceIds: string[] }) => { id: string; staffName: string };
   createOrUpdateSessionDraft: (draft: SessionDraft | null) => void;
-  prepareSessionForBooking: (bookingId: string) => void;
+  prepareSessionForBooking: (bookingId: string) => string;
   completeCheckout: (input: {
     promoCode?: string | null;
     pointsRedeemed: number;
@@ -377,6 +377,8 @@ const customerSeed: CustomerRecord[] = [
 const staffSeed: StaffRecord[] = [
   { id: "s1", name: "Tran Bao Nam", role: "Staff", status: "Active" },
   { id: "s2", name: "Hoang Lan", role: "Staff", status: "Inactive" },
+  { id: "s3", name: "Nguyen Van Hung", role: "Staff", status: "Active" },
+  { id: "s4", name: "Pham Minh Duc", role: "Staff", status: "Active" },
 ];
 
 const vehicleSeed: Record<string, Vehicle[]> = {
@@ -888,6 +890,26 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     return staff;
   }, [currentStaffId, staffMembers]);
 
+  const resolveFreeStaff = React.useCallback(() => {
+    const activeStaff = staffMembers.filter((item) => item.status === "Active");
+    if (activeStaff.length === 0) {
+      throw new Error("No active staff member is available.");
+    }
+    const counts = new Map<string, number>();
+    activeStaff.forEach((staff) => {
+      const activeSessionsCount = washSessions.filter(
+        (session) => session.staffId === staff.id && session.status !== "Completed"
+      ).length;
+      counts.set(staff.id, activeSessionsCount);
+    });
+    const sorted = [...activeStaff].sort((a, b) => {
+      const countA = counts.get(a.id) ?? 0;
+      const countB = counts.get(b.id) ?? 0;
+      return countA - countB;
+    });
+    return sorted[0];
+  }, [staffMembers, washSessions]);
+
   const updateCurrentProfile = React.useCallback(
     (patch: Partial<Pick<CustomerRecord, "name" | "email" | "status">>) => {
       setCustomers((prev) => prev.map((customer) => (customer.id === currentCustomerId ? { ...customer, ...patch } : customer)));
@@ -1326,8 +1348,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     (bookingId: string) => {
       const booking = bookings.find((item) => item.id === bookingId);
       const customer = customers.find((item) => item.id === booking?.customerId);
-      if (!booking || !customer) return;
-      const staff = resolveActiveStaff();
+      if (!booking || !customer) {
+        throw new Error("Invalid booking or customer details.");
+      }
+      const staff = resolveFreeStaff();
       if (!booking.isWalkIn) {
         const lateMinutes = (Date.now() - parseBookingDate(booking).getTime()) / 60000;
         if (lateMinutes > 15) {
@@ -1391,13 +1415,14 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         services: selectedServices,
         walkIn: booking.isWalkIn,
       });
+      return staff.name;
     },
-    [bookings, customers, resolveActiveStaff, services],
+    [bookings, customers, resolveFreeStaff, services],
   );
 
   const createWalkInBooking = React.useCallback(
     ({ plate, vehicleType, serviceIds }: { plate: string; vehicleType: VehicleType; serviceIds: string[] }) => {
-      const staff = resolveActiveStaff();
+      const staff = resolveFreeStaff();
       const selectedServices = services.filter((service) => serviceIds.includes(service.id));
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
       const dateISO = localDateISO(new Date());
@@ -1455,9 +1480,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         services: selectedServices,
         walkIn: true,
       });
-      return id;
+      return { id, staffName: staff.name };
     },
-    [createBookingFromLegacy, currentCustomerId, customers, resolveActiveStaff, services],
+    [createBookingFromLegacy, currentCustomerId, customers, resolveFreeStaff, services],
   );
 
   const updateCustomerPoints = React.useCallback(
@@ -1477,9 +1502,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const completeCheckout = React.useCallback(
     ({ promoCode, pointsRedeemed, paymentMethod }: { promoCode?: string | null; pointsRedeemed: number; paymentMethod: string }) => {
       if (!sessionDraft) return null;
-      const staff = resolveActiveStaff();
-      if (sessionDraft.staffId !== staff.id) {
-        throw new Error("Wash session staff assignment is no longer active.");
+      const staff = staffMembers.find((item) => item.id === sessionDraft.staffId && item.status === "Active");
+      if (!staff) {
+        throw new Error("Assigned wash staff is no longer active.");
       }
       const sessionRecord = washSessions.find((session) => session.id === sessionDraft.sessionId);
       if (!sessionRecord) {
@@ -1853,6 +1878,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       const activeSession =
         washSessions.find((session) => session.id === draft.sessionId) ??
         (draft.bookingId ? washSessions.find((session) => session.bookingId === draft.bookingId) : undefined);
+      const assignedStaffId = activeSession?.staffId || staff.id;
+      const assignedStaffName = activeSession?.staffName || staff.name;
       if (!activeSession) {
         throw new Error("Wash session record must exist before editing checkout details.");
       }
@@ -1872,8 +1899,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setSessionDraft({
         ...draft,
         sessionId: activeSession.id,
-        staffId: draft.staffId || sessionDraft?.staffId || staff.id,
-        staffName: draft.staffName || sessionDraft?.staffName || staff.name,
+        staffId: draft.staffId || sessionDraft?.staffId || assignedStaffId,
+        staffName: draft.staffName || sessionDraft?.staffName || assignedStaffName,
         bookingId: resolvedBookingId,
         walkIn: draft.walkIn ?? sessionDraft?.walkIn,
       });
@@ -1882,8 +1909,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           session.id === activeSession.id
             ? {
                 ...session,
-                staffId: staff.id,
-                staffName: staff.name,
+                staffId: assignedStaffId,
+                staffName: assignedStaffName,
                 customerId: draft.customerId,
                 customerName: draft.customerName,
                 vehicleType: draft.vehicleType,
