@@ -1,12 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  Calendar as CalIcon,
-  Car,
-  Check,
-  Droplets,
-  Sparkles,
-  Wind,
-} from "lucide-react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
+import { Calendar as CalIcon, Car, Check, Droplets, Sparkles, Wind } from "lucide-react";
 import {
   fmtBookingMoney,
   BookingStatus,
@@ -18,10 +11,11 @@ import { formatDateISO, useCarwashStore } from "@/lib/carwash-store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<string, any> = { Droplets, Sparkles, Wind };
+const ICONS: Record<string, ElementType> = { Droplets, Sparkles, Wind };
 const SLOTS = [
   "08:00 AM",
   "09:00 AM",
@@ -44,6 +38,7 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   const [serviceIds, setServiceIds] = useState<string[]>(services[0] ? [services[0].id] : []);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [slot, setSlot] = useState<string>("09:00 AM");
+  const [notes, setNotes] = useState("");
 
   const vehicle = vehicles.find((item) => item.id === vehicleId) ?? vehicles[0];
   const currentCustomer = customers.find((item) => item.id === currentCustomerId);
@@ -73,7 +68,7 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
         }
       });
 
-      for (const [timeSlot, count] of counts.entries()) {
+    for (const [timeSlot, count] of counts.entries()) {
       if (count >= 3) blocked.add(timeSlot);
       if (!isPlatinum && count >= 2 && !platinumLoads.has(timeSlot)) {
         blocked.add(timeSlot);
@@ -96,7 +91,9 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
   }, [blockedSlots, firstAvailableSlot, slot]);
 
   const toggleService = (id: string) =>
-    setServiceIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+    setServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
 
   const confirm = () => {
     if (!vehicle || !date || !slot || serviceIds.length === 0) {
@@ -115,9 +112,10 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
         totalPrice: total,
         scheduledAt: `${dateLabel} ${slot}`,
         dateISO,
-        status: "Confirmed",
+        status: "Pending",
+        notes: notes.trim() || undefined,
       });
-      toast.success(`Booking ${id} confirmed!`);
+      toast.success(`Booking ${id} created and waiting for check-in.`);
       onBooked();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to create booking.");
@@ -142,7 +140,9 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
             <h3 className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
               Summary
             </h3>
-            <p className="text-sm font-medium text-muted-foreground">Loading current booking draft...</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Loading current booking draft...
+            </p>
           </Card>
         </div>
       </div>
@@ -154,7 +154,9 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
       <div className="space-y-8 lg:col-span-2">
         <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
           <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">1</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">
+              1
+            </span>
             Select Vehicle
           </h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -167,19 +169,38 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                   "group flex items-center gap-4 rounded-[1.2rem] border-2 p-5 text-left transition-all duration-300",
                   vehicleId === item.id
                     ? "border-primary bg-primary/5 shadow-md shadow-primary/10 scale-[1.02]"
-                    : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40"
+                    : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40",
                 )}
               >
-                <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors", vehicleId === item.id ? "bg-primary text-primary-foreground shadow-inner" : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary")}>
+                <div
+                  className={cn(
+                    "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors",
+                    vehicleId === item.id
+                      ? "bg-primary text-primary-foreground shadow-inner"
+                      : "bg-muted text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary",
+                  )}
+                >
                   <Car className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={cn("font-bold truncate", vehicleId === item.id ? "text-primary" : "text-foreground")}>{item.name}</div>
+                  <div
+                    className={cn(
+                      "font-bold truncate",
+                      vehicleId === item.id ? "text-primary" : "text-foreground",
+                    )}
+                  >
+                    {item.name}
+                  </div>
                   <div className="text-xs font-semibold text-muted-foreground mt-1 truncate">
-                    {item.type} <span className="mx-1 opacity-50">/</span> <span className="font-mono bg-background px-1 rounded border border-border/50">{item.plate}</span>
+                    {item.type} <span className="mx-1 opacity-50">/</span>{" "}
+                    <span className="font-mono bg-background px-1 rounded border border-border/50">
+                      {item.plate}
+                    </span>
                   </div>
                 </div>
-                {vehicleId === item.id && <Check className="h-5 w-5 text-primary shrink-0 drop-shadow-sm" />}
+                {vehicleId === item.id && (
+                  <Check className="h-5 w-5 text-primary shrink-0 drop-shadow-sm" />
+                )}
               </button>
             ))}
           </div>
@@ -187,7 +208,24 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
 
         <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
           <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">2</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">
+              4
+            </span>
+            Notes
+          </h3>
+          <Textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Special instructions for staff..."
+            className="min-h-28 rounded-xl border-border/50 bg-background/50 text-sm shadow-sm"
+          />
+        </Card>
+
+        <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
+          <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">
+              2
+            </span>
             Choose Services
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -203,15 +241,29 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                     "group flex flex-col rounded-[1.2rem] border-2 p-5 text-left transition-all duration-300 relative overflow-hidden",
                     active
                       ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                      : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40 hover:-translate-y-0.5"
+                      : "border-border/60 bg-background/50 hover:border-primary/40 hover:bg-accent/40 hover:-translate-y-0.5",
                   )}
                 >
-                  <div className={cn("absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity duration-300", active ? "opacity-100" : "group-hover:opacity-50")} />
+                  <div
+                    className={cn(
+                      "absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity duration-300",
+                      active ? "opacity-100" : "group-hover:opacity-50",
+                    )}
+                  />
                   <div className="relative z-10 flex flex-col items-start">
-                    <div className={cn("mb-3 flex h-10 w-10 items-center justify-center rounded-xl shadow-inner transition-colors", active ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary group-hover:bg-primary/20")}>
+                    <div
+                      className={cn(
+                        "mb-3 flex h-10 w-10 items-center justify-center rounded-xl shadow-inner transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-primary/10 text-primary group-hover:bg-primary/20",
+                      )}
+                    >
                       <Icon className="h-5 w-5" />
                     </div>
-                    <div className={cn("font-bold", active ? "text-primary" : "text-foreground")}>{service.name}</div>
+                    <div className={cn("font-bold", active ? "text-primary" : "text-foreground")}>
+                      {service.name}
+                    </div>
                     <div className="mt-1 text-sm font-semibold text-muted-foreground">
                       {fmtBookingMoney(service.price)}
                     </div>
@@ -225,7 +277,9 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
 
         <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
           <h3 className="mb-6 flex items-center gap-3 text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">3</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary">
+              3
+            </span>
             Pick Date & Time
           </h3>
           <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
@@ -236,7 +290,8 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                 onSelect={setDate}
                 className="w-full max-w-sm"
                 classNames={{
-                  day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
+                  day_selected:
+                    "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground shadow-sm",
                   day_today: "bg-accent text-accent-foreground font-bold",
                 }}
               />
@@ -260,7 +315,7 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
                           ? "cursor-not-allowed border-border/50 bg-muted/50 text-muted-foreground/40 line-through"
                           : slot === item
                             ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
-                            : "border-border/60 bg-background/50 text-foreground hover:border-primary/40 hover:bg-accent/40"
+                            : "border-border/60 bg-background/50 text-foreground hover:border-primary/40 hover:bg-accent/40",
                       )}
                     >
                       {item}
@@ -290,14 +345,27 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
           </h3>
           <div className="space-y-5 text-sm">
             <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Vehicle</div>
-              <div className="font-bold text-base text-foreground truncate">
-                {vehicle?.name}
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                Customer
               </div>
+              <div className="font-bold text-base text-foreground truncate">
+                {currentCustomer?.name ?? "Current customer"}
+              </div>
+              <div className="font-mono text-muted-foreground mt-0.5 text-xs">
+                {currentCustomer?.phone ?? "-"}
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                Vehicle
+              </div>
+              <div className="font-bold text-base text-foreground truncate">{vehicle?.name}</div>
               <div className="font-mono text-primary mt-0.5 text-sm">{vehicle?.plate}</div>
             </div>
             <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Scheduled</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                Scheduled
+              </div>
               <div className="font-bold text-base text-foreground">
                 {date?.toLocaleDateString("en-US", {
                   month: "short",
@@ -308,22 +376,30 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
               <div className="font-bold text-primary mt-0.5">{slot}</div>
             </div>
             <div className="rounded-xl border border-border/50 bg-accent/20 p-4 shadow-sm">
-              <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">Services</div>
+              <div className="mb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">
+                Services
+              </div>
               {selectedServices.length === 0 && (
-                <div className="italic text-muted-foreground font-medium text-xs">None selected</div>
+                <div className="italic text-muted-foreground font-medium text-xs">
+                  None selected
+                </div>
               )}
               <div className="space-y-2">
                 {selectedServices.map((service) => (
                   <div key={service.id} className="flex justify-between items-center text-sm">
                     <span className="font-semibold text-foreground/90">{service.name}</span>
-                    <span className="font-bold text-muted-foreground">{fmtBookingMoney(service.price)}</span>
+                    <span className="font-bold text-muted-foreground">
+                      {fmtBookingMoney(service.price)}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex justify-between items-end border-t border-border/50 pt-5 px-1 text-base">
               <span className="font-bold text-foreground">Total</span>
-              <span className="text-2xl font-black text-primary tracking-tight">{fmtBookingMoney(total)}</span>
+              <span className="text-2xl font-black text-primary tracking-tight">
+                {fmtBookingMoney(total)}
+              </span>
             </div>
           </div>
           <Button

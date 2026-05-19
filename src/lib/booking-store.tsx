@@ -1,4 +1,10 @@
-import { useCarwashStore, BookingStatus, VehicleType, WashStatus, formatMoney } from "@/lib/carwash-store";
+import {
+  useCarwashStore,
+  BookingStatus,
+  VehicleType,
+  WashStatus,
+  formatMoney,
+} from "@/lib/carwash-store";
 
 export type { BookingStatus, WashStatus };
 
@@ -18,6 +24,9 @@ export interface Service {
 
 export interface Booking {
   id: string;
+  customerId: string;
+  customerName?: string;
+  customerPhone?: string;
   vehiclePlate: string;
   vehicleName: string;
   vehicleType: string;
@@ -26,6 +35,7 @@ export interface Booking {
   scheduledAt: string;
   dateISO: string;
   status: BookingStatus;
+  notes?: string;
   isWalkIn?: boolean;
   checkInAt?: string;
   washStatus?: WashStatus;
@@ -46,11 +56,16 @@ export function useBookings() {
       : store.bookings;
   const scopedTransactions =
     store.role === "Customer"
-      ? store.transactions.filter((transaction) => transaction.customer.id === store.currentCustomerId)
+      ? store.transactions.filter(
+          (transaction) => transaction.customer.id === store.currentCustomerId,
+        )
       : store.transactions;
   return {
     bookings: scopedBookings.map((booking) => ({
       id: booking.id,
+      customerId: booking.customerId,
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
       vehiclePlate: booking.vehiclePlate,
       vehicleName: booking.vehicleName,
       vehicleType: booking.vehicleType,
@@ -59,6 +74,7 @@ export function useBookings() {
       scheduledAt: booking.scheduledAt,
       dateISO: booking.dateISO,
       status: booking.status,
+      notes: booking.notes,
       isWalkIn: booking.isWalkIn,
       checkInAt: booking.checkInAt,
       washStatus: booking.washStatus,

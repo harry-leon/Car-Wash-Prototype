@@ -20,7 +20,9 @@ export function useWashStore() {
   const store = useCarwashStore();
   const visibleTransactions =
     store.role === "Customer"
-      ? store.transactions.filter((transaction) => transaction.customer.id === store.currentCustomerId)
+      ? store.transactions.filter(
+          (transaction) => transaction.customer.id === store.currentCustomerId,
+        )
       : store.transactions;
   return {
     customers: store.customers.map((customer) => {
@@ -34,8 +36,11 @@ export function useWashStore() {
       };
     }),
     draft: store.sessionDraft
-        ? {
+      ? {
+          sessionId: store.sessionDraft.sessionId,
           bookingId: store.sessionDraft.bookingId,
+          staffId: store.sessionDraft.staffId,
+          staffName: store.sessionDraft.staffName,
           customer: {
             id: store.sessionDraft.customerId,
             name: store.sessionDraft.customerName,
@@ -54,21 +59,23 @@ export function useWashStore() {
           walkIn: store.sessionDraft.walkIn,
         }
       : null,
-    setDraft: (draft: {
-      bookingId?: string;
-      customer: {
-        id: string;
-        name: string;
-        tier: "Member" | "Silver" | "Gold" | "Platinum" | "Guest";
-        discountPct: number;
-        points: number;
-        multiplier?: number;
-      };
-      vehicleType: string;
-      plate: string;
-      services: Service[];
-      walkIn?: boolean;
-    } | null) =>
+    setDraft: (
+      draft: {
+        bookingId?: string;
+        customer: {
+          id: string;
+          name: string;
+          tier: "Member" | "Silver" | "Gold" | "Platinum" | "Guest";
+          discountPct: number;
+          points: number;
+          multiplier?: number;
+        };
+        vehicleType: string;
+        plate: string;
+        services: Service[];
+        walkIn?: boolean;
+      } | null,
+    ) =>
       store.createOrUpdateSessionDraft(
         draft
           ? ({
@@ -91,6 +98,8 @@ export function useWashStore() {
     transactions: visibleTransactions,
     promotions: store.promotions,
     servicesCatalog: store.services,
+    staffAvailability: store.staffAvailability,
+    assignStaffToSession: store.assignStaffToSession,
     completeCheckout: store.completeCheckout,
     updateCustomerPoints: store.updateCustomerPoints,
   };
@@ -101,7 +110,4 @@ export function fmtMoney(n: number) {
 }
 
 export const SERVICES = [] as Service[];
-export const PROMOS = {} as Record<
-  string,
-  { type: "flat" | "pct"; value: number; label: string }
->;
+export const PROMOS = {} as Record<string, { type: "flat" | "pct"; value: number; label: string }>;

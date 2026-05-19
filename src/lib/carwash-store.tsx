@@ -1,4 +1,9 @@
 import * as React from "react";
+import {
+  getStaffAvailability,
+  requireAvailableStaff,
+  type StaffAvailability,
+} from "@/lib/staff-availability";
 
 export type Role = "Customer" | "Staff" | "Admin";
 export type CustomerStatus = "Active" | "Inactive" | "Blocked";
@@ -12,7 +17,7 @@ export type BookingStatus =
   | "Completed"
   | "Cancelled"
   | "No-show";
-export type WashStatus = "Queued" | "Ready for Checkout" | "Completed";
+export type WashStatus = "Queued" | "In Progress" | "Ready for Checkout" | "Completed";
 export type NotificationType = "Booking" | "Reminder" | "Loyalty" | "Promotion";
 export type RewardType = "discount" | "free wash" | "add-on";
 
@@ -64,6 +69,8 @@ export interface Service {
 export interface Booking {
   id: string;
   customerId: string;
+  customerName?: string;
+  customerPhone?: string;
   vehicleId?: string;
   vehiclePlate: string;
   vehicleName: string;
@@ -75,6 +82,7 @@ export interface Booking {
   timeSlot: string;
   status: BookingStatus;
   createdAt: string;
+  notes?: string;
   isWalkIn?: boolean;
   checkInAt?: string;
   washStatus?: WashStatus;
@@ -169,11 +177,7 @@ export interface TierHistoryEntry {
   customerName: string;
   previousTier: Tier;
   newTier: Tier;
-  trigger:
-    | "Monthly Review"
-    | "System Auto-Upgrade"
-    | "System Auto-Downgrade"
-    | "Admin Override";
+  trigger: "Monthly Review" | "System Auto-Upgrade" | "System Auto-Downgrade" | "Admin Override";
   authorizedBy: string;
 }
 
@@ -286,6 +290,7 @@ interface Store {
   vehiclesByCustomer: Record<string, Vehicle[]>;
   bookings: Booking[];
   washSessions: WashSessionRecord[];
+  staffAvailability: StaffAvailability[];
   selectedBookingId: string | null;
   sessionDraft: SessionDraft | null;
   transactions: Transaction[];
@@ -316,10 +321,17 @@ interface Store {
   updateVehicle: (id: string, vehicle: Omit<Vehicle, "id">) => void;
   deleteVehicle: (id: string) => { ok: boolean; error?: string };
   setCurrentCustomerId: (id: string) => void;
-  createBookingFromLegacy: (input: Omit<Booking, "id" | "customerId" | "createdAt" | "timeSlot">) => string;
+  createBookingFromLegacy: (
+    input: Omit<Booking, "id" | "customerId" | "createdAt" | "timeSlot">,
+  ) => string;
   updateBookingStatus: (id: string, status: BookingStatus) => void;
   setSelectedBookingId: (id: string | null) => void;
-  createWalkInBooking: (input: { plate: string; vehicleType: VehicleType; serviceIds: string[] }) => { id: string; staffName: string };
+  createWalkInBooking: (input: {
+    plate: string;
+    vehicleType: VehicleType;
+    serviceIds: string[];
+  }) => { id: string; staffName: string };
+  assignStaffToSession: (sessionId: string, staffId: string) => void;
   createOrUpdateSessionDraft: (draft: SessionDraft | null) => void;
   prepareSessionForBooking: (bookingId: string) => string;
   completeCheckout: (input: {
@@ -343,10 +355,38 @@ interface Store {
 }
 
 const tierSeed: TierRule[] = [
-  { name: "Member", minPoints: 0, bookingWindowDays: 7, discountPercent: 0, multiplier: 1, perks: "Standard booking and loyalty earning." },
-  { name: "Silver", minPoints: 500, bookingWindowDays: 10, discountPercent: 5, multiplier: 1.5, perks: "Priority booking window and 5% wash discount." },
-  { name: "Gold", minPoints: 1500, bookingWindowDays: 12, discountPercent: 10, multiplier: 2, perks: "Premium promotion eligibility and double points." },
-  { name: "Platinum", minPoints: 4000, bookingWindowDays: 14, discountPercent: 15, multiplier: 3, perks: "Highest booking priority and VIP campaigns." },
+  {
+    name: "Member",
+    minPoints: 0,
+    bookingWindowDays: 7,
+    discountPercent: 0,
+    multiplier: 1,
+    perks: "Standard booking and loyalty earning.",
+  },
+  {
+    name: "Silver",
+    minPoints: 500,
+    bookingWindowDays: 10,
+    discountPercent: 5,
+    multiplier: 1.5,
+    perks: "Priority booking window and 5% wash discount.",
+  },
+  {
+    name: "Gold",
+    minPoints: 1500,
+    bookingWindowDays: 12,
+    discountPercent: 10,
+    multiplier: 2,
+    perks: "Premium promotion eligibility and double points.",
+  },
+  {
+    name: "Platinum",
+    minPoints: 4000,
+    bookingWindowDays: 14,
+    discountPercent: 15,
+    multiplier: 3,
+    perks: "Highest booking priority and VIP campaigns.",
+  },
 ];
 
 const serviceSeed: Service[] = [
@@ -357,9 +397,39 @@ const serviceSeed: Service[] = [
 ];
 
 const promotionSeed: Promotion[] = [
-  { id: "p1", code: "WELCOME50K", discountType: "Flat", amount: 50000, tiers: ["Member", "Silver", "Gold", "Platinum"], active: true, startDate: "2026-05-01", endDate: "2026-12-31", stackable: false },
-  { id: "p2", code: "SILVER10", discountType: "Percentage", amount: 10, tiers: ["Silver", "Gold", "Platinum"], active: true, startDate: "2026-05-01", endDate: "2026-08-31", stackable: false },
-  { id: "p3", code: "PLATINUM15", discountType: "Percentage", amount: 15, tiers: ["Platinum"], active: true, startDate: "2026-05-01", endDate: "2026-08-31", stackable: false },
+  {
+    id: "p1",
+    code: "WELCOME50K",
+    discountType: "Flat",
+    amount: 50000,
+    tiers: ["Member", "Silver", "Gold", "Platinum"],
+    active: true,
+    startDate: "2026-05-01",
+    endDate: "2026-12-31",
+    stackable: false,
+  },
+  {
+    id: "p2",
+    code: "SILVER10",
+    discountType: "Percentage",
+    amount: 10,
+    tiers: ["Silver", "Gold", "Platinum"],
+    active: true,
+    startDate: "2026-05-01",
+    endDate: "2026-08-31",
+    stackable: false,
+  },
+  {
+    id: "p3",
+    code: "PLATINUM15",
+    discountType: "Percentage",
+    amount: 15,
+    tiers: ["Platinum"],
+    active: true,
+    startDate: "2026-05-01",
+    endDate: "2026-08-31",
+    stackable: false,
+  },
 ];
 
 const rewardSeed: Reward[] = [
@@ -369,9 +439,42 @@ const rewardSeed: Reward[] = [
 ];
 
 const customerSeed: CustomerRecord[] = [
-  { id: "c1", name: "Tran Minh Anh", email: "minhanh@autowash.vn", phone: "0901234567", countryCode: "+84", tier: "Silver", points: 860, status: "Active", joinedAt: "2025-02-15", phoneVerifiedAt: "2025-02-15T09:00:00.000Z" },
-  { id: "c2", name: "Le Gia Huy", email: "giahuy@autowash.vn", phone: "0912345678", countryCode: "+84", tier: "Gold", points: 1820, status: "Active", joinedAt: "2024-10-03", phoneVerifiedAt: "2024-10-03T10:15:00.000Z" },
-  { id: "c3", name: "Pham Thu Trang", email: "thutrang@autowash.vn", phone: "0987654321", countryCode: "+84", tier: "Platinum", points: 4520, status: "Active", joinedAt: "2024-05-01", phoneVerifiedAt: "2024-05-01T08:00:00.000Z" },
+  {
+    id: "c1",
+    name: "Tran Minh Anh",
+    email: "minhanh@autowash.vn",
+    phone: "0901234567",
+    countryCode: "+84",
+    tier: "Silver",
+    points: 860,
+    status: "Active",
+    joinedAt: "2025-02-15",
+    phoneVerifiedAt: "2025-02-15T09:00:00.000Z",
+  },
+  {
+    id: "c2",
+    name: "Le Gia Huy",
+    email: "giahuy@autowash.vn",
+    phone: "0912345678",
+    countryCode: "+84",
+    tier: "Gold",
+    points: 1820,
+    status: "Active",
+    joinedAt: "2024-10-03",
+    phoneVerifiedAt: "2024-10-03T10:15:00.000Z",
+  },
+  {
+    id: "c3",
+    name: "Pham Thu Trang",
+    email: "thutrang@autowash.vn",
+    phone: "0987654321",
+    countryCode: "+84",
+    tier: "Platinum",
+    points: 4520,
+    status: "Active",
+    joinedAt: "2024-05-01",
+    phoneVerifiedAt: "2024-05-01T08:00:00.000Z",
+  },
 ];
 
 const staffSeed: StaffRecord[] = [
@@ -439,19 +542,70 @@ const bookingSeed: Booking[] = [
 ];
 
 const ledgerSeed: LedgerEntry[] = [
-  { id: "l1", customerId: "c1", date: "2026-05-12", type: "Earned", delta: 120, description: "Premium Detail completed", expiresAt: "2027-05-12" },
-  { id: "l2", customerId: "c1", date: "2026-05-08", type: "Spent", delta: -80, description: "Redeemed Free Interior Scent" },
-  { id: "l3", customerId: "c2", date: "2025-06-18", type: "Earned", delta: 90, description: "Express wash completed", expiresAt: "2026-06-18" },
+  {
+    id: "l1",
+    customerId: "c1",
+    date: "2026-05-12",
+    type: "Earned",
+    delta: 120,
+    description: "Premium Detail completed",
+    expiresAt: "2027-05-12",
+  },
+  {
+    id: "l2",
+    customerId: "c1",
+    date: "2026-05-08",
+    type: "Spent",
+    delta: -80,
+    description: "Redeemed Free Interior Scent",
+  },
+  {
+    id: "l3",
+    customerId: "c2",
+    date: "2025-06-18",
+    type: "Earned",
+    delta: 90,
+    description: "Express wash completed",
+    expiresAt: "2026-06-18",
+  },
 ];
 
 const tierHistorySeed: TierHistoryEntry[] = [
-  { id: "th1", date: "2026-05-01 09:00", customerName: "Tran Minh Anh", previousTier: "Member", newTier: "Silver", trigger: "Monthly Review", authorizedBy: "system" },
-  { id: "th2", date: "2026-04-01 09:00", customerName: "Le Gia Huy", previousTier: "Silver", newTier: "Gold", trigger: "Monthly Review", authorizedBy: "system" },
+  {
+    id: "th1",
+    date: "2026-05-01 09:00",
+    customerName: "Tran Minh Anh",
+    previousTier: "Member",
+    newTier: "Silver",
+    trigger: "Monthly Review",
+    authorizedBy: "system",
+  },
+  {
+    id: "th2",
+    date: "2026-04-01 09:00",
+    customerName: "Le Gia Huy",
+    previousTier: "Silver",
+    newTier: "Gold",
+    trigger: "Monthly Review",
+    authorizedBy: "system",
+  },
 ];
 
 const notificationsSeed: NotificationItem[] = [
-  { id: "n1", type: "Booking", title: "Booking Confirmed", message: "Booking B001 has been confirmed for 09:00 AM tomorrow.", timestamp: new Date(Date.now() - 10 * 60 * 1000) },
-  { id: "n2", type: "Reminder", title: "1-Hour Reminder", message: "Vehicle 51G-123.45 is scheduled in 1 hour.", timestamp: new Date(Date.now() - 65 * 60 * 1000) },
+  {
+    id: "n1",
+    type: "Booking",
+    title: "Booking Confirmed",
+    message: "Booking B001 has been confirmed for 09:00 AM tomorrow.",
+    timestamp: new Date(Date.now() - 10 * 60 * 1000),
+  },
+  {
+    id: "n2",
+    type: "Reminder",
+    title: "1-Hour Reminder",
+    message: "Vehicle 51G-123.45 is scheduled in 1 hour.",
+    timestamp: new Date(Date.now() - 65 * 60 * 1000),
+  },
 ];
 
 const adjustmentSeed: Adjustment[] = [
@@ -571,7 +725,11 @@ interface PointSnapshot {
   nextExpiryDate: string | null;
 }
 
-export function getPointSnapshotForCustomer(entries: LedgerEntry[], customerId: string, asOf = new Date()): PointSnapshot {
+export function getPointSnapshotForCustomer(
+  entries: LedgerEntry[],
+  customerId: string,
+  asOf = new Date(),
+): PointSnapshot {
   const lots: Array<{ amount: number; expiresAt: string }> = [];
   const customerEntries = entries
     .filter((entry) => entry.customerId === customerId)
@@ -631,7 +789,11 @@ export function getPointSnapshotForCustomer(entries: LedgerEntry[], customerId: 
   };
 }
 
-export function getRolling12MonthPoints(entries: LedgerEntry[], customerId: string, asOf = new Date()) {
+export function getRolling12MonthPoints(
+  entries: LedgerEntry[],
+  customerId: string,
+  asOf = new Date(),
+) {
   const windowStart = new Date(asOf);
   windowStart.setFullYear(windowStart.getFullYear() - 1);
   return Math.max(
@@ -660,9 +822,17 @@ export function calculateCheckoutPricing(input: {
     : 0;
   const bestSingleDiscount = Math.max(tierDiscount, rawPromoDiscount);
   const effectiveTierDiscount =
-    input.promo?.stackable === false ? (tierDiscount >= rawPromoDiscount ? tierDiscount : 0) : tierDiscount;
+    input.promo?.stackable === false
+      ? tierDiscount >= rawPromoDiscount
+        ? tierDiscount
+        : 0
+      : tierDiscount;
   const promoDiscount =
-    input.promo?.stackable === false ? (rawPromoDiscount > tierDiscount ? rawPromoDiscount : 0) : rawPromoDiscount;
+    input.promo?.stackable === false
+      ? rawPromoDiscount > tierDiscount
+        ? rawPromoDiscount
+        : 0
+      : rawPromoDiscount;
   const afterPromo =
     input.promo?.stackable === false
       ? Math.max(0, input.subtotal - bestSingleDiscount)
@@ -698,7 +868,10 @@ function nextBookingSequence(bookings: Booking[]) {
 }
 
 function tierFor(points: number, tiers: TierRule[]): Tier {
-  return [...tiers].sort((a, b) => b.minPoints - a.minPoints).find((tier) => points >= tier.minPoints)?.name ?? "Member";
+  return (
+    [...tiers].sort((a, b) => b.minPoints - a.minPoints).find((tier) => points >= tier.minPoints)
+      ?.name ?? "Member"
+  );
 }
 
 function tierRank(tier: Tier) {
@@ -743,23 +916,32 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const [customers, setCustomers] = React.useState<CustomerRecord[]>(customerSeed);
   const [staffMembers, setStaffMembers] = React.useState<StaffRecord[]>(staffSeed);
   const [currentStaffId, setCurrentStaffId] = React.useState("s1");
-  const [vehiclesByCustomer, setVehiclesByCustomer] = React.useState<Record<string, Vehicle[]>>(vehicleSeed);
+  const [vehiclesByCustomer, setVehiclesByCustomer] =
+    React.useState<Record<string, Vehicle[]>>(vehicleSeed);
   const [bookings, setBookings] = React.useState<Booking[]>(bookingSeed);
   const [washSessions, setWashSessions] = React.useState<WashSessionRecord[]>(washSessionSeed);
   const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>("B001");
   const [sessionDraft, setSessionDraft] = React.useState<SessionDraft | null>(null);
   const [transactions, setTransactions] = React.useState<Transaction[]>(transactionSeed);
-  const [lastTransaction, setLastTransaction] = React.useState<Transaction | null>(transactionSeed[0]);
+  const [lastTransaction, setLastTransaction] = React.useState<Transaction | null>(
+    transactionSeed[0],
+  );
   const [ledger, setLedger] = React.useState<LedgerEntry[]>(ledgerSeed);
   const [tierHistory, setTierHistory] = React.useState<TierHistoryEntry[]>(tierHistorySeed);
   const [notifications, setNotifications] = React.useState<NotificationItem[]>(notificationsSeed);
   const [adjustments, setAdjustments] = React.useState<Adjustment[]>(adjustmentSeed);
-  const [pendingRegistration, setPendingRegistration] = React.useState<PendingRegistration | null>(null);
-  const [pendingPhoneChange, setPendingPhoneChange] = React.useState<PendingPhoneChange | null>(null);
+  const [pendingRegistration, setPendingRegistration] = React.useState<PendingRegistration | null>(
+    null,
+  );
+  const [pendingPhoneChange, setPendingPhoneChange] = React.useState<PendingPhoneChange | null>(
+    null,
+  );
   const [pendingTierRules, setPendingTierRules] = React.useState<TierRule[] | null>(null);
   const [nextTierReviewDate, setNextTierReviewDate] = React.useState(nextMonthStart(now));
   const [eventKeys, setEventKeys] = React.useState<string[]>([]);
-  const [vehicleOwnershipHistory, setVehicleOwnershipHistory] = React.useState<VehicleOwnershipHistoryEntry[]>(vehicleOwnershipHistorySeed);
+  const [vehicleOwnershipHistory, setVehicleOwnershipHistory] = React.useState<
+    VehicleOwnershipHistoryEntry[]
+  >(vehicleOwnershipHistorySeed);
   const nextBookingIdRef = React.useRef(nextBookingSequence(bookingSeed));
 
   React.useEffect(() => {
@@ -778,7 +960,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     const restoredStaffMembers = persisted.staffMembers ?? staffSeed;
     const restoredStaffId = persisted.currentStaffId ?? "s1";
     const restoredActiveStaff =
-      restoredStaffMembers.find((item) => item.id === restoredStaffId && item.status === "Active") ??
+      restoredStaffMembers.find(
+        (item) => item.id === restoredStaffId && item.status === "Active",
+      ) ??
       restoredStaffMembers.find((item) => item.status === "Active") ??
       staffSeed[0];
     const restoredWashSessions = persisted.washSessions ?? washSessionSeed;
@@ -869,9 +1053,15 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     [],
   );
 
-  const pushNotification = React.useCallback((notification: Omit<NotificationItem, "id" | "timestamp">) => {
-    setNotifications((prev) => [{ ...notification, id: crypto.randomUUID(), timestamp: new Date() }, ...prev]);
-  }, []);
+  const pushNotification = React.useCallback(
+    (notification: Omit<NotificationItem, "id" | "timestamp">) => {
+      setNotifications((prev) => [
+        { ...notification, id: crypto.randomUUID(), timestamp: new Date() },
+        ...prev,
+      ]);
+    },
+    [],
+  );
 
   const loginAs = React.useCallback((nextRole: Role) => {
     setRole(nextRole);
@@ -883,7 +1073,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const resolveActiveStaff = React.useCallback(() => {
-    const staff = staffMembers.find((item) => item.id === currentStaffId && item.status === "Active");
+    const staff = staffMembers.find(
+      (item) => item.id === currentStaffId && item.status === "Active",
+    );
     if (!staff) {
       throw new Error("Wash session requires an active staff member.");
     }
@@ -891,39 +1083,22 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   }, [currentStaffId, staffMembers]);
 
   const resolveFreeStaff = React.useCallback(() => {
-    const activeStaff = staffMembers.filter((item) => item.status === "Active");
-    if (activeStaff.length === 0) {
-      throw new Error("No active staff member is available.");
-    }
-    const counts = new Map<string, number>();
-    activeStaff.forEach((staff) => {
-      const activeSessionsCount = washSessions.filter(
-        (session) => session.staffId === staff.id && session.status !== "Completed"
-      ).length;
-      counts.set(staff.id, activeSessionsCount);
-    });
-    const sorted = [...activeStaff].sort((a, b) => {
-      const countA = counts.get(a.id) ?? 0;
-      const countB = counts.get(b.id) ?? 0;
-      return countA - countB;
-    });
-    return sorted[0];
+    return requireAvailableStaff(staffMembers, washSessions);
   }, [staffMembers, washSessions]);
 
   const updateCurrentProfile = React.useCallback(
     (patch: Partial<Pick<CustomerRecord, "name" | "email" | "status">>) => {
-      setCustomers((prev) => prev.map((customer) => (customer.id === currentCustomerId ? { ...customer, ...patch } : customer)));
+      setCustomers((prev) =>
+        prev.map((customer) =>
+          customer.id === currentCustomerId ? { ...customer, ...patch } : customer,
+        ),
+      );
     },
     [currentCustomerId],
   );
 
   const requestRegistrationOtp = React.useCallback(
-    (input: {
-      name: string;
-      phone: string;
-      countryCode: string;
-      vehicle: Omit<Vehicle, "id">;
-    }) => {
+    (input: { name: string; phone: string; countryCode: string; vehicle: Omit<Vehicle, "id"> }) => {
       if (!input.name.trim()) {
         throw new Error("Please enter your full name.");
       }
@@ -961,90 +1136,92 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     return challenge.otpCode;
   }, [pendingRegistration]);
 
-  const completeRegistration = React.useCallback((otpCode: string) => {
-    if (!pendingRegistration) return;
-    assertValidOtp(otpCode, pendingRegistration);
-    const duplicatePhone = customers.some(
-      (customer) =>
-        customer.status === "Active" && customer.phone === pendingRegistration.phone,
-    );
-    if (duplicatePhone) {
-      throw new Error("Phone number already exists.");
-    }
-    if (!isVietnamesePhone(pendingRegistration.phone)) {
-      throw new Error("Phone number must follow Vietnamese format.");
-    }
-    const normalizedPlate = normalizePlate(pendingRegistration.vehicle.plate);
-    ensureVietnamesePlate(normalizedPlate);
-    const existingOwner = Object.entries(vehiclesByCustomer).find(([, customerVehicles]) =>
-      customerVehicles.some((vehicle) => normalizePlate(vehicle.plate) === normalizedPlate),
-    );
-    let transferredVehicleId: string | undefined;
-    let previousCustomerId: string | undefined;
-    let previousCustomerName = "Unknown";
-    if (existingOwner) {
-      const [ownerId, ownerVehicles] = existingOwner;
-      const owner = customers.find((customer) => customer.id === ownerId);
-      if (owner?.status === "Active") {
-        throw new Error("License plate already belongs to another active customer.");
+  const completeRegistration = React.useCallback(
+    (otpCode: string) => {
+      if (!pendingRegistration) return;
+      assertValidOtp(otpCode, pendingRegistration);
+      const duplicatePhone = customers.some(
+        (customer) => customer.status === "Active" && customer.phone === pendingRegistration.phone,
+      );
+      if (duplicatePhone) {
+        throw new Error("Phone number already exists.");
       }
-      previousCustomerId = ownerId;
-      previousCustomerName = owner?.name ?? "Unknown";
-      transferredVehicleId = ownerVehicles.find(
-        (vehicle) => normalizePlate(vehicle.plate) === normalizedPlate,
-      )?.id;
+      if (!isVietnamesePhone(pendingRegistration.phone)) {
+        throw new Error("Phone number must follow Vietnamese format.");
+      }
+      const normalizedPlate = normalizePlate(pendingRegistration.vehicle.plate);
+      ensureVietnamesePlate(normalizedPlate);
+      const existingOwner = Object.entries(vehiclesByCustomer).find(([, customerVehicles]) =>
+        customerVehicles.some((vehicle) => normalizePlate(vehicle.plate) === normalizedPlate),
+      );
+      let transferredVehicleId: string | undefined;
+      let previousCustomerId: string | undefined;
+      let previousCustomerName = "Unknown";
+      if (existingOwner) {
+        const [ownerId, ownerVehicles] = existingOwner;
+        const owner = customers.find((customer) => customer.id === ownerId);
+        if (owner?.status === "Active") {
+          throw new Error("License plate already belongs to another active customer.");
+        }
+        previousCustomerId = ownerId;
+        previousCustomerName = owner?.name ?? "Unknown";
+        transferredVehicleId = ownerVehicles.find(
+          (vehicle) => normalizePlate(vehicle.plate) === normalizedPlate,
+        )?.id;
+        setVehiclesByCustomer((prev) => ({
+          ...prev,
+          [ownerId]: (prev[ownerId] ?? []).filter(
+            (vehicle) => normalizePlate(vehicle.plate) !== normalizedPlate,
+          ),
+        }));
+      }
+      const id = `c${Date.now()}`;
+      setCustomers((prev) => [
+        ...prev,
+        {
+          id,
+          name: pendingRegistration.name,
+          email: `${pendingRegistration.phone}@autowash.local`,
+          phone: pendingRegistration.phone,
+          countryCode: pendingRegistration.countryCode,
+          tier: "Member",
+          points: 0,
+          status: "Active",
+          joinedAt: nowLocalDateISO(),
+          phoneVerifiedAt: new Date().toISOString(),
+        },
+      ]);
       setVehiclesByCustomer((prev) => ({
         ...prev,
-        [ownerId]: (prev[ownerId] ?? []).filter(
-          (vehicle) => normalizePlate(vehicle.plate) !== normalizedPlate,
-        ),
+        [id]: [
+          {
+            ...pendingRegistration.vehicle,
+            plate: normalizedPlate,
+            id: transferredVehicleId ?? `v-${Date.now()}`,
+          },
+        ],
       }));
-    }
-    const id = `c${Date.now()}`;
-    setCustomers((prev) => [
-      ...prev,
-      {
-        id,
-        name: pendingRegistration.name,
-        email: `${pendingRegistration.phone}@autowash.local`,
-        phone: pendingRegistration.phone,
-        countryCode: pendingRegistration.countryCode,
-        tier: "Member",
-        points: 0,
-        status: "Active",
-        joinedAt: nowLocalDateISO(),
-        phoneVerifiedAt: new Date().toISOString(),
-      },
-    ]);
-    setVehiclesByCustomer((prev) => ({
-      ...prev,
-      [id]: [
-        {
-          ...pendingRegistration.vehicle,
-          plate: normalizedPlate,
-          id: transferredVehicleId ?? `v-${Date.now()}`,
-        },
-      ],
-    }));
-    if (previousCustomerId) {
-      setVehicleOwnershipHistory((prev) => [
-        {
-          id: crypto.randomUUID(),
-          vehicleId: transferredVehicleId,
-          plate: normalizedPlate,
-          previousCustomerId,
-          newCustomerId: id,
-          previousCustomerName,
-          newCustomerName: pendingRegistration.name,
-          transferredAt: new Date().toISOString(),
-          note: "Vehicle ownership transferred during new customer registration from an inactive record.",
-        },
-        ...prev,
-      ]);
-    }
-    setCurrentCustomerId(id);
-    setPendingRegistration(null);
-  }, [customers, pendingRegistration, vehiclesByCustomer]);
+      if (previousCustomerId) {
+        setVehicleOwnershipHistory((prev) => [
+          {
+            id: crypto.randomUUID(),
+            vehicleId: transferredVehicleId,
+            plate: normalizedPlate,
+            previousCustomerId,
+            newCustomerId: id,
+            previousCustomerName,
+            newCustomerName: pendingRegistration.name,
+            transferredAt: new Date().toISOString(),
+            note: "Vehicle ownership transferred during new customer registration from an inactive record.",
+          },
+          ...prev,
+        ]);
+      }
+      setCurrentCustomerId(id);
+      setPendingRegistration(null);
+    },
+    [customers, pendingRegistration, vehiclesByCustomer],
+  );
 
   const requestPhoneChange = React.useCallback(
     ({ phone, countryCode }: { phone: string; countryCode: string }) => {
@@ -1109,9 +1286,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       const normalizedPlate = normalizePlate(vehicle.plate);
       ensureVietnamesePlate(normalizedPlate);
       const currentCustomer = customers.find((customer) => customer.id === currentCustomerId);
-      const existingOwner = Object.entries(vehiclesByCustomer).find(([customerId, customerVehicles]) =>
-        customerId !== currentCustomerId &&
-        customerVehicles.some((item) => normalizePlate(item.plate) === normalizedPlate),
+      const existingOwner = Object.entries(vehiclesByCustomer).find(
+        ([customerId, customerVehicles]) =>
+          customerId !== currentCustomerId &&
+          customerVehicles.some((item) => normalizePlate(item.plate) === normalizedPlate),
       );
       if (existingOwner) {
         const [ownerId] = existingOwner;
@@ -1124,7 +1302,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         }
         setVehiclesByCustomer((prev) => ({
           ...prev,
-          [ownerId]: (prev[ownerId] ?? []).filter((item) => normalizePlate(item.plate) !== normalizedPlate),
+          [ownerId]: (prev[ownerId] ?? []).filter(
+            (item) => normalizePlate(item.plate) !== normalizedPlate,
+          ),
         }));
         setVehicleOwnershipHistory((prev) => [
           {
@@ -1170,9 +1350,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       const normalizedPlate = normalizePlate(vehicle.plate);
       ensureVietnamesePlate(normalizedPlate);
       const currentCustomer = customers.find((customer) => customer.id === currentCustomerId);
-      const conflictingOwner = Object.entries(vehiclesByCustomer).find(([customerId, customerVehicles]) =>
-        customerId !== currentCustomerId &&
-        customerVehicles.some((item) => normalizePlate(item.plate) === normalizedPlate),
+      const conflictingOwner = Object.entries(vehiclesByCustomer).find(
+        ([customerId, customerVehicles]) =>
+          customerId !== currentCustomerId &&
+          customerVehicles.some((item) => normalizePlate(item.plate) === normalizedPlate),
       );
       if (conflictingOwner) {
         const [ownerId] = conflictingOwner;
@@ -1185,7 +1366,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         }
         setVehiclesByCustomer((prev) => ({
           ...prev,
-          [ownerId]: (prev[ownerId] ?? []).filter((item) => normalizePlate(item.plate) !== normalizedPlate),
+          [ownerId]: (prev[ownerId] ?? []).filter(
+            (item) => normalizePlate(item.plate) !== normalizedPlate,
+          ),
         }));
         setVehicleOwnershipHistory((prev) => [
           {
@@ -1202,7 +1385,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           ...prev,
         ]);
       }
-      const previousVehicle = (vehiclesByCustomer[currentCustomerId] ?? []).find((item) => item.id === id);
+      const previousVehicle = (vehiclesByCustomer[currentCustomerId] ?? []).find(
+        (item) => item.id === id,
+      );
       setVehiclesByCustomer((prev) => ({
         ...prev,
         [currentCustomerId]: (prev[currentCustomerId] ?? []).map((item) =>
@@ -1232,7 +1417,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const deleteVehicle = React.useCallback(
     (id: string) => {
       const currentVehicles = vehiclesByCustomer[currentCustomerId] ?? [];
-      if (currentVehicles.length <= 1) return { ok: false, error: "Customer must keep at least one vehicle." };
+      if (currentVehicles.length <= 1)
+        return { ok: false, error: "Customer must keep at least one vehicle." };
       setVehiclesByCustomer((prev) => ({
         ...prev,
         [currentCustomerId]: currentVehicles.filter((vehicle) => vehicle.id !== id),
@@ -1249,8 +1435,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (customer.status === "Blocked") {
         throw new Error("Blocked customers cannot create bookings.");
       }
-      if (customer.bookingSuspendedUntil && new Date(customer.bookingSuspendedUntil) >= new Date()) {
-        throw new Error(`Booking is suspended until ${new Date(customer.bookingSuspendedUntil).toLocaleDateString()}.`);
+      if (
+        customer.bookingSuspendedUntil &&
+        new Date(customer.bookingSuspendedUntil) >= new Date()
+      ) {
+        throw new Error(
+          `Booking is suspended until ${new Date(customer.bookingSuspendedUntil).toLocaleDateString()}.`,
+        );
       }
       ensureVietnamesePlate(input.vehiclePlate);
       const tier = tiers.find((item) => item.name === customer.tier);
@@ -1262,7 +1453,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (!input.isWalkIn) {
         if (diffDays < 0) throw new Error("Cannot book in the past.");
         if (diffDays > (tier?.bookingWindowDays ?? 7)) {
-          throw new Error(`Booking exceeds ${tier?.bookingWindowDays ?? 7}-day window for ${customer.tier}.`);
+          throw new Error(
+            `Booking exceeds ${tier?.bookingWindowDays ?? 7}-day window for ${customer.tier}.`,
+          );
         }
         const activeBookings = bookings.filter(
           (booking) => booking.customerId === currentCustomerId && isActiveBooking(booking.status),
@@ -1294,8 +1487,15 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           isActiveBooking(booking.status) &&
           customers.find((item) => item.id === booking.customerId)?.tier === "Platinum",
       );
-      if (!input.isWalkIn && customer.tier !== "Platinum" && slotLoad >= SHOP_CAPACITY - 1 && !platinumAlreadyBooked) {
-        throw new Error("The last available bay in this slot is reserved for Platinum priority bookings.");
+      if (
+        !input.isWalkIn &&
+        customer.tier !== "Platinum" &&
+        slotLoad >= SHOP_CAPACITY - 1 &&
+        !platinumAlreadyBooked
+      ) {
+        throw new Error(
+          "The last available bay in this slot is reserved for Platinum priority bookings.",
+        );
       }
       if (!input.isWalkIn && slotLoad >= SHOP_CAPACITY) {
         throw new Error("Selected slot has reached shop capacity.");
@@ -1304,6 +1504,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         ...input,
         id: `B${String(nextBookingIdRef.current++).padStart(3, "0")}`,
         customerId: currentCustomerId,
+        customerName: customer.name,
+        customerPhone: customer.phone,
         createdAt: new Date().toISOString(),
         timeSlot,
       };
@@ -1339,7 +1541,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           throw new Error("Cancellation is only allowed at least 2 hours before booking.");
         }
       }
-      setBookings((prev) => prev.map((booking) => (booking.id === id ? { ...booking, status } : booking)));
+      setBookings((prev) =>
+        prev.map((booking) => (booking.id === id ? { ...booking, status } : booking)),
+      );
     },
     [bookings],
   );
@@ -1355,12 +1559,15 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (!booking.isWalkIn) {
         const lateMinutes = (Date.now() - parseBookingDate(booking).getTime()) / 60000;
         if (lateMinutes > 15) {
-          setBookings((prev) => prev.map((item) => (item.id === bookingId ? { ...item, status: "No-show" } : item)));
-          const noShowsInWindow = bookings.filter((item) => {
-            if (item.customerId !== booking.customerId || item.status !== "No-show") return false;
-            const ageDays = (Date.now() - parseBookingDate(item).getTime()) / 86400000;
-            return ageDays <= 30;
-          }).length + 1;
+          setBookings((prev) =>
+            prev.map((item) => (item.id === bookingId ? { ...item, status: "No-show" } : item)),
+          );
+          const noShowsInWindow =
+            bookings.filter((item) => {
+              if (item.customerId !== booking.customerId || item.status !== "No-show") return false;
+              const ageDays = (Date.now() - parseBookingDate(item).getTime()) / 86400000;
+              return ageDays <= 30;
+            }).length + 1;
           if (noShowsInWindow >= 2) {
             const suspendedUntil = addDays(nowLocalDateISO(), 14);
             setCustomers((prev) =>
@@ -1376,11 +1583,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setBookings((prev) =>
         prev.map((item) =>
           item.id === bookingId
-            ? { ...item, status: "Checked-in", checkInAt: checkedInAt, washStatus: "Queued" }
+            ? { ...item, status: "Checked-in", checkInAt: checkedInAt, washStatus: "In Progress" }
             : item,
         ),
       );
-      const selectedServices = services.filter((service) => booking.services.includes(service.name));
+      const selectedServices = services.filter((service) =>
+        booking.services.includes(service.name),
+      );
       const sessionId = crypto.randomUUID();
       setWashSessions((prev) => [
         {
@@ -1394,7 +1603,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           plate: booking.vehiclePlate,
           services: selectedServices,
           subtotal: subtotalForServices(selectedServices),
-          status: "Queued",
+          status: "In Progress",
           startedAt: checkedInAt,
           walkIn: booking.isWalkIn,
         },
@@ -1421,12 +1630,23 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   );
 
   const createWalkInBooking = React.useCallback(
-    ({ plate, vehicleType, serviceIds }: { plate: string; vehicleType: VehicleType; serviceIds: string[] }) => {
+    ({
+      plate,
+      vehicleType,
+      serviceIds,
+    }: {
+      plate: string;
+      vehicleType: VehicleType;
+      serviceIds: string[];
+    }) => {
       const staff = resolveFreeStaff();
       const selectedServices = services.filter((service) => serviceIds.includes(service.id));
       const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0);
       const dateISO = localDateISO(new Date());
-      const timeSlot = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      const timeSlot = new Date().toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       const id = createBookingFromLegacy({
         vehiclePlate: plate.toUpperCase(),
         vehicleName: "Walk-in Vehicle",
@@ -1444,7 +1664,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setBookings((prev) =>
         prev.map((booking) =>
           booking.id === id
-            ? { ...booking, checkInAt: checkedInAt, washStatus: "Queued" }
+            ? { ...booking, checkInAt: checkedInAt, washStatus: "In Progress" }
             : booking,
         ),
       );
@@ -1460,7 +1680,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           plate: plate.toUpperCase(),
           services: selectedServices,
           subtotal: totalPrice,
-          status: "Queued",
+          status: "In Progress",
           startedAt: checkedInAt,
           walkIn: true,
         },
@@ -1490,19 +1710,75 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       const target = customers.find((customer) => customer.id === customerId);
       if (!target) return;
       const resolved = Math.max(0, nextPoints);
-      setCustomers((prev) => prev.map((customer) => (customer.id === customerId ? { ...customer, points: resolved } : customer)));
+      setCustomers((prev) =>
+        prev.map((customer) =>
+          customer.id === customerId ? { ...customer, points: resolved } : customer,
+        ),
+      );
       setLedger((prev) => [
-        { id: crypto.randomUUID(), customerId, date: localDateISO(new Date()), type: "Adjusted", delta: resolved - target.points, description: reason },
+        {
+          id: crypto.randomUUID(),
+          customerId,
+          date: localDateISO(new Date()),
+          type: "Adjusted",
+          delta: resolved - target.points,
+          description: reason,
+        },
         ...prev,
       ]);
     },
     [customers],
   );
 
+  const assignStaffToSession = React.useCallback(
+    (sessionId: string, staffId: string) => {
+      const session = washSessions.find((item) => item.id === sessionId);
+      if (!session) {
+        throw new Error("Wash session record is missing.");
+      }
+      if (session.status === "Completed") {
+        throw new Error("Completed wash session cannot be reassigned.");
+      }
+      const staff = staffMembers.find((item) => item.id === staffId && item.status === "Active");
+      if (!staff) {
+        throw new Error("Only active staff can be assigned.");
+      }
+      const isAlreadyAssigned = session.staffId === staffId;
+      const hasOtherActiveSession = washSessions.some(
+        (item) => item.id !== sessionId && item.staffId === staffId && item.status !== "Completed",
+      );
+      if (!isAlreadyAssigned && hasOtherActiveSession) {
+        throw new Error("Busy employees cannot be assigned to another vehicle.");
+      }
+
+      setWashSessions((prev) =>
+        prev.map((item) =>
+          item.id === sessionId ? { ...item, staffId: staff.id, staffName: staff.name } : item,
+        ),
+      );
+      setSessionDraft((prev) =>
+        prev && prev.sessionId === sessionId
+          ? { ...prev, staffId: staff.id, staffName: staff.name }
+          : prev,
+      );
+    },
+    [staffMembers, washSessions],
+  );
+
   const completeCheckout = React.useCallback(
-    ({ promoCode, pointsRedeemed, paymentMethod }: { promoCode?: string | null; pointsRedeemed: number; paymentMethod: string }) => {
+    ({
+      promoCode,
+      pointsRedeemed,
+      paymentMethod,
+    }: {
+      promoCode?: string | null;
+      pointsRedeemed: number;
+      paymentMethod: string;
+    }) => {
       if (!sessionDraft) return null;
-      const staff = staffMembers.find((item) => item.id === sessionDraft.staffId && item.status === "Active");
+      const staff = staffMembers.find(
+        (item) => item.id === sessionDraft.staffId && item.status === "Active",
+      );
       if (!staff) {
         throw new Error("Assigned wash staff is no longer active.");
       }
@@ -1530,8 +1806,12 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         tierDiscountPercent: customer && tierRule ? tierRule.discountPercent : 0,
         promo,
       });
-      const requestedPoints = Number.isFinite(pointsRedeemed) ? Math.max(0, Math.trunc(pointsRedeemed)) : 0;
-      const safePoints = customer ? Math.min(requestedPoints, customer.points, Math.floor(afterPromo / 1000)) : 0;
+      const requestedPoints = Number.isFinite(pointsRedeemed)
+        ? Math.max(0, Math.trunc(pointsRedeemed))
+        : 0;
+      const safePoints = customer
+        ? Math.min(requestedPoints, customer.points, Math.floor(afterPromo / 1000))
+        : 0;
       if (requestedPoints > 0 && safePoints <= 0) {
         throw new Error("Point redemption must use more than 0 eligible loyalty points.");
       }
@@ -1543,7 +1823,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         id: `TX-${Date.now().toString().slice(-6)}`,
         bookingId: sessionDraft.bookingId,
         date: new Date().toISOString(),
-        customer: { id: customer?.id ?? "guest", name: customer?.name ?? sessionDraft.customerName, tier: customer?.tier ?? "Guest", discountPct: tierRule?.discountPercent ?? 0, points: customer?.points ?? 0 },
+        customer: {
+          id: customer?.id ?? "guest",
+          name: customer?.name ?? sessionDraft.customerName,
+          tier: customer?.tier ?? "Guest",
+          discountPct: tierRule?.discountPercent ?? 0,
+          points: customer?.points ?? 0,
+        },
         vehicleType: sessionDraft.vehicleType,
         plate: sessionDraft.plate,
         services: sessionDraft.services,
@@ -1596,12 +1882,33 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (customer) {
         setCustomers((prev) =>
           prev.map((item) =>
-            item.id === customer.id ? { ...item, points: customer.points - safePoints + pointsEarned } : item,
+            item.id === customer.id
+              ? { ...item, points: customer.points - safePoints + pointsEarned }
+              : item,
           ),
         );
         setLedger((prev) => [
-          { id: crypto.randomUUID(), customerId: customer.id, date: localDateISO(new Date()), type: "Earned", delta: pointsEarned, description: `Completed session ${tx.id}`, expiresAt: addDays(localDateISO(new Date()), 365) },
-          ...(safePoints > 0 ? [{ id: crypto.randomUUID(), customerId: customer.id, date: localDateISO(new Date()), type: "Spent" as const, delta: -safePoints, description: `Redeemed ${safePoints} points at checkout` }] : []),
+          {
+            id: crypto.randomUUID(),
+            customerId: customer.id,
+            date: localDateISO(new Date()),
+            type: "Earned",
+            delta: pointsEarned,
+            description: `Completed session ${tx.id}`,
+            expiresAt: addDays(localDateISO(new Date()), 365),
+          },
+          ...(safePoints > 0
+            ? [
+                {
+                  id: crypto.randomUUID(),
+                  customerId: customer.id,
+                  date: localDateISO(new Date()),
+                  type: "Spent" as const,
+                  delta: -safePoints,
+                  description: `Redeemed ${safePoints} points at checkout`,
+                },
+              ]
+            : []),
           ...prev,
         ]);
       }
@@ -1613,7 +1920,15 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setSessionDraft(null);
       return tx;
     },
-    [customers, promotions, pushNotification, resolveActiveStaff, sessionDraft, tiers, washSessions],
+    [
+      customers,
+      promotions,
+      pushNotification,
+      resolveActiveStaff,
+      sessionDraft,
+      tiers,
+      washSessions,
+    ],
   );
 
   const redeemReward = React.useCallback(
@@ -1627,7 +1942,14 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         ),
       );
       setLedger((prev) => [
-        { id: crypto.randomUUID(), customerId, date: localDateISO(new Date()), type: "Spent", delta: -reward.cost, description: `Redeemed ${reward.name}` },
+        {
+          id: crypto.randomUUID(),
+          customerId,
+          date: localDateISO(new Date()),
+          type: "Spent",
+          delta: -reward.cost,
+          description: `Redeemed ${reward.name}`,
+        },
         ...prev,
       ]);
       return true;
@@ -1728,7 +2050,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setCustomers((prev) =>
         prev.map((customer) => {
           const adjustment = expiredAdjustments.find((entry) => entry.customerId === customer.id);
-          return adjustment ? { ...customer, points: Math.max(0, customer.points + adjustment.delta) } : customer;
+          return adjustment
+            ? { ...customer, points: Math.max(0, customer.points + adjustment.delta) }
+            : customer;
         }),
       );
     }
@@ -1823,6 +2147,11 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     hydrated,
   ]);
 
+  const staffAvailability = React.useMemo(
+    () => getStaffAvailability(staffMembers, washSessions),
+    [staffMembers, washSessions],
+  );
+
   const value: Store = {
     role,
     isAuthenticated,
@@ -1840,6 +2169,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     vehiclesByCustomer,
     bookings,
     washSessions,
+    staffAvailability,
     selectedBookingId,
     sessionDraft,
     transactions,
@@ -1869,6 +2199,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     updateBookingStatus,
     setSelectedBookingId,
     createWalkInBooking,
+    assignStaffToSession,
     createOrUpdateSessionDraft: (draft) => {
       if (!draft) {
         setSessionDraft(null);
@@ -1877,7 +2208,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       const staff = resolveActiveStaff();
       const activeSession =
         washSessions.find((session) => session.id === draft.sessionId) ??
-        (draft.bookingId ? washSessions.find((session) => session.bookingId === draft.bookingId) : undefined);
+        (draft.bookingId
+          ? washSessions.find((session) => session.bookingId === draft.bookingId)
+          : undefined);
       const assignedStaffId = activeSession?.staffId || staff.id;
       const assignedStaffName = activeSession?.staffName || staff.name;
       if (!activeSession) {
@@ -1929,15 +2262,20 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     completeCheckout,
     updateCustomerPoints,
     redeemReward,
-      updateTiers: (next) => setPendingTierRules(next),
-      addPromotion: (promotion) => {
-        if (promotion.startDate > promotion.endDate) {
-          throw new Error("Promotion start date cannot be after end date.");
-        }
-        setPromotions((prev) => [{ ...promotion, id: crypto.randomUUID() }, ...prev]);
-      },
-      togglePromotion: (id) => setPromotions((prev) => prev.map((promotion) => (promotion.id === id ? { ...promotion, active: !promotion.active } : promotion))),
-      pushNotification,
+    updateTiers: (next) => setPendingTierRules(next),
+    addPromotion: (promotion) => {
+      if (promotion.startDate > promotion.endDate) {
+        throw new Error("Promotion start date cannot be after end date.");
+      }
+      setPromotions((prev) => [{ ...promotion, id: crypto.randomUUID() }, ...prev]);
+    },
+    togglePromotion: (id) =>
+      setPromotions((prev) =>
+        prev.map((promotion) =>
+          promotion.id === id ? { ...promotion, active: !promotion.active } : promotion,
+        ),
+      ),
+    pushNotification,
     addAdjustment: (adjustment) => {
       const target = customers.find((customer) => customer.id === adjustment.customerId);
       if (!target) {
@@ -1976,9 +2314,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         },
         ...prev,
       ]);
-      },
-      runMonthlyTierReview,
-    };
+    },
+    runMonthlyTierReview,
+  };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
