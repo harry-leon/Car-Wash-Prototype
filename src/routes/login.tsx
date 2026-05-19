@@ -45,7 +45,7 @@ function LoginPage() {
     <GuestOnly>
       <GuestLayout
         title="Welcome back"
-        description="Sign in to your account to continue your journey with AutoWash Pro."
+        description="Sign in to your account to continue your journey with AURA CAR CARE."
         footer={
           <div className="text-sm text-muted-foreground">
             Don't have an account?{" "}

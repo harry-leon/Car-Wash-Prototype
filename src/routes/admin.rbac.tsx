@@ -38,7 +38,7 @@ function RbacPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Permission Matrix</h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Role-based capability snapshot for the protected AutoWash Pro workspace.
+              Role-based capability snapshot for the protected AURA CAR CARE workspace.
             </p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-xs font-bold text-primary shadow-sm border border-primary/20 backdrop-blur-md">

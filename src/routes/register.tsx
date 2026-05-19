@@ -56,7 +56,7 @@ export function RegisterPage() {
     <GuestOnly>
       <GuestLayout
         title="Create an account"
-        description="Join AutoWash Pro to manage your vehicles, bookings, and earn loyalty rewards."
+        description="Join AURA CAR CARE to manage your vehicles, bookings, and earn loyalty rewards."
         footer={
           <div className="text-sm text-muted-foreground">
             Already have an account?{" "}

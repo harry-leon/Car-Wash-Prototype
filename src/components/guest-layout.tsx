@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Hexagon, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function GuestLayout({
@@ -31,12 +31,10 @@ export function GuestLayout({
           <div className="relative z-10">
             <Link to="/login" className="inline-flex items-center gap-3 group">
               <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg transition-transform group-hover:scale-105 overflow-hidden p-0.5">
-                <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-gradient-to-br from-primary to-indigo-600 text-primary-foreground">
-                  <Hexagon className="h-7 w-7" />
-                </div>
+                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[14px] object-cover" />
               </div>
               <div>
-                <div className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">AutoWash Pro</div>
+                <div className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">AURA CAR CARE</div>
                 <div className="text-sm font-medium text-muted-foreground">Smart Car Wash System</div>
               </div>
             </Link>
@@ -86,12 +84,10 @@ export function GuestLayout({
           <div className="mb-8 flex lg:hidden items-center justify-between">
              <Link to="/login" className="inline-flex items-center gap-3 group">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-md overflow-hidden p-0.5">
-                <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-primary to-indigo-600 text-primary-foreground">
-                  <Hexagon className="h-5 w-5" />
-                </div>
+                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[10px] object-cover" />
               </div>
               <div>
-                <div className="font-bold tracking-tight">AutoWash Pro</div>
+                <div className="font-bold tracking-tight">AURA CAR CARE</div>
               </div>
             </Link>
           </div>

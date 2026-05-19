@@ -16,7 +16,6 @@ import {
   Sparkles,
   UserRound,
   Wrench,
-  Hexagon
 } from "lucide-react";
 import { useState } from "react";
 import { getHomePath } from "@/lib/auth";
@@ -154,13 +153,11 @@ export function AppShell({ role }: { role: Role }) {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-md overflow-hidden p-0.5">
-                <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-primary to-indigo-600 text-primary-foreground">
-                  <Hexagon className="h-5 w-5" />
-                </div>
+                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[10px] object-cover" />
               </div>
               {!sidebarCollapsed && (
                 <div className="animate-in fade-in duration-300">
-                  <div className="font-bold tracking-tight">AutoWash Pro</div>
+                  <div className="font-bold tracking-tight">AURA CAR CARE</div>
                   <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{roleBadge(role)}</div>
                 </div>
               )}
@@ -285,8 +282,8 @@ export function AppShell({ role }: { role: Role }) {
         <header className="sticky top-0 z-30 border-b border-border/50 bg-background/90 px-4 py-4 backdrop-blur-xl lg:px-8 transition-all">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-4">
-              <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-indigo-600 text-white shadow-sm">
-                <Sparkles className="h-3.5 w-3.5" />
+              <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm overflow-hidden p-0.5">
+                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[6px] object-cover" />
               </div>
               <div className="hidden lg:block">
                 <div className="text-xl font-bold tracking-tight text-foreground">{headerTitle}</div>
