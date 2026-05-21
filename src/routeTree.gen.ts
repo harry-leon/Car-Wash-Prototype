@@ -26,6 +26,7 @@ import { Route as BookingsRouteImport } from './routes/bookings'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffWashSessionRouteImport } from './routes/staff.wash-session'
+import { Route as StaffOperationsRouteImport } from './routes/staff.operations'
 import { Route as StaffNotificationsRouteImport } from './routes/staff.notifications'
 import { Route as StaffDashboardRouteImport } from './routes/staff.dashboard'
 import { Route as StaffConfirmationRouteImport } from './routes/staff.confirmation'
@@ -46,6 +47,7 @@ import { Route as AdminPromotionsRouteImport } from './routes/admin.promotions'
 import { Route as AdminPointsAuditRouteImport } from './routes/admin.points-audit'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as StaffCheckinIdRouteImport } from './routes/staff.checkin.$id'
 import { Route as CustomerBookingsTrackerRouteImport } from './routes/customer.bookings.tracker'
 import { Route as CustomerBookingsNewRouteImport } from './routes/customer.bookings.new'
 
@@ -132,6 +134,11 @@ const IndexRoute = IndexRouteImport.update({
 const StaffWashSessionRoute = StaffWashSessionRouteImport.update({
   id: '/wash-session',
   path: '/wash-session',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffOperationsRoute = StaffOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
@@ -234,6 +241,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const StaffCheckinIdRoute = StaffCheckinIdRouteImport.update({
+  id: '/checkin/$id',
+  path: '/checkin/$id',
+  getParentRoute: () => StaffRoute,
+} as any)
 const CustomerBookingsTrackerRoute = CustomerBookingsTrackerRouteImport.update({
   id: '/tracker',
   path: '/tracker',
@@ -282,9 +294,11 @@ export interface FileRoutesByFullPath {
   '/staff/confirmation': typeof StaffConfirmationRoute
   '/staff/dashboard': typeof StaffDashboardRoute
   '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -323,9 +337,11 @@ export interface FileRoutesByTo {
   '/staff/confirmation': typeof StaffConfirmationRoute
   '/staff/dashboard': typeof StaffDashboardRoute
   '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -365,9 +381,11 @@ export interface FileRoutesById {
   '/staff/confirmation': typeof StaffConfirmationRoute
   '/staff/dashboard': typeof StaffDashboardRoute
   '/staff/notifications': typeof StaffNotificationsRoute
+  '/staff/operations': typeof StaffOperationsRoute
   '/staff/wash-session': typeof StaffWashSessionRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -408,9 +426,11 @@ export interface FileRouteTypes {
     | '/staff/confirmation'
     | '/staff/dashboard'
     | '/staff/notifications'
+    | '/staff/operations'
     | '/staff/wash-session'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/staff/checkin/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -449,9 +469,11 @@ export interface FileRouteTypes {
     | '/staff/confirmation'
     | '/staff/dashboard'
     | '/staff/notifications'
+    | '/staff/operations'
     | '/staff/wash-session'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/staff/checkin/$id'
   id:
     | '__root__'
     | '/'
@@ -490,9 +512,11 @@ export interface FileRouteTypes {
     | '/staff/confirmation'
     | '/staff/dashboard'
     | '/staff/notifications'
+    | '/staff/operations'
     | '/staff/wash-session'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/staff/checkin/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -635,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffWashSessionRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/staff/operations': {
+      id: '/staff/operations'
+      path: '/operations'
+      fullPath: '/staff/operations'
+      preLoaderRoute: typeof StaffOperationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/staff/notifications': {
       id: '/staff/notifications'
       path: '/notifications'
@@ -775,6 +806,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/staff/checkin/$id': {
+      id: '/staff/checkin/$id'
+      path: '/checkin/$id'
+      fullPath: '/staff/checkin/$id'
+      preLoaderRoute: typeof StaffCheckinIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/customer/bookings/tracker': {
       id: '/customer/bookings/tracker'
       path: '/tracker'
@@ -869,7 +907,9 @@ interface StaffRouteChildren {
   StaffConfirmationRoute: typeof StaffConfirmationRoute
   StaffDashboardRoute: typeof StaffDashboardRoute
   StaffNotificationsRoute: typeof StaffNotificationsRoute
+  StaffOperationsRoute: typeof StaffOperationsRoute
   StaffWashSessionRoute: typeof StaffWashSessionRoute
+  StaffCheckinIdRoute: typeof StaffCheckinIdRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
@@ -878,7 +918,9 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffConfirmationRoute: StaffConfirmationRoute,
   StaffDashboardRoute: StaffDashboardRoute,
   StaffNotificationsRoute: StaffNotificationsRoute,
+  StaffOperationsRoute: StaffOperationsRoute,
   StaffWashSessionRoute: StaffWashSessionRoute,
+  StaffCheckinIdRoute: StaffCheckinIdRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
