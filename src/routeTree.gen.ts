@@ -37,6 +37,7 @@ import { Route as CustomerTransactionsRouteImport } from './routes/customer.tran
 import { Route as CustomerProfileRouteImport } from './routes/customer.profile'
 import { Route as CustomerOverviewRouteImport } from './routes/customer.overview'
 import { Route as CustomerLoyaltyRouteImport } from './routes/customer.loyalty'
+import { Route as CustomerCbRouteImport } from './routes/customer.cb'
 import { Route as CustomerBookingsRouteImport } from './routes/customer.bookings'
 import { Route as BookingsTrackerRouteImport } from './routes/bookings.tracker'
 import { Route as BookingsNewRouteImport } from './routes/bookings.new'
@@ -53,6 +54,10 @@ import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as StaffCheckinIdRouteImport } from './routes/staff.checkin.$id'
+import { Route as CustomerCbVehiclesRouteImport } from './routes/customer.cb.vehicles'
+import { Route as CustomerCbHomeRouteImport } from './routes/customer.cb.home'
+import { Route as CustomerCbHistoryRouteImport } from './routes/customer.cb.history'
+import { Route as CustomerCbBookingRouteImport } from './routes/customer.cb.booking'
 import { Route as CustomerBookingsTrackerRouteImport } from './routes/customer.bookings.tracker'
 import { Route as CustomerBookingsNewRouteImport } from './routes/customer.bookings.new'
 import { Route as AdminCustomersIdRouteImport } from './routes/admin.customers.$id'
@@ -197,6 +202,11 @@ const CustomerLoyaltyRoute = CustomerLoyaltyRouteImport.update({
   path: '/loyalty',
   getParentRoute: () => CustomerRoute,
 } as any)
+const CustomerCbRoute = CustomerCbRouteImport.update({
+  id: '/cb',
+  path: '/cb',
+  getParentRoute: () => CustomerRoute,
+} as any)
 const CustomerBookingsRoute = CustomerBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -277,6 +287,26 @@ const StaffCheckinIdRoute = StaffCheckinIdRouteImport.update({
   path: '/checkin/$id',
   getParentRoute: () => StaffRoute,
 } as any)
+const CustomerCbVehiclesRoute = CustomerCbVehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => CustomerCbRoute,
+} as any)
+const CustomerCbHomeRoute = CustomerCbHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => CustomerCbRoute,
+} as any)
+const CustomerCbHistoryRoute = CustomerCbHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => CustomerCbRoute,
+} as any)
+const CustomerCbBookingRoute = CustomerCbBookingRouteImport.update({
+  id: '/booking',
+  path: '/booking',
+  getParentRoute: () => CustomerCbRoute,
+} as any)
 const CustomerBookingsTrackerRoute = CustomerBookingsTrackerRouteImport.update({
   id: '/tracker',
   path: '/tracker',
@@ -325,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/cb': typeof CustomerCbRouteWithChildren
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -340,6 +371,10 @@ export interface FileRoutesByFullPath {
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/customer/cb/booking': typeof CustomerCbBookingRoute
+  '/customer/cb/history': typeof CustomerCbHistoryRoute
+  '/customer/cb/home': typeof CustomerCbHomeRoute
+  '/customer/cb/vehicles': typeof CustomerCbVehiclesRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRoutesByTo {
@@ -374,6 +409,7 @@ export interface FileRoutesByTo {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/cb': typeof CustomerCbRouteWithChildren
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -389,6 +425,10 @@ export interface FileRoutesByTo {
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/customer/cb/booking': typeof CustomerCbBookingRoute
+  '/customer/cb/history': typeof CustomerCbHistoryRoute
+  '/customer/cb/home': typeof CustomerCbHomeRoute
+  '/customer/cb/vehicles': typeof CustomerCbVehiclesRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRoutesById {
@@ -424,6 +464,7 @@ export interface FileRoutesById {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/cb': typeof CustomerCbRouteWithChildren
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -439,6 +480,10 @@ export interface FileRoutesById {
   '/admin/customers/$id': typeof AdminCustomersIdRoute
   '/customer/bookings/new': typeof CustomerBookingsNewRoute
   '/customer/bookings/tracker': typeof CustomerBookingsTrackerRoute
+  '/customer/cb/booking': typeof CustomerCbBookingRoute
+  '/customer/cb/history': typeof CustomerCbHistoryRoute
+  '/customer/cb/home': typeof CustomerCbHomeRoute
+  '/customer/cb/vehicles': typeof CustomerCbVehiclesRoute
   '/staff/checkin/$id': typeof StaffCheckinIdRoute
 }
 export interface FileRouteTypes {
@@ -475,6 +520,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/cb'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -490,6 +536,10 @@ export interface FileRouteTypes {
     | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/customer/cb/booking'
+    | '/customer/cb/history'
+    | '/customer/cb/home'
+    | '/customer/cb/vehicles'
     | '/staff/checkin/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -524,6 +574,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/cb'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -539,6 +590,10 @@ export interface FileRouteTypes {
     | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/customer/cb/booking'
+    | '/customer/cb/history'
+    | '/customer/cb/home'
+    | '/customer/cb/vehicles'
     | '/staff/checkin/$id'
   id:
     | '__root__'
@@ -573,6 +628,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/cb'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -588,6 +644,10 @@ export interface FileRouteTypes {
     | '/admin/customers/$id'
     | '/customer/bookings/new'
     | '/customer/bookings/tracker'
+    | '/customer/cb/booking'
+    | '/customer/cb/history'
+    | '/customer/cb/home'
+    | '/customer/cb/vehicles'
     | '/staff/checkin/$id'
   fileRoutesById: FileRoutesById
 }
@@ -808,6 +868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerLoyaltyRouteImport
       parentRoute: typeof CustomerRoute
     }
+    '/customer/cb': {
+      id: '/customer/cb'
+      path: '/cb'
+      fullPath: '/customer/cb'
+      preLoaderRoute: typeof CustomerCbRouteImport
+      parentRoute: typeof CustomerRoute
+    }
     '/customer/bookings': {
       id: '/customer/bookings'
       path: '/bookings'
@@ -920,6 +987,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffCheckinIdRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/customer/cb/vehicles': {
+      id: '/customer/cb/vehicles'
+      path: '/vehicles'
+      fullPath: '/customer/cb/vehicles'
+      preLoaderRoute: typeof CustomerCbVehiclesRouteImport
+      parentRoute: typeof CustomerCbRoute
+    }
+    '/customer/cb/home': {
+      id: '/customer/cb/home'
+      path: '/home'
+      fullPath: '/customer/cb/home'
+      preLoaderRoute: typeof CustomerCbHomeRouteImport
+      parentRoute: typeof CustomerCbRoute
+    }
+    '/customer/cb/history': {
+      id: '/customer/cb/history'
+      path: '/history'
+      fullPath: '/customer/cb/history'
+      preLoaderRoute: typeof CustomerCbHistoryRouteImport
+      parentRoute: typeof CustomerCbRoute
+    }
+    '/customer/cb/booking': {
+      id: '/customer/cb/booking'
+      path: '/booking'
+      fullPath: '/customer/cb/booking'
+      preLoaderRoute: typeof CustomerCbBookingRouteImport
+      parentRoute: typeof CustomerCbRoute
+    }
     '/customer/bookings/tracker': {
       id: '/customer/bookings/tracker'
       path: '/tracker'
@@ -1015,8 +1110,27 @@ const CustomerBookingsRouteChildren: CustomerBookingsRouteChildren = {
 const CustomerBookingsRouteWithChildren =
   CustomerBookingsRoute._addFileChildren(CustomerBookingsRouteChildren)
 
+interface CustomerCbRouteChildren {
+  CustomerCbBookingRoute: typeof CustomerCbBookingRoute
+  CustomerCbHistoryRoute: typeof CustomerCbHistoryRoute
+  CustomerCbHomeRoute: typeof CustomerCbHomeRoute
+  CustomerCbVehiclesRoute: typeof CustomerCbVehiclesRoute
+}
+
+const CustomerCbRouteChildren: CustomerCbRouteChildren = {
+  CustomerCbBookingRoute: CustomerCbBookingRoute,
+  CustomerCbHistoryRoute: CustomerCbHistoryRoute,
+  CustomerCbHomeRoute: CustomerCbHomeRoute,
+  CustomerCbVehiclesRoute: CustomerCbVehiclesRoute,
+}
+
+const CustomerCbRouteWithChildren = CustomerCbRoute._addFileChildren(
+  CustomerCbRouteChildren,
+)
+
 interface CustomerRouteChildren {
   CustomerBookingsRoute: typeof CustomerBookingsRouteWithChildren
+  CustomerCbRoute: typeof CustomerCbRouteWithChildren
   CustomerLoyaltyRoute: typeof CustomerLoyaltyRoute
   CustomerOverviewRoute: typeof CustomerOverviewRoute
   CustomerProfileRoute: typeof CustomerProfileRoute
@@ -1026,6 +1140,7 @@ interface CustomerRouteChildren {
 
 const CustomerRouteChildren: CustomerRouteChildren = {
   CustomerBookingsRoute: CustomerBookingsRouteWithChildren,
+  CustomerCbRoute: CustomerCbRouteWithChildren,
   CustomerLoyaltyRoute: CustomerLoyaltyRoute,
   CustomerOverviewRoute: CustomerOverviewRoute,
   CustomerProfileRoute: CustomerProfileRoute,

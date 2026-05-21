@@ -1,0 +1,115 @@
+.page {
+  position: relative;
+  padding: 1.5rem;
+}
+
+.tabsContainer {
+  margin-bottom: 1.5rem;
+}
+
+.tabsList {
+  display: flex;
+  gap: 0.25rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.5);
+  padding: 0.25rem;
+  width: fit-content;
+}
+
+.tabItem {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.tabItem:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+}
+
+.tabItemActive {
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+  box-shadow: 0 1px 3px hsl(var(--ring) / 0.1);
+}
+
+/* ── Status Badge Colors ── */
+.statusCONFIRMED {
+  background: hsl(210 100% 95%);
+  color: hsl(210 100% 40%);
+  border-color: hsl(210 100% 80%);
+}
+
+.statusCHECKED_IN {
+  background: hsl(185 70% 92%);
+  color: hsl(185 70% 32%);
+  border-color: hsl(185 70% 75%);
+}
+
+.statusIN_PROGRESS {
+  background: hsl(30 100% 92%);
+  color: hsl(30 100% 35%);
+  border-color: hsl(30 100% 75%);
+}
+
+.statusCOMPLETED {
+  background: hsl(142 71% 92%);
+  color: hsl(142 71% 30%);
+  border-color: hsl(142 71% 75%);
+}
+
+.statusCANCELLED {
+  background: hsl(0 84% 94%);
+  color: hsl(0 84% 40%);
+  border-color: hsl(0 84% 80%);
+}
+
+.statusNO_SHOW {
+  background: hsl(0 0% 92%);
+  color: hsl(0 0% 45%);
+  border-color: hsl(0 0% 78%);
+}
+
+/* ── Transaction Type Badges ── */
+.typeEARN {
+  background: hsl(142 71% 92%);
+  color: hsl(142 71% 30%);
+}
+
+.typeREDEEM {
+  background: hsl(0 84% 94%);
+  color: hsl(0 84% 40%);
+}
+
+.typeREFUND {
+  background: hsl(210 100% 95%);
+  color: hsl(210 100% 40%);
+}
+
+.typeBONUS {
+  background: hsl(43 96% 92%);
+  color: hsl(43 80% 30%);
+}
+
+.typeADJUSTMENT {
+  background: hsl(260 40% 93%);
+  color: hsl(260 40% 40%);
+}
+
+/* ── Points Coloring ── */
+.pointsPositive {
+  color: hsl(142 71% 35%);
+  font-weight: 700;
+}
+
+.pointsNegative {
+  color: hsl(0 84% 45%);
+  font-weight: 700;
+}

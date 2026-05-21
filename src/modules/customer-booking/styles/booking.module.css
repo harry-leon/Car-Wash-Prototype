@@ -1,0 +1,259 @@
+.page {
+  position: relative;
+  padding: 1.5rem;
+}
+
+/* ── Step Indicator ── */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.stepDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  transition: all 0.25s ease;
+}
+
+.stepDotActive {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.15);
+}
+
+.stepDotCompleted {
+  border-color: hsl(142 71% 45%);
+  background: hsl(142 71% 45%);
+  color: white;
+}
+
+.stepLine {
+  flex: 1;
+  height: 2px;
+  background: hsl(var(--border));
+}
+
+.stepLineCompleted {
+  background: hsl(142 71% 45%);
+}
+
+/* ── Step Content ── */
+.stepContent {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Selectable Cards ── */
+.selectableGrid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .selectableGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.selectableCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  background: hsl(var(--card) / 0.6);
+  border: 2px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 2px 8px hsl(var(--ring) / 0.05);
+  transition: all 0.2s ease;
+}
+
+.selectableCard:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 4px 16px hsl(var(--ring) / 0.12);
+}
+
+.selectableCardSelected {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.06);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12);
+}
+
+.selectableCardCheck {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* ── Date/Time Picker ── */
+.dateTimeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.dateTimeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dateTimeField label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.dateTimeField input,
+.dateTimeField select {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  font-size: 0.9rem;
+}
+
+.dateTimeField input:focus,
+.dateTimeField select:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+/* ── Promo / Combo / Points ── */
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--card) / 0.5);
+  margin-bottom: 0.75rem;
+}
+
+.pointsInput {
+  width: 120px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.pointsInput:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+/* ── Summary ── */
+.summaryCard {
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  background: hsl(var(--card) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.5);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px hsl(var(--ring) / 0.1);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
+}
+
+.summaryRowTotal {
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid hsl(var(--border));
+  border-bottom: none;
+}
+
+.summaryDiscount {
+  color: hsl(142 71% 45%);
+}
+
+/* ── Booking Nav ── */
+.navRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+/* ── Success ── */
+.successContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(142 71% 45%), hsl(142 71% 55%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  box-shadow: 0 8px 24px hsl(142 71% 45% / 0.3);
+}
+
+.successTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.successBookingId {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--muted) / 0.5);
+  border: 1px dashed hsl(var(--border));
+}
