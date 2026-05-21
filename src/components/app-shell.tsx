@@ -48,6 +48,15 @@ const CUSTOMER_NAV: NavGroup[] = [
       { to: "/customer/transactions", label: "Transactions", icon: ReceiptText },
     ],
   },
+  {
+    label: "Booking Module",
+    items: [
+      { to: "/customer/cb/home", label: "CB Home", icon: Sparkles, exact: true },
+      { to: "/customer/cb/vehicles", label: "CB Vehicles", icon: CarFront },
+      { to: "/customer/cb/booking", label: "CB Booking", icon: ClipboardList },
+      { to: "/customer/cb/history", label: "CB History", icon: ReceiptText },
+    ],
+  },
 ];
 
 const STAFF_NAV: NavGroup[] = [
@@ -111,7 +120,19 @@ export function AppShell({ role }: { role: Role }) {
   let headerTitle = "Overview";
   let headerSubtitle = "Manage your car wash activities";
 
-  if (pathname.includes("/profile")) {
+  if (pathname.includes("/cb/home")) {
+    headerTitle = "Customer Home";
+    headerSubtitle = "Your dashboard — points, combos, and packages";
+  } else if (pathname.includes("/cb/vehicles")) {
+    headerTitle = "My Vehicles";
+    headerSubtitle = "Add, edit, or remove your registered vehicles";
+  } else if (pathname.includes("/cb/booking")) {
+    headerTitle = "Book a Wash";
+    headerSubtitle = "Create a new booking in 6 easy steps";
+  } else if (pathname.includes("/cb/history")) {
+    headerTitle = "History";
+    headerSubtitle = "Bookings, washes, and point transactions";
+  } else if (pathname.includes("/profile")) {
     headerTitle = "Personal Profile";
     headerSubtitle = "Manage your account information and preferences";
   } else if (pathname.includes("/bookings")) {
