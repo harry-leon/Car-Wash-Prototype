@@ -7,100 +7,98 @@ import {
   ClipboardList,
   Droplets,
   Gift,
+  Home,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Phone,
+  ReceiptText,
   Settings2,
   Sparkles,
+  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getHomePath } from "@/lib/auth";
 import { type Role, useCarwashStore } from "@/lib/carwash-store";
-import { useCustomerBooking } from "@/modules/customer-booking/routes";
 import { cn } from "@/lib/utils";
+import { useCustomerBooking } from "@/modules/customer-booking/routes";
+import {
+  LanguageSwitcher,
+  ThemeSwitcher,
+  useLanguage,
+} from "@/modules/public-auth/components/LanguageSwitcher";
 
 type NavItem = {
   to: string;
   label: string;
+  labelVi?: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
 };
 
 type NavGroup = {
   label: string;
+  labelVi?: string;
   items: NavItem[];
 };
 
 const CUSTOMER_NAV: NavGroup[] = [
   {
     label: "Customer",
+    labelVi: "Khách hàng",
     items: [
-      { to: "/customer/home", label: "Home", icon: LayoutDashboard, exact: true },
-      { to: "/customer/vehicles", label: "Vehicles", icon: CarFront },
-      { to: "/customer/bookings/new", label: "New Booking", icon: ClipboardList, exact: true },
-      { to: "/customer/bookings", label: "Bookings", icon: ClipboardList, exact: true },
-      { to: "/customer/loyalty", label: "Loyalty", icon: Gift },
+      {
+        to: "/customer/home",
+        label: "Home",
+        labelVi: "Trang chủ",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      { to: "/customer/profile", label: "Profile", labelVi: "Hồ sơ", icon: UserRound },
+      { to: "/customer/vehicles", label: "Vehicles", labelVi: "Xe của tôi", icon: CarFront },
+      {
+        to: "/customer/bookings/new",
+        label: "New Booking",
+        labelVi: "Đặt lịch mới",
+        icon: ClipboardList,
+        exact: true,
+      },
+      {
+        to: "/customer/bookings",
+        label: "Bookings",
+        labelVi: "Lịch đặt",
+        icon: ClipboardList,
+        exact: true,
+      },
+      { to: "/customer/loyalty", label: "Loyalty", labelVi: "Tích điểm", icon: Gift },
+      {
+        to: "/customer/transactions",
+        label: "Transactions",
+        labelVi: "Giao dịch",
+        icon: ReceiptText,
+        exact: true,
+      },
     ],
   },
 ];
 
-const CUSTOMER_TEXT = {
-  en: {
-    customer: "Customer",
-    home: "Home",
-    vehicles: "Vehicles",
-    newBooking: "New Booking",
-    bookings: "Bookings",
-    loyalty: "Loyalty",
-    homeSubtitle: "Points, vouchers, active combo, and bookings",
-    vehiclesTitle: "My Vehicles",
-    vehiclesSubtitle: "Add, edit, or remove your registered vehicles",
-    bookingTitle: "Book a Wash",
-    bookingSubtitle: "Choose a wash, voucher, payment method, or active combo",
-    historyTitle: "History",
-    historySubtitle: "Bookings, washes, and point transactions",
-    loyaltyTitle: "Loyalty & Rewards",
-    loyaltySubtitle: "Track your points and membership benefits",
-    support: "Customer Support",
-    daily: "8:00 - 20:00 Daily",
-    signOut: "Sign out",
-    member: "Member",
-  },
-  vi: {
-    customer: "Khách hàng",
-    home: "Trang chủ",
-    vehicles: "Xe của tôi",
-    newBooking: "Đặt lịch mới",
-    bookings: "Lịch sử",
-    loyalty: "Đổi voucher",
-    homeSubtitle: "Điểm, voucher, combo đang dùng và đặt lịch",
-    vehiclesTitle: "Xe của tôi",
-    vehiclesSubtitle: "Thêm, sửa hoặc xóa xe đã đăng ký",
-    bookingTitle: "Đặt lịch rửa xe",
-    bookingSubtitle: "Chọn gói rửa, voucher, thanh toán hoặc combo",
-    historyTitle: "Lịch sử",
-    historySubtitle: "Lịch đặt, lượt rửa và giao dịch điểm",
-    loyaltyTitle: "Đổi điểm & Voucher",
-    loyaltySubtitle: "Theo dõi điểm và quyền lợi thành viên",
-    support: "Hỗ trợ khách hàng",
-    daily: "8:00 - 20:00 hằng ngày",
-    signOut: "Đăng xuất",
-    member: "Thành viên",
-  },
-} as const;
-
 const STAFF_NAV: NavGroup[] = [
   {
     label: "Staff",
+    labelVi: "Nhân viên",
     items: [
-      { to: "/staff/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { to: "/staff/operations", label: "Operations", icon: ClipboardList },
-      { to: "/staff/check-in", label: "Check-in", icon: Wrench },
-      { to: "/staff/notifications", label: "Notifications", icon: Bell },
+      {
+        to: "/staff/dashboard",
+        label: "Dashboard",
+        labelVi: "Bảng điều khiển",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      { to: "/staff/operations", label: "Operations", labelVi: "Vận hành", icon: ClipboardList },
+      { to: "/staff/check-in", label: "Check-in", labelVi: "Check-in", icon: Wrench },
     ],
   },
 ];
@@ -108,15 +106,22 @@ const STAFF_NAV: NavGroup[] = [
 const ADMIN_NAV: NavGroup[] = [
   {
     label: "Admin",
+    labelVi: "Quản trị",
     items: [
-      { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { to: "/admin/bookings", label: "Bookings", icon: ClipboardList },
-      { to: "/admin/customers", label: "Customers", icon: Users },
-      { to: "/admin/packages", label: "Wash Packages", icon: Droplets },
-      { to: "/admin/loyalty", label: "Loyalty", icon: Gift },
-      { to: "/admin/promotions", label: "Promotions", icon: Sparkles },
-      { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-      { to: "/admin/settings", label: "Settings", icon: Settings2 },
+      {
+        to: "/admin/dashboard",
+        label: "Dashboard",
+        labelVi: "Bảng điều khiển",
+        icon: LayoutDashboard,
+        exact: true,
+      },
+      { to: "/admin/bookings", label: "Bookings", labelVi: "Lịch đặt", icon: ClipboardList },
+      { to: "/admin/customers", label: "Customers", labelVi: "Khách hàng", icon: Users },
+      { to: "/admin/packages", label: "Wash Packages", labelVi: "Gói rửa xe", icon: Droplets },
+      { to: "/admin/loyalty", label: "Loyalty", labelVi: "Tích điểm", icon: Gift },
+      { to: "/admin/promotions", label: "Promotions", labelVi: "Khuyến mãi", icon: Sparkles },
+      { to: "/admin/reports", label: "Reports", labelVi: "Báo cáo", icon: BarChart3 },
+      { to: "/admin/settings", label: "Settings", labelVi: "Cài đặt", icon: Settings2 },
     ],
   },
 ];
@@ -127,37 +132,20 @@ function navForRole(role: Role) {
   return CUSTOMER_NAV;
 }
 
-function roleBadge(role: Role) {
-  return `${role} Workspace`;
-}
-
 export function AppShell({ role }: { role: Role }) {
+  const { lang, t } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { loginAs, logout } = useCarwashStore();
-  const { language, setLanguage } = useCustomerBooking();
-  const copy = CUSTOMER_TEXT[language];
+  const { setLanguage: setCustomerBookingLanguage } = useCustomerBooking();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const navGroups =
-    role === "Customer"
-      ? [
-          {
-            label: copy.customer,
-            items: [
-              { to: "/customer/home", label: copy.home, icon: LayoutDashboard, exact: true },
-              { to: "/customer/vehicles", label: copy.vehicles, icon: CarFront },
-              {
-                to: "/customer/bookings/new",
-                label: copy.newBooking,
-                icon: ClipboardList,
-                exact: true,
-              },
-              { to: "/customer/bookings", label: copy.bookings, icon: ClipboardList, exact: true },
-              { to: "/customer/loyalty", label: copy.loyalty, icon: Gift },
-            ],
-          },
-        ]
-      : navForRole(role);
+  const navGroups = navForRole(role);
+
+  useEffect(() => {
+    if (role === "Customer") {
+      setCustomerBookingLanguage(lang);
+    }
+  }, [lang, role, setCustomerBookingLanguage]);
 
   const switchRole = (nextRole: Role) => {
     loginAs(nextRole);
@@ -170,49 +158,63 @@ export function AppShell({ role }: { role: Role }) {
     role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
   const profileTag =
     role === "Customer" && currentCustomer
-      ? language === "vi"
-        ? `${copy.member} ${currentCustomer.tier}`
-        : `${currentCustomer.tier} ${copy.member}`
-      : `${role} Workspace`;
+      ? t(`${currentCustomer.tier} Member`, `Hạng ${currentCustomer.tier}`)
+      : t(`${role} Workspace`, `Không gian ${role}`);
 
   let headerTitle = "Overview";
+  let headerTitleVi = "Tổng quan";
   let headerSubtitle = "Manage your car wash activities";
+  let headerSubtitleVi = "Quản lý hoạt động rửa xe của bạn";
 
   if (pathname === "/customer/home" || pathname.includes("/cb/home")) {
-    headerTitle = copy.home;
-    headerSubtitle = copy.homeSubtitle;
-  } else if (pathname.includes("/cb/vehicles") || pathname === "/customer/vehicles") {
-    headerTitle = copy.vehiclesTitle;
-    headerSubtitle = copy.vehiclesSubtitle;
-  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings/new") {
-    headerTitle = copy.bookingTitle;
-    headerSubtitle = copy.bookingSubtitle;
-  } else if (pathname.includes("/cb/history") || pathname === "/customer/bookings") {
-    headerTitle = copy.historyTitle;
-    headerSubtitle = copy.historySubtitle;
+    headerTitle = "Customer Home";
+    headerTitleVi = "Trang khách hàng";
+    headerSubtitle = "Points, vouchers, active combo, and bookings";
+    headerSubtitleVi = "Điểm, voucher, combo đang dùng và lịch đặt";
   } else if (pathname.includes("/profile")) {
     headerTitle = "Personal Profile";
+    headerTitleVi = "Hồ sơ cá nhân";
     headerSubtitle = "Manage your account information and preferences";
-  } else if (pathname.includes("/bookings")) {
+    headerSubtitleVi = "Quản lý thông tin tài khoản và tùy chọn";
+  } else if (pathname.includes("/cb/vehicles") || pathname === "/customer/vehicles") {
+    headerTitle = "My Vehicles";
+    headerTitleVi = "Xe của tôi";
+    headerSubtitle = "Add, edit, or remove your registered vehicles";
+    headerSubtitleVi = "Thêm, sửa hoặc xóa xe đã đăng ký";
+  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings/new") {
+    headerTitle = "Book a Wash";
+    headerTitleVi = "Đặt lịch rửa xe";
+    headerSubtitle = "Choose a wash, voucher, payment method, or active combo";
+    headerSubtitleVi = "Chọn gói rửa, voucher, thanh toán hoặc combo";
+  } else if (pathname.includes("/cb/history") || pathname === "/customer/bookings") {
     headerTitle = "Your Bookings";
+    headerTitleVi = "Lịch đặt của bạn";
     headerSubtitle = "Track and manage your wash appointments";
-  } else if (pathname.includes("/vehicles")) {
-    headerTitle = "Your Vehicles";
-    headerSubtitle = "Manage your registered vehicles";
+    headerSubtitleVi = "Theo dõi và quản lý lịch hẹn rửa xe";
+  } else if (pathname.includes("/transactions")) {
+    headerTitle = "Transactions";
+    headerTitleVi = "Giao dịch";
+    headerSubtitle = "View your payment history and receipts";
+    headerSubtitleVi = "Xem lịch sử thanh toán và hóa đơn";
   } else if (pathname.includes("/loyalty")) {
-    headerTitle = copy.loyaltyTitle;
-    headerSubtitle = copy.loyaltySubtitle;
+    headerTitle = "Loyalty & Rewards";
+    headerTitleVi = "Tích điểm & quà thưởng";
+    headerSubtitle = "Track your points and membership benefits";
+    headerSubtitleVi = "Theo dõi điểm và quyền lợi thành viên";
   } else if (role === "Staff") {
     headerTitle = "Staff Dashboard";
+    headerTitleVi = "Bảng điều khiển nhân viên";
     headerSubtitle = "Manage check-ins and operations";
+    headerSubtitleVi = "Quản lý check-in và vận hành";
   } else if (role === "Admin") {
     headerTitle = "Admin Control Panel";
+    headerTitleVi = "Bảng quản trị";
     headerSubtitle = "System overview and configurations";
+    headerSubtitleVi = "Tổng quan hệ thống và cấu hình";
   }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground relative selection:bg-primary/30">
-      {/* Dynamic Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/5 blur-[120px] mix-blend-screen" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/5 blur-[120px] mix-blend-screen" />
@@ -243,7 +245,7 @@ export function AppShell({ role }: { role: Role }) {
                 <div className="animate-in fade-in duration-300">
                   <div className="font-bold tracking-tight">AURA CAR CARE</div>
                   <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {roleBadge(role)}
+                    {t(`${role} Workspace`, `Không gian ${role}`)}
                   </div>
                 </div>
               )}
@@ -268,7 +270,7 @@ export function AppShell({ role }: { role: Role }) {
           {!sidebarCollapsed && (
             <div className="mt-6 rounded-xl border border-border/50 bg-background/40 p-3 backdrop-blur-sm animate-in fade-in duration-500">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Demo Role Switch
+                {t("Demo Role Switch", "Chuyển vai trò demo")}
               </div>
               <div className="flex gap-1.5">
                 {(["Customer", "Staff", "Admin"] as const).map((item) => (
@@ -296,7 +298,7 @@ export function AppShell({ role }: { role: Role }) {
             <div key={group.label} className="mb-6">
               {!sidebarCollapsed && (
                 <div className="px-2 pb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 animate-in fade-in">
-                  {group.label}
+                  {t(group.label, group.labelVi ?? group.label)}
                 </div>
               )}
               <div className="space-y-1.5">
@@ -320,7 +322,9 @@ export function AppShell({ role }: { role: Role }) {
                           ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                           : "text-muted-foreground hover:bg-primary/5 hover:text-foreground",
                       )}
-                      title={sidebarCollapsed ? item.label : undefined}
+                      title={
+                        sidebarCollapsed ? t(item.label, item.labelVi ?? item.label) : undefined
+                      }
                     >
                       {active && !sidebarCollapsed && (
                         <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r-full bg-primary-foreground/30" />
@@ -333,7 +337,9 @@ export function AppShell({ role }: { role: Role }) {
                             : "text-muted-foreground group-hover:text-primary",
                         )}
                       />
-                      {!sidebarCollapsed && <span>{item.label}</span>}
+                      {!sidebarCollapsed && (
+                        <span>{t(item.label, item.labelVi ?? item.label)}</span>
+                      )}
                     </Link>
                   );
                 })}
@@ -350,12 +356,14 @@ export function AppShell({ role }: { role: Role }) {
                   <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-foreground">{copy.support}</div>
+                  <div className="text-xs font-bold text-foreground">
+                    {t("Customer Support", "Hỗ trợ khách hàng")}
+                  </div>
                   <div className="mt-0.5 text-base font-extrabold text-foreground tracking-tight">
                     1900 1234
                   </div>
                   <div className="mt-1 text-[10px] text-muted-foreground font-medium">
-                    {copy.daily}
+                    {t("8:00 - 20:00 Daily", "8:00 - 20:00 hằng ngày")}
                   </div>
                 </div>
               </div>
@@ -371,10 +379,10 @@ export function AppShell({ role }: { role: Role }) {
               "flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 p-3 text-sm font-bold text-foreground transition-all hover:bg-accent hover:text-accent-foreground shadow-sm group",
               sidebarCollapsed ? "px-0" : "px-4",
             )}
-            title={copy.signOut}
+            title={t("Sign out", "Đăng xuất")}
           >
             <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            {!sidebarCollapsed && <span>{copy.signOut}</span>}
+            {!sidebarCollapsed && <span>{t("Sign out", "Đăng xuất")}</span>}
           </button>
         </div>
       </aside>
@@ -392,50 +400,49 @@ export function AppShell({ role }: { role: Role }) {
               </div>
               <div className="hidden lg:block">
                 <div className="text-xl font-bold tracking-tight text-foreground">
-                  {headerTitle}
+                  {t(headerTitle, headerTitleVi)}
                 </div>
                 <div className="text-sm font-medium text-muted-foreground mt-0.5">
-                  {headerSubtitle}
+                  {t(headerSubtitle, headerSubtitleVi)}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-5">
-              {role === "Customer" && (
-                <div className="hidden rounded-full border border-border/60 bg-background/70 p-0.5 shadow-sm backdrop-blur sm:flex">
-                  {(["vi", "en"] as const).map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setLanguage(item)}
-                      className={cn(
-                        "h-7 min-w-9 rounded-full px-2.5 text-[11px] font-black uppercase leading-none transition-all",
-                        language === item
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
-                      )}
-                      aria-pressed={language === item}
-                    >
-                      {item === "vi" ? "VN" : "EN"}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 type="button"
-                onClick={() =>
-                  navigate({
-                    to:
-                      role === "Customer" ? "/customer/profile" : `/${role.toLowerCase()}/profile`,
-                  })
-                }
-                className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                onClick={() => {
+                  logout();
+                  window.location.assign("/");
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                title={t("Public home", "Trang chủ")}
               >
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff3b30] text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
-                  2
-                </span>
+                <Home className="h-4 w-4" />
               </button>
+
+              <div className="flex items-center gap-2">
+                <ThemeSwitcher />
+                <LanguageSwitcher />
+              </div>
+
+              {role === "Customer" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate({
+                      to: "/customer/bookings",
+                    })
+                  }
+                  className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title={t("Booking reminders", "Nhắc lịch đặt")}
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff3b30] text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+                    2
+                  </span>
+                </button>
+              )}
 
               <div className="h-10 w-px bg-border/60 hidden sm:block" />
 

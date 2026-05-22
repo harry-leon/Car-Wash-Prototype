@@ -5,22 +5,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockLogin, ROLE_REDIRECT } from "../mock/auth.mock";
+import { getHomePath } from "@/lib/auth";
 import { useCarwashStore } from "@/lib/carwash-store";
-import type { Role as StoreRole } from "@/lib/carwash-store";
-import { useLanguage } from "./LanguageSwitcher";
 import { ForgotPasswordModal } from "./ForgotPasswordModal";
-
-const ROLE_MAP: Record<string, StoreRole> = {
-  customer: "Customer",
-  admin: "Admin",
-  staff: "Staff",
-};
+import { useLanguage } from "./LanguageSwitcher";
 
 export function LoginForm() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { loginAs } = useCarwashStore();
+  const { loginWithCredentials } = useCarwashStore();
   const [emailOrPhone, setEmailOrPhone] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
@@ -28,23 +21,32 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailOrPhone.trim()) return toast.error(t("Email or phone is required.", "Vui lòng nhập email hoặc số điện thoại."));
-    if (!password.trim()) return toast.error(t("Password is required.", "Vui lòng nhập mật khẩu."));
+    if (!emailOrPhone.trim()) {
+      toast.error(t("Email or phone is required.", "Vui lòng nhập email hoặc số điện thoại."));
+      return;
+    }
+    if (!password.trim()) {
+      toast.error(t("Password is required.", "Vui lòng nhập mật khẩu."));
+      return;
+    }
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
-    const user = mockLogin(emailOrPhone.trim(), password.trim());
+    const user = loginWithCredentials(emailOrPhone.trim(), password.trim());
     if (!user) {
-      toast.error(t("Incorrect credentials. Try customer@aura.vn / password123", "Sai thông tin. Thử customer@aura.vn / password123"));
+      toast.error(
+        t(
+          "Incorrect credentials. Try customer@aura.vn / password123, or sign in with the phone number you registered.",
+          "Sai thông tin. Thử customer@aura.vn / password123, hoặc đăng nhập bằng số điện thoại đã đăng ký.",
+        ),
+      );
       setSubmitting(false);
       return;
     }
 
-    const storeRole = ROLE_MAP[user.role];
-    loginAs(storeRole);
-    toast.success(t(`Welcome, ${user.fullName}!`, `Chào mừng, ${user.fullName}!`));
-    navigate({ to: ROLE_REDIRECT[user.role] });
+    toast.success(t(`Welcome, ${user.displayName}!`, `Chào mừng, ${user.displayName}!`));
+    navigate({ to: getHomePath(user.role) });
   };
 
   return (
@@ -53,13 +55,13 @@ export function LoginForm() {
         <div className="space-y-2">
           <Label htmlFor="emailOrPhone">{t("Email / Phone", "Email / Số điện thoại")}</Label>
           <div className="relative group">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
             <Input
               id="emailOrPhone"
               value={emailOrPhone}
-              onChange={(e) => setEmailOrPhone(e.target.value)}
-              placeholder="customer@aura.vn"
-              className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+              onChange={(event) => setEmailOrPhone(event.target.value)}
+              placeholder="customer@aura.vn / 0901234567"
+              className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
             />
           </div>
         </div>
@@ -76,30 +78,31 @@ export function LoginForm() {
             </button>
           </div>
           <div className="relative group">
-            <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
             <Input
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
-              className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+              className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
             />
           </div>
         </div>
 
-        {/* Demo hint */}
         <div className="rounded-xl bg-accent/50 p-3 text-xs text-muted-foreground space-y-1">
-          <div className="font-semibold text-foreground">{t("Demo Accounts:", "Tài Khoản Demo:")}</div>
-          <div>👤 customer@aura.vn / password123</div>
-          <div>🔧 staff@aura.vn / staff123</div>
-          <div>🛡️ admin@aura.vn / admin123</div>
+          <div className="font-semibold text-foreground">
+            {t("Demo Accounts:", "Tài khoản demo:")}
+          </div>
+          <div>Customer: customer@aura.vn / password123</div>
+          <div>Staff: staff@aura.vn / staff123</div>
+          <div>Admin: admin@aura.vn / admin123</div>
         </div>
 
         <Button
           type="submit"
           size="lg"
-          className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
+          className="h-12 w-full text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
           disabled={submitting}
         >
           {submitting ? (
@@ -109,7 +112,7 @@ export function LoginForm() {
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              {t("Sign In", "Đăng Nhập")} <ArrowRight className="h-4 w-4" />
+              {t("Sign In", "Đăng nhập")} <ArrowRight className="h-4 w-4" />
             </span>
           )}
         </Button>

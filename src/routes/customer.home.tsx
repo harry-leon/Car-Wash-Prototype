@@ -15,8 +15,10 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useCarwashStore, type Tier } from "@/lib/carwash-store";
 import { useCustomerBooking } from "@/modules/customer-booking/routes";
 import type { BookingStatus } from "@/modules/customer-booking/types/booking.types";
+import type { CustomerProfile } from "@/modules/customer-booking/types/customer.types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/customer/home")({
@@ -25,19 +27,40 @@ export const Route = createFileRoute("/customer/home")({
 
 const activeStatuses: BookingStatus[] = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS"];
 
+function mapPortalTier(tier: Tier): CustomerProfile["tier"] {
+  if (tier === "Gold") return "Gold";
+  if (tier === "Platinum") return "Diamond";
+  return "Silver";
+}
+
 function CustomerHome() {
   const navigate = useNavigate();
+  const portalStore = useCarwashStore();
   const {
     activeCombo,
     bookings,
     comboPackages,
-    customer,
+    customer: bookingCustomer,
     language,
     redeemPointsForVoucher,
     servicePackages,
     setBookingDraft,
     vehicles,
   } = useCustomerBooking();
+  const portalCustomer = portalStore.customers.find(
+    (customer) => customer.id === portalStore.currentCustomerId,
+  );
+  const customer = portalCustomer
+    ? {
+        ...bookingCustomer,
+        id: portalCustomer.id,
+        fullName: portalCustomer.name,
+        tier: mapPortalTier(portalCustomer.tier),
+        isNewCustomer: portalCustomer.tier === "Member",
+        availablePoints: portalCustomer.points,
+        lifetimePoints: Math.max(bookingCustomer.lifetimePoints, portalCustomer.points),
+      }
+    : bookingCustomer;
   const [redeemPoints, setRedeemPoints] = useState(50);
   const [redeemMessage, setRedeemMessage] = useState("");
   const copy =

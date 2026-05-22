@@ -83,6 +83,7 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   notes?: string;
+  reminderMinutesBefore?: number;
   isWalkIn?: boolean;
   checkInAt?: string;
   washStatus?: WashStatus;
@@ -215,6 +216,15 @@ export interface NotificationItem {
   timestamp: Date;
 }
 
+export interface AuthAccount {
+  id: string;
+  role: Role;
+  emailOrPhone: string;
+  password: string;
+  customerId?: string;
+  staffId?: string;
+}
+
 export interface Adjustment {
   id: string;
   timestamp: Date;
@@ -263,9 +273,11 @@ export interface AppSettings {
 
 interface PendingRegistration {
   name: string;
+  email?: string;
   phone: string;
   countryCode: string;
-  vehicle: Omit<Vehicle, "id">;
+  password: string;
+  vehicle?: Omit<Vehicle, "id">;
   otpCode: string;
   otpExpiresAt: string;
   otpSentAt: string;
@@ -290,6 +302,7 @@ interface PersistedStore {
   customers: CustomerRecord[];
   staffMembers: StaffRecord[];
   currentStaffId: string;
+  authAccounts: AuthAccount[];
   vehiclesByCustomer: Record<string, Vehicle[]>;
   bookings: Booking[];
   washSessions: WashSessionRecord[];
@@ -325,6 +338,7 @@ interface Store {
   customers: CustomerRecord[];
   staffMembers: StaffRecord[];
   currentStaffId: string;
+  authAccounts: AuthAccount[];
   vehiclesByCustomer: Record<string, Vehicle[]>;
   bookings: Booking[];
   washSessions: WashSessionRecord[];
@@ -345,12 +359,18 @@ interface Store {
   settings: AppSettings;
   updateSettings: (patch: Partial<AppSettings>) => void;
   resetSettings: () => void;
+  loginWithCredentials: (
+    identifier: string,
+    password: string,
+  ) => { role: Role; displayName: string } | null;
   setPendingRegistration: (value: PendingRegistration | null) => void;
   requestRegistrationOtp: (input: {
     name: string;
+    email?: string;
     phone: string;
     countryCode: string;
-    vehicle: Omit<Vehicle, "id">;
+    password: string;
+    vehicle?: Omit<Vehicle, "id">;
   }) => string;
   resendRegistrationOtp: () => string;
   completeRegistration: (otpCode: string) => void;
@@ -370,6 +390,7 @@ interface Store {
     input: Omit<Booking, "id" | "customerId" | "createdAt" | "timeSlot">,
   ) => string;
   updateBookingStatus: (id: string, status: BookingStatus) => void;
+  setBookingReminder: (id: string, minutes: number | null) => void;
   setSelectedBookingId: (id: string | null) => void;
   createWalkInBooking: (input: {
     plate: string;
@@ -548,6 +569,36 @@ const staffSeed: StaffRecord[] = [
   { id: "s2", name: "Hoang Lan", role: "Staff", status: "Inactive" },
   { id: "s3", name: "Nguyen Van Hung", role: "Staff", status: "Active" },
   { id: "s4", name: "Pham Minh Duc", role: "Staff", status: "Active" },
+];
+
+const authAccountSeed: AuthAccount[] = [
+  {
+    id: "auth-customer-email",
+    role: "Customer",
+    emailOrPhone: "customer@aura.vn",
+    password: "password123",
+    customerId: "c1",
+  },
+  {
+    id: "auth-customer-phone",
+    role: "Customer",
+    emailOrPhone: "0901234567",
+    password: "password123",
+    customerId: "c1",
+  },
+  {
+    id: "auth-staff",
+    role: "Staff",
+    emailOrPhone: "staff@aura.vn",
+    password: "staff123",
+    staffId: "s1",
+  },
+  {
+    id: "auth-admin",
+    role: "Admin",
+    emailOrPhone: "admin@aura.vn",
+    password: "admin123",
+  },
 ];
 
 const vehicleSeed: Record<string, Vehicle[]> = {
@@ -845,8 +896,18 @@ export function formatDateISO(date: Date) {
   return localDateISO(date);
 }
 
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase();
+}
+
 function normalizePlate(plate: string) {
   return plate.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+export function maskProfanity(text: string) {
+  return text
+    .replace(/\b(fuck|shit|damn|bitch|asshole|bastard|dick)\b/gi, "***")
+    .replace(/(đụ|địt|dit|dm|đm|vcl|vl|cặc|lồn|loz|cc)/gi, "***");
 }
 
 function isVietnamesePhone(phone: string) {
@@ -1088,6 +1149,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   const [customers, setCustomers] = React.useState<CustomerRecord[]>(customerSeed);
   const [staffMembers, setStaffMembers] = React.useState<StaffRecord[]>(staffSeed);
   const [currentStaffId, setCurrentStaffId] = React.useState("s1");
+  const [authAccounts, setAuthAccounts] = React.useState<AuthAccount[]>(authAccountSeed);
   const [vehiclesByCustomer, setVehiclesByCustomer] =
     React.useState<Record<string, Vehicle[]>>(vehicleSeed);
   const [bookings, setBookings] = React.useState<Booking[]>(bookingSeed);
@@ -1143,6 +1205,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     const restoredWashSessions = persisted.washSessions ?? washSessionSeed;
     setStaffMembers(restoredStaffMembers);
     setCurrentStaffId(restoredActiveStaff.id);
+    setAuthAccounts(persisted.authAccounts ?? authAccountSeed);
     setVehiclesByCustomer(persisted.vehiclesByCustomer ?? vehicleSeed);
     setBookings(restoredBookings);
     setWashSessions(
@@ -1255,8 +1318,64 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setIsAuthenticated(true);
   }, []);
 
+  const loginWithCredentials = React.useCallback(
+    (identifier: string, password: string) => {
+      const normalizedIdentifier = normalizeIdentifier(identifier);
+      const account = authAccounts.find(
+        (item) => normalizeIdentifier(item.emailOrPhone) === normalizedIdentifier,
+      );
+      if (!account || account.password !== password) {
+        return null;
+      }
+
+      if (account.role === "Customer" && account.customerId) {
+        const customer = customers.find((item) => item.id === account.customerId);
+        if (!customer || customer.status !== "Active") {
+          return null;
+        }
+        setRole(account.role);
+        setIsAuthenticated(true);
+        setCurrentCustomerId(customer.id);
+        return { role: account.role, displayName: customer.name };
+      }
+
+      if (account.role === "Staff") {
+        const staff =
+          staffMembers.find((item) => item.id === account.staffId && item.status === "Active") ??
+          staffMembers.find((item) => item.status === "Active");
+        if (staff) {
+          setRole(account.role);
+          setIsAuthenticated(true);
+          setCurrentStaffId(staff.id);
+          return { role: account.role, displayName: staff.name };
+        }
+      }
+
+      setRole(account.role);
+      setIsAuthenticated(true);
+      return {
+        role: account.role,
+        displayName: account.role === "Admin" ? "Admin User" : "Staff User",
+      };
+    },
+    [authAccounts, customers, staffMembers],
+  );
+
   const logout = React.useCallback(() => {
     setIsAuthenticated(false);
+    if (typeof window !== "undefined") {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const payload = JSON.parse(raw) as PersistedStore;
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ ...payload, isAuthenticated: false }),
+        );
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    }
   }, []);
 
   const resolveActiveStaff = React.useCallback(() => {
@@ -1285,10 +1404,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   );
 
   const updateCustomerById = React.useCallback(
-    (
-      id: string,
-      patch: Partial<Pick<CustomerRecord, "status" | "name" | "email" | "tier">>,
-    ) => {
+    (id: string, patch: Partial<Pick<CustomerRecord, "status" | "name" | "email" | "tier">>) => {
       setCustomers((prev) =>
         prev.map((customer) => (customer.id === id ? { ...customer, ...patch } : customer)),
       );
@@ -1297,33 +1413,53 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   );
 
   const requestRegistrationOtp = React.useCallback(
-    (input: { name: string; phone: string; countryCode: string; vehicle: Omit<Vehicle, "id"> }) => {
+    (input: {
+      name: string;
+      email?: string;
+      phone: string;
+      countryCode: string;
+      password: string;
+      vehicle?: Omit<Vehicle, "id">;
+    }) => {
       if (!input.name.trim()) {
         throw new Error("Please enter your full name.");
       }
       if (!isVietnamesePhone(input.phone)) {
         throw new Error("Phone number must follow Vietnamese format.");
       }
-      if (!input.vehicle.brandModel.trim()) {
+      if (input.password.length < 6) {
+        throw new Error("Password must be at least 6 characters.");
+      }
+      if (input.vehicle && !input.vehicle.brandModel.trim()) {
         throw new Error("Please enter your vehicle brand & model.");
       }
-      const normalizedPlate = normalizePlate(input.vehicle.plate);
-      ensureVietnamesePlate(normalizedPlate);
+      const normalizedPlate = input.vehicle ? normalizePlate(input.vehicle.plate) : "";
+      if (input.vehicle) {
+        ensureVietnamesePlate(normalizedPlate);
+      }
       const duplicatePhone = customers.some(
         (customer) => customer.status === "Active" && customer.phone === input.phone,
       );
       if (duplicatePhone) {
         throw new Error("Phone number already exists.");
       }
+      const duplicateAccount = authAccounts.some(
+        (account) => normalizeIdentifier(account.emailOrPhone) === normalizeIdentifier(input.phone),
+      );
+      if (duplicateAccount) {
+        throw new Error("Phone number already has a sign-in account.");
+      }
       const challenge = createOtpChallenge();
       setPendingRegistration({
         ...input,
-        vehicle: { ...input.vehicle, plate: normalizedPlate },
+        email: input.email?.trim() || undefined,
+        phone: input.phone.trim(),
+        vehicle: input.vehicle ? { ...input.vehicle, plate: normalizedPlate } : undefined,
         ...challenge,
       });
       return challenge.otpCode;
     },
-    [customers],
+    [authAccounts, customers],
   );
 
   const resendRegistrationOtp = React.useCallback(() => {
@@ -1348,11 +1484,17 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (!isVietnamesePhone(pendingRegistration.phone)) {
         throw new Error("Phone number must follow Vietnamese format.");
       }
-      const normalizedPlate = normalizePlate(pendingRegistration.vehicle.plate);
-      ensureVietnamesePlate(normalizedPlate);
-      const existingOwner = Object.entries(vehiclesByCustomer).find(([, customerVehicles]) =>
-        customerVehicles.some((vehicle) => normalizePlate(vehicle.plate) === normalizedPlate),
-      );
+      const normalizedPlate = pendingRegistration.vehicle
+        ? normalizePlate(pendingRegistration.vehicle.plate)
+        : "";
+      if (pendingRegistration.vehicle) {
+        ensureVietnamesePlate(normalizedPlate);
+      }
+      const existingOwner = pendingRegistration.vehicle
+        ? Object.entries(vehiclesByCustomer).find(([, customerVehicles]) =>
+            customerVehicles.some((vehicle) => normalizePlate(vehicle.plate) === normalizedPlate),
+          )
+        : undefined;
       let transferredVehicleId: string | undefined;
       let previousCustomerId: string | undefined;
       let previousCustomerName = "Unknown";
@@ -1375,12 +1517,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         }));
       }
       const id = `c${Date.now()}`;
+      const email = pendingRegistration.email || `${pendingRegistration.phone}@autowash.local`;
       setCustomers((prev) => [
         ...prev,
         {
           id,
           name: pendingRegistration.name,
-          email: `${pendingRegistration.phone}@autowash.local`,
+          email,
           phone: pendingRegistration.phone,
           countryCode: pendingRegistration.countryCode,
           tier: "Member",
@@ -1390,16 +1533,30 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           phoneVerifiedAt: new Date().toISOString(),
         },
       ]);
-      setVehiclesByCustomer((prev) => ({
+      if (pendingRegistration.vehicle) {
+        setVehiclesByCustomer((prev) => ({
+          ...prev,
+          [id]: [
+            {
+              ...pendingRegistration.vehicle,
+              plate: normalizedPlate,
+              id: transferredVehicleId ?? `v-${Date.now()}`,
+            },
+          ],
+        }));
+      } else {
+        setVehiclesByCustomer((prev) => ({ ...prev, [id]: [] }));
+      }
+      setAuthAccounts((prev) => [
         ...prev,
-        [id]: [
-          {
-            ...pendingRegistration.vehicle,
-            plate: normalizedPlate,
-            id: transferredVehicleId ?? `v-${Date.now()}`,
-          },
-        ],
-      }));
+        {
+          id: `auth-${id}`,
+          role: "Customer",
+          emailOrPhone: pendingRegistration.phone,
+          password: pendingRegistration.password,
+          customerId: id,
+        },
+      ]);
       if (previousCustomerId) {
         setVehicleOwnershipHistory((prev) => [
           {
@@ -1699,6 +1856,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (!input.isWalkIn && slotLoad >= SHOP_CAPACITY) {
         throw new Error("Selected slot has reached shop capacity.");
       }
+      const safeNotes = input.notes ? maskProfanity(input.notes).trim() : undefined;
       const booking = {
         ...input,
         id: `B${String(nextBookingIdRef.current++).padStart(3, "0")}`,
@@ -1706,6 +1864,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         customerName: customer.name,
         customerPhone: customer.phone,
         createdAt: new Date().toISOString(),
+        notes: safeNotes || undefined,
         timeSlot,
       };
       setBookings((prev) => [booking, ...prev]);
@@ -1781,6 +1940,19 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     },
     [bookings, customers, pushNotification, settings.cancellationAutoBan],
   );
+
+  const setBookingReminder = React.useCallback((id: string, minutes: number | null) => {
+    setBookings((prev) =>
+      prev.map((booking) =>
+        booking.id === id
+          ? {
+              ...booking,
+              reminderMinutesBefore: minutes && minutes > 0 ? minutes : undefined,
+            }
+          : booking,
+      ),
+    );
+  }, []);
 
   const prepareSessionForBooking = React.useCallback(
     (bookingId: string) => {
@@ -2502,15 +2674,17 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     const upcomingReminderKeys: string[] = [];
     bookings.forEach((booking) => {
       if (booking.status !== "Confirmed") return;
+      if (!booking.reminderMinutesBefore) return;
       const diffMs = parseBookingDate(booking).getTime() - Date.now();
-      if (diffMs > 0 && diffMs <= 3600000) {
-        const key = `reminder:${booking.id}:${booking.dateISO}:${booking.timeSlot}`;
+      const reminderWindowMs = booking.reminderMinutesBefore * 60 * 1000;
+      if (diffMs > 0 && diffMs <= reminderWindowMs) {
+        const key = `reminder:${booking.id}:${booking.dateISO}:${booking.timeSlot}:${booking.reminderMinutesBefore}`;
         upcomingReminderKeys.push(key);
         if (!eventKeys.includes(key)) {
           pushNotification({
             type: "Reminder",
-            title: "1-Hour Reminder",
-            message: `${booking.id} for ${booking.vehiclePlate} starts within 1 hour.`,
+            title: `${booking.reminderMinutesBefore}-Minute Reminder`,
+            message: `${booking.id} for ${booking.vehiclePlate} starts at ${booking.timeSlot}.`,
           });
         }
       }
@@ -2532,6 +2706,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       customers,
       staffMembers,
       currentStaffId,
+      authAccounts,
       vehiclesByCustomer,
       bookings,
       washSessions,
@@ -2564,6 +2739,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     washSessions,
     currentCustomerId,
     currentStaffId,
+    authAccounts,
     customers,
     staffMembers,
     lastTransaction,
@@ -2610,6 +2786,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     customers,
     staffMembers,
     currentStaffId,
+    authAccounts,
     vehiclesByCustomer,
     bookings,
     washSessions,
@@ -2628,6 +2805,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     nextTierReviewDate,
     vehicleOwnershipHistory,
     settings,
+    loginWithCredentials,
     updateSettings: (patch) =>
       setSettings((prev) => ({
         business: { ...prev.business, ...(patch.business ?? {}) },
@@ -2654,6 +2832,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setCurrentCustomerId,
     createBookingFromLegacy,
     updateBookingStatus,
+    setBookingReminder,
     setSelectedBookingId,
     createWalkInBooking,
     checkInOperationalBooking,
@@ -2738,8 +2917,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         return { ok: false, error: "Service not found." };
       }
       const inUse = bookings.some(
-        (booking) =>
-          isActiveBooking(booking.status) && booking.services.includes(target.name),
+        (booking) => isActiveBooking(booking.status) && booking.services.includes(target.name),
       );
       if (inUse) {
         return { ok: false, error: "Service is referenced by an active booking." };
@@ -2755,9 +2933,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     },
     updatePromotion: (id, patch) =>
       setPromotions((prev) =>
-        prev.map((promotion) =>
-          promotion.id === id ? { ...promotion, ...patch } : promotion,
-        ),
+        prev.map((promotion) => (promotion.id === id ? { ...promotion, ...patch } : promotion)),
       ),
     togglePromotion: (id) =>
       setPromotions((prev) =>

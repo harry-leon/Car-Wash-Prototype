@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, LockKeyhole, Mail, User } from "lucide-react";
+import { ArrowRight, LockKeyhole, Phone, User } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,70 +11,92 @@ import { useLanguage } from "./LanguageSwitcher";
 export function RegisterForm() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { loginAs } = useCarwashStore();
+  const { requestRegistrationOtp } = useCarwashStore();
 
   const [fullName, setFullName] = React.useState("");
-  const [emailOrPhone, setEmailOrPhone] = React.useState("");
+  const [phone, setPhone] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim())
-      return toast.error(t("Full name is required.", "Vui lòng nhập họ và tên."));
-    if (!emailOrPhone.trim())
-      return toast.error(
-        t("Email or phone is required.", "Vui lòng nhập email hoặc số điện thoại."),
+    const normalizedPhone = phone.replace(/\D/g, "");
+
+    if (!fullName.trim()) {
+      toast.error(t("Full name is required.", "Vui lòng nhập họ và tên."));
+      return;
+    }
+    if (!/^0\d{9}$/.test(normalizedPhone)) {
+      toast.error(
+        t(
+          "Phone number must be 10 digits and start with 0.",
+          "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0.",
+        ),
       );
-    if (password.length < 6)
-      return toast.error(
+      return;
+    }
+    if (password.length < 6) {
+      toast.error(
         t("Password must be at least 6 characters.", "Mật khẩu phải có ít nhất 6 ký tự."),
       );
-    if (password !== confirmPassword)
-      return toast.error(t("Passwords do not match.", "Mật khẩu xác nhận không khớp."));
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error(t("Passwords do not match.", "Mật khẩu xác nhận không khớp."));
+      return;
+    }
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
-    // Mock register: log in as Customer with default values
-    // membershipTier = Member, availablePoints = 0, lifetimePoints = 0
-    loginAs("Customer");
-    toast.success(
-      t(
-        "Account created! Welcome to AURA CAR CARE.",
-        "Tạo tài khoản thành công! Chào mừng đến AURA CAR CARE.",
-      ),
-    );
-    navigate({ to: "/customer/home" });
+    try {
+      const otp = requestRegistrationOtp({
+        name: fullName.trim(),
+        phone: normalizedPhone,
+        countryCode: "+84",
+        password,
+      });
+      toast.success(
+        t(
+          `OTP sent to ${normalizedPhone}. Prototype code: ${otp}`,
+          `Đã gửi OTP đến ${normalizedPhone}. Mã prototype: ${otp}`,
+        ),
+      );
+      navigate({ to: "/verify" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to start registration.");
+      setSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="fullName">{t("Full Name", "Họ và Tên")}</Label>
+        <Label htmlFor="fullName">{t("Full Name", "Họ và tên")}</Label>
         <div className="relative group">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
             id="fullName"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(event) => setFullName(event.target.value)}
             placeholder={t("Nguyen Van A", "Nguyễn Văn A")}
-            className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+            className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="emailOrPhone">{t("Email / Phone", "Email / Số điện thoại")}</Label>
+        <Label htmlFor="phone">{t("Phone for OTP", "Số điện thoại nhận OTP")}</Label>
         <div className="relative group">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
-            id="emailOrPhone"
-            value={emailOrPhone}
-            onChange={(e) => setEmailOrPhone(e.target.value)}
-            placeholder="example@email.com"
-            className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+            id="phone"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="0901234567"
+            inputMode="tel"
+            className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
           />
         </div>
       </div>
@@ -82,14 +104,14 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="password">{t("Password", "Mật khẩu")}</Label>
         <div className="relative group">
-          <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
             id="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
             placeholder="••••••••"
-            className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+            className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
           />
         </div>
       </div>
@@ -97,42 +119,46 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">{t("Confirm Password", "Xác nhận mật khẩu")}</Label>
         <div className="relative group">
-          <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <LockKeyhole className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
             id="confirmPassword"
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(event) => setConfirmPassword(event.target.value)}
             placeholder="••••••••"
-            className="pl-10 h-12 bg-background/50 border-border/60 focus:bg-background transition-all"
+            className="h-12 border-border/60 bg-background/50 pl-10 transition-all focus:bg-background"
           />
         </div>
       </div>
 
-      {/* Default tier info */}
-      <div className="rounded-xl bg-primary/5 border border-primary/20 p-3 text-xs space-y-1 text-muted-foreground">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs space-y-1 text-muted-foreground">
         <div className="font-semibold text-foreground">
-          {t("New account defaults:", "Thông tin tài khoản mới:")}
+          {t("New customer defaults:", "Mặc định cho khách hàng mới:")}
         </div>
-        <div>🏅 {t("Membership Tier: Member", "Hạng thành viên: Member")}</div>
-        <div>⭐ {t("Available Points: 0", "Điểm hiện có: 0")}</div>
-        <div>🏆 {t("Lifetime Points: 0", "Tổng điểm tích lũy: 0")}</div>
+        <div>{t("Membership Tier: Member", "Hạng thành viên: Member")}</div>
+        <div>{t("Available Points: 0", "Điểm hiện có: 0")}</div>
+        <div>
+          {t(
+            "Phone must be verified by OTP before the account is activated.",
+            "Cần xác nhận OTP trước khi kích hoạt tài khoản.",
+          )}
+        </div>
       </div>
 
       <Button
         type="submit"
         size="lg"
-        className="w-full h-12 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all"
+        className="h-12 w-full text-base font-semibold shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
         disabled={submitting}
       >
         {submitting ? (
           <span className="flex items-center gap-2">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            {t("Creating account...", "Đang tạo tài khoản...")}
+            {t("Sending OTP...", "Đang gửi OTP...")}
           </span>
         ) : (
           <span className="flex items-center justify-center gap-2">
-            {t("Create Account", "Tạo Tài Khoản")} <ArrowRight className="h-4 w-4" />
+            {t("Send OTP", "Gửi OTP")} <ArrowRight className="h-4 w-4" />
           </span>
         )}
       </Button>
