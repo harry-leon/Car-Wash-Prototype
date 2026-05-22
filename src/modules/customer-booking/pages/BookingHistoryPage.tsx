@@ -1,5 +1,4 @@
 import { BookingTable } from "../components/BookingTable";
-import { HistoryTabs } from "../components/HistoryTabs";
 import { useCustomerBooking } from "../routes";
 import styles from "../styles/history.module.css";
 
@@ -18,7 +17,6 @@ export function BookingHistoryPage() {
           </p>
         </div>
       </header>
-      <HistoryTabs activeTab="bookings" />
       <BookingTable bookings={bookings} />
     </main>
   );

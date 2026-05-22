@@ -37,6 +37,7 @@ import { Route as CustomerTransactionsRouteImport } from './routes/customer.tran
 import { Route as CustomerProfileRouteImport } from './routes/customer.profile'
 import { Route as CustomerOverviewRouteImport } from './routes/customer.overview'
 import { Route as CustomerLoyaltyRouteImport } from './routes/customer.loyalty'
+import { Route as CustomerHomeRouteImport } from './routes/customer.home'
 import { Route as CustomerBookingsRouteImport } from './routes/customer.bookings'
 import { Route as BookingsTrackerRouteImport } from './routes/bookings.tracker'
 import { Route as BookingsNewRouteImport } from './routes/bookings.new'
@@ -202,6 +203,11 @@ const CustomerLoyaltyRoute = CustomerLoyaltyRouteImport.update({
   path: '/loyalty',
   getParentRoute: () => CustomerRoute,
 } as any)
+const CustomerHomeRoute = CustomerHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => CustomerRoute,
+} as any)
 const CustomerBookingsRoute = CustomerBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/home': typeof CustomerHomeRoute
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/home': typeof CustomerHomeRoute
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -465,6 +473,7 @@ export interface FileRoutesById {
   '/bookings/new': typeof BookingsNewRoute
   '/bookings/tracker': typeof BookingsTrackerRoute
   '/customer/bookings': typeof CustomerBookingsRouteWithChildren
+  '/customer/home': typeof CustomerHomeRoute
   '/customer/loyalty': typeof CustomerLoyaltyRoute
   '/customer/overview': typeof CustomerOverviewRoute
   '/customer/profile': typeof CustomerProfileRoute
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/home'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/home'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -629,6 +640,7 @@ export interface FileRouteTypes {
     | '/bookings/new'
     | '/bookings/tracker'
     | '/customer/bookings'
+    | '/customer/home'
     | '/customer/loyalty'
     | '/customer/overview'
     | '/customer/profile'
@@ -866,6 +878,13 @@ declare module '@tanstack/react-router' {
       path: '/loyalty'
       fullPath: '/customer/loyalty'
       preLoaderRoute: typeof CustomerLoyaltyRouteImport
+      parentRoute: typeof CustomerRoute
+    }
+    '/customer/home': {
+      id: '/customer/home'
+      path: '/home'
+      fullPath: '/customer/home'
+      preLoaderRoute: typeof CustomerHomeRouteImport
       parentRoute: typeof CustomerRoute
     }
     '/customer/bookings': {
@@ -1114,6 +1133,7 @@ const CustomerBookingsRouteWithChildren =
 
 interface CustomerRouteChildren {
   CustomerBookingsRoute: typeof CustomerBookingsRouteWithChildren
+  CustomerHomeRoute: typeof CustomerHomeRoute
   CustomerLoyaltyRoute: typeof CustomerLoyaltyRoute
   CustomerOverviewRoute: typeof CustomerOverviewRoute
   CustomerProfileRoute: typeof CustomerProfileRoute
@@ -1127,6 +1147,7 @@ interface CustomerRouteChildren {
 
 const CustomerRouteChildren: CustomerRouteChildren = {
   CustomerBookingsRoute: CustomerBookingsRouteWithChildren,
+  CustomerHomeRoute: CustomerHomeRoute,
   CustomerLoyaltyRoute: CustomerLoyaltyRoute,
   CustomerOverviewRoute: CustomerOverviewRoute,
   CustomerProfileRoute: CustomerProfileRoute,

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useCustomerBooking } from "../routes";
 import styles from "../styles/booking.module.css";
 
 const availableTimes = [
@@ -115,6 +116,26 @@ export function BookingTimePicker({
   onDateChange,
   onTimeChange,
 }: BookingTimePickerProps) {
+  const { language } = useCustomerBooking();
+  const copy =
+    language === "vi"
+      ? {
+          month: "Tháng đặt lịch",
+          slots: "khung giờ trống trong ngày đã chọn. Khung xám đã được đặt hoặc giữ cho vận hành.",
+          dateLabel: "Ngày đặt lịch",
+          available: "Còn trống",
+          unavailable: "Không khả dụng",
+          open: "Trống",
+        }
+      : {
+          month: "Booking month",
+          slots:
+            "slots available on the selected date. Gray slots are already booked or reserved for operations.",
+          dateLabel: "Booking date",
+          available: "Available",
+          unavailable: "Unavailable",
+          open: "Open",
+        };
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const selectedMonth = getMonthValue(date);
   const monthDates = useMemo(() => getMonthDates(selectedMonth), [selectedMonth]);
@@ -182,7 +203,7 @@ export function BookingTimePicker({
         tabIndex={0}
       >
         <div className={styles.monthPicker}>
-          <span>Booking month</span>
+          <span>{copy.month}</span>
           <button
             type="button"
             onClick={(event) => {
@@ -209,11 +230,10 @@ export function BookingTimePicker({
           ) : null}
         </div>
         <p>
-          {availableSlotCount} slots available on the selected date. Gray slots are already booked
-          or reserved for operations.
+          {availableSlotCount} {copy.slots}
         </p>
       </div>
-      <div className={styles.dateGrid} role="radiogroup" aria-label="Booking date">
+      <div className={styles.dateGrid} role="radiogroup" aria-label={copy.dateLabel}>
         {monthDates.map((option) => {
           const availableCount = availableTimes.filter((slot) =>
             isSlotAvailable(option.iso, slot),
@@ -231,20 +251,22 @@ export function BookingTimePicker({
             >
               <span>{option.day}</span>
               <strong>{option.date}</strong>
-              <small>{availableCount} open</small>
+              <small>
+                {availableCount} {copy.open}
+              </small>
             </button>
           );
         })}
       </div>
       <div className={styles.slotLegend} aria-hidden="true">
         <span>
-          <i className={styles.legendAvailable} /> Available
+          <i className={styles.legendAvailable} /> {copy.available}
         </span>
         <span>
-          <i className={styles.legendUnavailable} /> Unavailable
+          <i className={styles.legendUnavailable} /> {copy.unavailable}
         </span>
       </div>
-      <div className={styles.timeSlots} role="radiogroup" aria-label="Booking time">
+      <div className={styles.timeSlots} role="radiogroup" aria-label={copy.dateLabel}>
         {availableTimes.map((slot) => {
           const available = isSlotAvailable(date, slot);
           const selected = slot === time && available;
@@ -257,10 +279,10 @@ export function BookingTimePicker({
               onClick={() => onTimeChange(slot)}
               aria-pressed={selected}
               disabled={!available}
-              title={available ? "Available" : "Unavailable"}
+              title={available ? copy.available : copy.unavailable}
             >
               {slot}
-              <small>{available ? "Open" : "Unavailable"}</small>
+              <small>{available ? copy.open : copy.unavailable}</small>
             </button>
           );
         })}

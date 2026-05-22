@@ -20,10 +20,11 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getHomePath } from "@/lib/auth";
 import { type Role, useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
+import { useCustomerBooking } from "@/modules/customer-booking/routes";
 import {
   LanguageSwitcher,
   ThemeSwitcher,
@@ -33,14 +34,14 @@ import {
 type NavItem = {
   to: string;
   label: string;
-  labelVi: string;
+  labelVi?: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
 };
 
 type NavGroup = {
   label: string;
-  labelVi: string;
+  labelVi?: string;
   items: NavItem[];
 };
 
@@ -50,9 +51,9 @@ const CUSTOMER_NAV: NavGroup[] = [
     labelVi: "Khách hàng",
     items: [
       {
-        to: "/customer/overview",
-        label: "Overview",
-        labelVi: "Tổng quan",
+        to: "/customer/home",
+        label: "Home",
+        labelVi: "Trang chủ",
         icon: LayoutDashboard,
         exact: true,
       },
@@ -63,36 +64,23 @@ const CUSTOMER_NAV: NavGroup[] = [
         label: "New Booking",
         labelVi: "Đặt lịch mới",
         icon: ClipboardList,
+        exact: true,
       },
-      { to: "/customer/bookings", label: "Bookings", labelVi: "Lịch đặt", icon: ClipboardList },
+      {
+        to: "/customer/bookings",
+        label: "Bookings",
+        labelVi: "Lịch đặt",
+        icon: ClipboardList,
+        exact: true,
+      },
       { to: "/customer/loyalty", label: "Loyalty", labelVi: "Tích điểm", icon: Gift },
       {
         to: "/customer/transactions",
         label: "Transactions",
         labelVi: "Giao dịch",
         icon: ReceiptText,
-      },
-    ],
-  },
-  {
-    label: "Booking Module",
-    labelVi: "Module đặt lịch",
-    items: [
-      {
-        to: "/customer/cb/home",
-        label: "CB Home",
-        labelVi: "Trang CB",
-        icon: Sparkles,
         exact: true,
       },
-      { to: "/customer/cb/vehicles", label: "CB Vehicles", labelVi: "Xe CB", icon: CarFront },
-      {
-        to: "/customer/cb/booking",
-        label: "CB Booking",
-        labelVi: "Đặt lịch CB",
-        icon: ClipboardList,
-      },
-      { to: "/customer/cb/history", label: "CB History", labelVi: "Lịch sử CB", icon: ReceiptText },
     ],
   },
 ];
@@ -145,12 +133,19 @@ function navForRole(role: Role) {
 }
 
 export function AppShell({ role }: { role: Role }) {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { loginAs, logout } = useCarwashStore();
+  const { setLanguage: setCustomerBookingLanguage } = useCustomerBooking();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navGroups = navForRole(role);
+
+  useEffect(() => {
+    if (role === "Customer") {
+      setCustomerBookingLanguage(lang);
+    }
+  }, [lang, role, setCustomerBookingLanguage]);
 
   const switchRole = (nextRole: Role) => {
     loginAs(nextRole);
@@ -171,66 +166,55 @@ export function AppShell({ role }: { role: Role }) {
   let headerSubtitle = "Manage your car wash activities";
   let headerSubtitleVi = "Quản lý hoạt động rửa xe của bạn";
 
-  if (pathname.includes("/cb/home")) {
+  if (pathname === "/customer/home" || pathname.includes("/cb/home")) {
     headerTitle = "Customer Home";
     headerTitleVi = "Trang khách hàng";
-    headerSubtitleVi = "Bảng điều khiển điểm, combo và gói dịch vụ";
-    headerSubtitle = "Your dashboard — points, combos, and packages";
-  } else if (pathname.includes("/cb/vehicles")) {
-    headerTitle = "My Vehicles";
-    headerTitleVi = "Xe của tôi";
-    headerSubtitleVi = "Thêm, sửa hoặc xóa xe đã đăng ký";
-    headerSubtitle = "Add, edit, or remove your registered vehicles";
-  } else if (pathname.includes("/cb/booking")) {
-    headerTitle = "Book a Wash";
-    headerTitleVi = "Đặt lịch rửa xe";
-    headerSubtitleVi = "Tạo lịch đặt mới trong 6 bước";
-    headerSubtitle = "Create a new booking in 6 easy steps";
-  } else if (pathname.includes("/cb/history")) {
-    headerTitle = "History";
-    headerTitleVi = "Lịch sử";
-    headerSubtitleVi = "Lịch đặt, lượt rửa và giao dịch điểm";
-    headerSubtitle = "Bookings, washes, and point transactions";
+    headerSubtitle = "Points, vouchers, active combo, and bookings";
+    headerSubtitleVi = "Điểm, voucher, combo đang dùng và lịch đặt";
   } else if (pathname.includes("/profile")) {
     headerTitle = "Personal Profile";
     headerTitleVi = "Hồ sơ cá nhân";
-    headerSubtitleVi = "Quản lý thông tin tài khoản và tùy chọn";
     headerSubtitle = "Manage your account information and preferences";
-  } else if (pathname.includes("/bookings")) {
+    headerSubtitleVi = "Quản lý thông tin tài khoản và tùy chọn";
+  } else if (pathname.includes("/cb/vehicles") || pathname === "/customer/vehicles") {
+    headerTitle = "My Vehicles";
+    headerTitleVi = "Xe của tôi";
+    headerSubtitle = "Add, edit, or remove your registered vehicles";
+    headerSubtitleVi = "Thêm, sửa hoặc xóa xe đã đăng ký";
+  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings/new") {
+    headerTitle = "Book a Wash";
+    headerTitleVi = "Đặt lịch rửa xe";
+    headerSubtitle = "Choose a wash, voucher, payment method, or active combo";
+    headerSubtitleVi = "Chọn gói rửa, voucher, thanh toán hoặc combo";
+  } else if (pathname.includes("/cb/history") || pathname === "/customer/bookings") {
     headerTitle = "Your Bookings";
     headerTitleVi = "Lịch đặt của bạn";
-    headerSubtitleVi = "Theo dõi và quản lý lịch hẹn rửa xe";
     headerSubtitle = "Track and manage your wash appointments";
+    headerSubtitleVi = "Theo dõi và quản lý lịch hẹn rửa xe";
   } else if (pathname.includes("/transactions")) {
     headerTitle = "Transactions";
     headerTitleVi = "Giao dịch";
-    headerSubtitleVi = "Xem lịch sử thanh toán và hóa đơn";
     headerSubtitle = "View your payment history and receipts";
-  } else if (pathname.includes("/vehicles")) {
-    headerTitle = "Your Vehicles";
-    headerTitleVi = "Xe của bạn";
-    headerSubtitleVi = "Quản lý xe đã đăng ký";
-    headerSubtitle = "Manage your registered vehicles";
+    headerSubtitleVi = "Xem lịch sử thanh toán và hóa đơn";
   } else if (pathname.includes("/loyalty")) {
     headerTitle = "Loyalty & Rewards";
     headerTitleVi = "Tích điểm & quà thưởng";
-    headerSubtitleVi = "Theo dõi điểm và quyền lợi thành viên";
     headerSubtitle = "Track your points and membership benefits";
+    headerSubtitleVi = "Theo dõi điểm và quyền lợi thành viên";
   } else if (role === "Staff") {
     headerTitle = "Staff Dashboard";
     headerTitleVi = "Bảng điều khiển nhân viên";
-    headerSubtitleVi = "Quản lý check-in và vận hành";
     headerSubtitle = "Manage check-ins and operations";
+    headerSubtitleVi = "Quản lý check-in và vận hành";
   } else if (role === "Admin") {
     headerTitle = "Admin Control Panel";
     headerTitleVi = "Bảng quản trị";
-    headerSubtitleVi = "Tổng quan hệ thống và cấu hình";
     headerSubtitle = "System overview and configurations";
+    headerSubtitleVi = "Tổng quan hệ thống và cấu hình";
   }
 
   return (
     <div className="flex min-h-screen bg-background text-foreground relative selection:bg-primary/30">
-      {/* Dynamic Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/5 blur-[120px] mix-blend-screen" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/5 blur-[120px] mix-blend-screen" />
@@ -314,7 +298,7 @@ export function AppShell({ role }: { role: Role }) {
             <div key={group.label} className="mb-6">
               {!sidebarCollapsed && (
                 <div className="px-2 pb-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 animate-in fade-in">
-                  {t(group.label, group.labelVi)}
+                  {t(group.label, group.labelVi ?? group.label)}
                 </div>
               )}
               <div className="space-y-1.5">
@@ -338,7 +322,9 @@ export function AppShell({ role }: { role: Role }) {
                           ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                           : "text-muted-foreground hover:bg-primary/5 hover:text-foreground",
                       )}
-                      title={sidebarCollapsed ? t(item.label, item.labelVi) : undefined}
+                      title={
+                        sidebarCollapsed ? t(item.label, item.labelVi ?? item.label) : undefined
+                      }
                     >
                       {active && !sidebarCollapsed && (
                         <div className="absolute left-0 top-1/2 h-1/2 w-1 -translate-y-1/2 rounded-r-full bg-primary-foreground/30" />
@@ -351,7 +337,9 @@ export function AppShell({ role }: { role: Role }) {
                             : "text-muted-foreground group-hover:text-primary",
                         )}
                       />
-                      {!sidebarCollapsed && <span>{t(item.label, item.labelVi)}</span>}
+                      {!sidebarCollapsed && (
+                        <span>{t(item.label, item.labelVi ?? item.label)}</span>
+                      )}
                     </Link>
                   );
                 })}

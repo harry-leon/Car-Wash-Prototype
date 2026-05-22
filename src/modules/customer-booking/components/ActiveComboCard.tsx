@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import type { ActiveCombo } from "../types/customer.types";
 import type { Vehicle } from "../types/vehicle.types";
 import styles from "../styles/customer-home.module.css";
@@ -7,6 +6,7 @@ import styles from "../styles/customer-home.module.css";
 interface ActiveComboCardProps {
   combo: ActiveCombo;
   linkedVehicle?: Vehicle;
+  onBookWash?: () => void;
 }
 
 function getDaysUntil(dateValue: string) {
@@ -16,7 +16,7 @@ function getDaysUntil(dateValue: string) {
   return Math.max(0, Math.ceil(diff / 86_400_000));
 }
 
-export function ActiveComboCard({ combo, linkedVehicle }: ActiveComboCardProps) {
+export function ActiveComboCard({ combo, linkedVehicle, onBookWash }: ActiveComboCardProps) {
   const [showBarcode, setShowBarcode] = useState(false);
   const expiresInDays = getDaysUntil(combo.validUntil);
   const bars = combo.qrCodeText.split("").slice(0, 18);
@@ -46,9 +46,9 @@ export function ActiveComboCard({ combo, linkedVehicle }: ActiveComboCardProps) 
           </div>
         </dl>
         <div className={styles.activeComboActions}>
-          <Link className={styles.comboBookButton} to="/customer/cb/booking">
+          <button className={styles.comboBookButton} type="button" onClick={onBookWash}>
             Book a wash
-          </Link>
+          </button>
           <button
             type="button"
             className={styles.barcodeToggleButton}
@@ -109,4 +109,3 @@ export function ActiveComboCard({ combo, linkedVehicle }: ActiveComboCardProps) 
     </article>
   );
 }
-

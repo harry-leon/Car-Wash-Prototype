@@ -1,4 +1,3 @@
-import { HistoryTabs } from "../components/HistoryTabs";
 import { TransactionTable } from "../components/TransactionTable";
 import { useCustomerBooking } from "../routes";
 import styles from "../styles/history.module.css";
@@ -12,10 +11,9 @@ export function PointTransactionsPage() {
         <div>
           <span>History</span>
           <h1>Point Transactions</h1>
-          <p>A dedicated ledger for earn, redeem, refund, bonus, and adjustment transactions.</p>
+          <p>A dedicated ledger for earn, redeem, bonus, adjustment, and expire transactions.</p>
         </div>
       </header>
-      <HistoryTabs activeTab="points" />
       <TransactionTable transactions={pointTransactions} />
     </main>
   );

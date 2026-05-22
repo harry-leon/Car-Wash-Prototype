@@ -34,15 +34,11 @@ export const MOCK_USERS: MockUser[] = [
 ];
 
 export const ROLE_REDIRECT: Record<string, string> = {
-  customer: "/customer/overview",
+  customer: "/customer/home",
   admin: "/admin/dashboard",
   staff: "/staff/dashboard",
 };
 
 export function mockLogin(emailOrPhone: string, password: string): MockUser | null {
-  return (
-    MOCK_USERS.find(
-      (u) => u.emailOrPhone === emailOrPhone && u.password === password,
-    ) ?? null
-  );
+  return MOCK_USERS.find((u) => u.emailOrPhone === emailOrPhone && u.password === password) ?? null;
 }
