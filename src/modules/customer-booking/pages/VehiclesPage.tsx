@@ -11,13 +11,43 @@ import styles from "../styles/vehicles.module.css";
 const activeBookingStatuses: BookingStatus[] = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS"];
 
 export function VehiclesPage() {
-  const { activeCombo, bookings, deleteVehicle, setDefaultVehicle, vehicles } =
+  const { activeCombo, bookings, deleteVehicle, language, setDefaultVehicle, vehicles } =
     useCustomerBooking();
   const navigate = useNavigate();
   const [isAdding, setIsAdding] = useState(false);
+  const copy =
+    language === "vi"
+      ? {
+          eyebrow: "Garage khách hàng",
+          title: "Xe sẵn sàng để đặt lịch",
+          description:
+            "Quản lý biển số, mẫu xe, xe mặc định và combo liên kết để mỗi lần đặt lịch đi đúng luồng dịch vụ.",
+          add: "Thêm xe",
+          defaultVehicle: "Xe thanh toán mặc định",
+          notSelected: "Chưa chọn",
+          defaultHint: "được chọn sẵn trong luồng đặt lịch.",
+          setDefaultHint: "Chọn một xe làm mặc định để đặt lịch nhanh hơn.",
+          total: "Tổng số xe",
+          active: "Đang có lịch",
+          combo: "Có combo",
+        }
+      : {
+          eyebrow: "Customer garage",
+          title: "Vehicles ready for booking",
+          description:
+            "Keep plate, model, default checkout vehicle, and combo linkage accurate so every wash booking starts with the right service logic.",
+          add: "Add vehicle",
+          defaultVehicle: "Default checkout vehicle",
+          notSelected: "Not selected",
+          defaultHint: "is preselected in the booking flow.",
+          setDefaultHint: "Set a default vehicle to shorten the booking flow.",
+          total: "Total vehicles",
+          active: "With active booking",
+          combo: "Combo linked",
+        };
 
   const handleEdit = (vehicleId: string) => {
-    navigate({ to: "/customer/cb/vehicles", search: { editId: vehicleId } });
+    navigate({ to: "/customer/vehicles", search: { editId: vehicleId } });
   };
 
   if (isAdding) {
@@ -39,27 +69,24 @@ export function VehiclesPage() {
     <main className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <span>Customer garage</span>
-          <h1>Vehicles ready for booking</h1>
-          <p>
-            Keep plate, model, default checkout vehicle, and combo linkage accurate so every wash
-            booking starts with the right service logic.
-          </p>
+          <span>{copy.eyebrow}</span>
+          <h1>{copy.title}</h1>
+          <p>{copy.description}</p>
         </div>
         <button className={styles.primaryButton} type="button" onClick={() => setIsAdding(true)}>
-          Add vehicle
+          {copy.add}
         </button>
       </header>
 
       <section className={styles.garageSummary} aria-label="Garage summary">
         <div className={styles.defaultVehiclePanel}>
           <div>
-            <span>Default checkout vehicle</span>
-            <strong>{defaultVehicle ? defaultVehicle.licensePlate : "Not selected"}</strong>
+            <span>{copy.defaultVehicle}</span>
+            <strong>{defaultVehicle ? defaultVehicle.licensePlate : copy.notSelected}</strong>
             <p>
               {defaultVehicle
-                ? `${defaultVehicle.brand} ${defaultVehicle.model} is preselected in the booking flow.`
-                : "Set a default vehicle to shorten the booking flow."}
+                ? `${defaultVehicle.brand} ${defaultVehicle.model} ${copy.defaultHint}`
+                : copy.setDefaultHint}
             </p>
           </div>
           <div className={styles.defaultVehicleVisual} aria-hidden="true">
@@ -85,15 +112,15 @@ export function VehiclesPage() {
 
         <dl className={styles.garageStats}>
           <div>
-            <dt>Total vehicles</dt>
+            <dt>{copy.total}</dt>
             <dd>{vehicles.length}</dd>
           </div>
           <div>
-            <dt>With active booking</dt>
+            <dt>{copy.active}</dt>
             <dd>{vehiclesWithBooking.length}</dd>
           </div>
           <div>
-            <dt>Combo linked</dt>
+            <dt>{copy.combo}</dt>
             <dd>{activeCombo ? "1" : "0"}</dd>
           </div>
         </dl>

@@ -12,16 +12,15 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Phone,
-  ReceiptText,
   Settings2,
   Sparkles,
-  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { getHomePath } from "@/lib/auth";
 import { type Role, useCarwashStore } from "@/lib/carwash-store";
+import { useCustomerBooking } from "@/modules/customer-booking/routes";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -40,25 +39,59 @@ const CUSTOMER_NAV: NavGroup[] = [
   {
     label: "Customer",
     items: [
-      { to: "/customer/overview", label: "Overview", icon: LayoutDashboard, exact: true },
-      { to: "/customer/profile", label: "Profile", icon: UserRound },
+      { to: "/customer/home", label: "Home", icon: LayoutDashboard, exact: true },
       { to: "/customer/vehicles", label: "Vehicles", icon: CarFront },
-      { to: "/customer/bookings/new", label: "New Booking", icon: ClipboardList },
-      { to: "/customer/bookings", label: "Bookings", icon: ClipboardList },
+      { to: "/customer/bookings/new", label: "New Booking", icon: ClipboardList, exact: true },
+      { to: "/customer/bookings", label: "Bookings", icon: ClipboardList, exact: true },
       { to: "/customer/loyalty", label: "Loyalty", icon: Gift },
-      { to: "/customer/transactions", label: "Transactions", icon: ReceiptText },
-    ],
-  },
-  {
-    label: "Booking Module",
-    items: [
-      { to: "/customer/cb/home", label: "CB Home", icon: Sparkles, exact: true },
-      { to: "/customer/cb/vehicles", label: "CB Vehicles", icon: CarFront },
-      { to: "/customer/cb/booking", label: "CB Booking", icon: ClipboardList },
-      { to: "/customer/cb/history", label: "CB History", icon: ReceiptText },
     ],
   },
 ];
+
+const CUSTOMER_TEXT = {
+  en: {
+    customer: "Customer",
+    home: "Home",
+    vehicles: "Vehicles",
+    newBooking: "New Booking",
+    bookings: "Bookings",
+    loyalty: "Loyalty",
+    homeSubtitle: "Points, vouchers, active combo, and bookings",
+    vehiclesTitle: "My Vehicles",
+    vehiclesSubtitle: "Add, edit, or remove your registered vehicles",
+    bookingTitle: "Book a Wash",
+    bookingSubtitle: "Choose a wash, voucher, payment method, or active combo",
+    historyTitle: "History",
+    historySubtitle: "Bookings, washes, and point transactions",
+    loyaltyTitle: "Loyalty & Rewards",
+    loyaltySubtitle: "Track your points and membership benefits",
+    support: "Customer Support",
+    daily: "8:00 - 20:00 Daily",
+    signOut: "Sign out",
+    member: "Member",
+  },
+  vi: {
+    customer: "Khách hàng",
+    home: "Trang chủ",
+    vehicles: "Xe của tôi",
+    newBooking: "Đặt lịch mới",
+    bookings: "Lịch sử",
+    loyalty: "Đổi voucher",
+    homeSubtitle: "Điểm, voucher, combo đang dùng và đặt lịch",
+    vehiclesTitle: "Xe của tôi",
+    vehiclesSubtitle: "Thêm, sửa hoặc xóa xe đã đăng ký",
+    bookingTitle: "Đặt lịch rửa xe",
+    bookingSubtitle: "Chọn gói rửa, voucher, thanh toán hoặc combo",
+    historyTitle: "Lịch sử",
+    historySubtitle: "Lịch đặt, lượt rửa và giao dịch điểm",
+    loyaltyTitle: "Đổi điểm & Voucher",
+    loyaltySubtitle: "Theo dõi điểm và quyền lợi thành viên",
+    support: "Hỗ trợ khách hàng",
+    daily: "8:00 - 20:00 hằng ngày",
+    signOut: "Đăng xuất",
+    member: "Thành viên",
+  },
+} as const;
 
 const STAFF_NAV: NavGroup[] = [
   {
@@ -102,8 +135,29 @@ export function AppShell({ role }: { role: Role }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { loginAs, logout } = useCarwashStore();
+  const { language, setLanguage } = useCustomerBooking();
+  const copy = CUSTOMER_TEXT[language];
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const navGroups = navForRole(role);
+  const navGroups =
+    role === "Customer"
+      ? [
+          {
+            label: copy.customer,
+            items: [
+              { to: "/customer/home", label: copy.home, icon: LayoutDashboard, exact: true },
+              { to: "/customer/vehicles", label: copy.vehicles, icon: CarFront },
+              {
+                to: "/customer/bookings/new",
+                label: copy.newBooking,
+                icon: ClipboardList,
+                exact: true,
+              },
+              { to: "/customer/bookings", label: copy.bookings, icon: ClipboardList, exact: true },
+              { to: "/customer/loyalty", label: copy.loyalty, icon: Gift },
+            ],
+          },
+        ]
+      : navForRole(role);
 
   const switchRole = (nextRole: Role) => {
     loginAs(nextRole);
@@ -115,38 +169,39 @@ export function AppShell({ role }: { role: Role }) {
   const profileName =
     role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
   const profileTag =
-    role === "Customer" && currentCustomer ? `${currentCustomer.tier} Member` : `${role} Workspace`;
+    role === "Customer" && currentCustomer
+      ? language === "vi"
+        ? `${copy.member} ${currentCustomer.tier}`
+        : `${currentCustomer.tier} ${copy.member}`
+      : `${role} Workspace`;
 
   let headerTitle = "Overview";
   let headerSubtitle = "Manage your car wash activities";
 
-  if (pathname.includes("/cb/home")) {
-    headerTitle = "Customer Home";
-    headerSubtitle = "Your dashboard — points, combos, and packages";
-  } else if (pathname.includes("/cb/vehicles")) {
-    headerTitle = "My Vehicles";
-    headerSubtitle = "Add, edit, or remove your registered vehicles";
-  } else if (pathname.includes("/cb/booking")) {
-    headerTitle = "Book a Wash";
-    headerSubtitle = "Create a new booking in 6 easy steps";
-  } else if (pathname.includes("/cb/history")) {
-    headerTitle = "History";
-    headerSubtitle = "Bookings, washes, and point transactions";
+  if (pathname === "/customer/home" || pathname.includes("/cb/home")) {
+    headerTitle = copy.home;
+    headerSubtitle = copy.homeSubtitle;
+  } else if (pathname.includes("/cb/vehicles") || pathname === "/customer/vehicles") {
+    headerTitle = copy.vehiclesTitle;
+    headerSubtitle = copy.vehiclesSubtitle;
+  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings/new") {
+    headerTitle = copy.bookingTitle;
+    headerSubtitle = copy.bookingSubtitle;
+  } else if (pathname.includes("/cb/history") || pathname === "/customer/bookings") {
+    headerTitle = copy.historyTitle;
+    headerSubtitle = copy.historySubtitle;
   } else if (pathname.includes("/profile")) {
     headerTitle = "Personal Profile";
     headerSubtitle = "Manage your account information and preferences";
   } else if (pathname.includes("/bookings")) {
     headerTitle = "Your Bookings";
     headerSubtitle = "Track and manage your wash appointments";
-  } else if (pathname.includes("/transactions")) {
-    headerTitle = "Transactions";
-    headerSubtitle = "View your payment history and receipts";
   } else if (pathname.includes("/vehicles")) {
     headerTitle = "Your Vehicles";
     headerSubtitle = "Manage your registered vehicles";
   } else if (pathname.includes("/loyalty")) {
-    headerTitle = "Loyalty & Rewards";
-    headerSubtitle = "Track your points and membership benefits";
+    headerTitle = copy.loyaltyTitle;
+    headerSubtitle = copy.loyaltySubtitle;
   } else if (role === "Staff") {
     headerTitle = "Staff Dashboard";
     headerSubtitle = "Manage check-ins and operations";
@@ -295,12 +350,12 @@ export function AppShell({ role }: { role: Role }) {
                   <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-foreground">Customer Support</div>
+                  <div className="text-xs font-bold text-foreground">{copy.support}</div>
                   <div className="mt-0.5 text-base font-extrabold text-foreground tracking-tight">
                     1900 1234
                   </div>
                   <div className="mt-1 text-[10px] text-muted-foreground font-medium">
-                    8:00 - 20:00 Daily
+                    {copy.daily}
                   </div>
                 </div>
               </div>
@@ -316,10 +371,10 @@ export function AppShell({ role }: { role: Role }) {
               "flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 p-3 text-sm font-bold text-foreground transition-all hover:bg-accent hover:text-accent-foreground shadow-sm group",
               sidebarCollapsed ? "px-0" : "px-4",
             )}
-            title="Sign out"
+            title={copy.signOut}
           >
             <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            {!sidebarCollapsed && <span>Sign out</span>}
+            {!sidebarCollapsed && <span>{copy.signOut}</span>}
           </button>
         </div>
       </aside>
@@ -346,6 +401,26 @@ export function AppShell({ role }: { role: Role }) {
             </div>
 
             <div className="flex items-center gap-5">
+              {role === "Customer" && (
+                <div className="hidden rounded-full border border-border/60 bg-background/70 p-0.5 shadow-sm backdrop-blur sm:flex">
+                  {(["vi", "en"] as const).map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setLanguage(item)}
+                      className={cn(
+                        "h-7 min-w-9 rounded-full px-2.5 text-[11px] font-black uppercase leading-none transition-all",
+                        language === item
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
+                      )}
+                      aria-pressed={language === item}
+                    >
+                      {item === "vi" ? "VN" : "EN"}
+                    </button>
+                  ))}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() =>

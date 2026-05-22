@@ -27,7 +27,7 @@ export function VehicleFormPage({ vehicleId, onDone }: VehicleFormPageProps) {
       return;
     }
 
-    navigate({ to: "/customer/cb/vehicles" });
+    navigate({ to: "/customer/vehicles" });
   };
 
   const handleCancel = () => {
@@ -36,7 +36,7 @@ export function VehicleFormPage({ vehicleId, onDone }: VehicleFormPageProps) {
       return;
     }
 
-    navigate({ to: "/customer/cb/vehicles" });
+    navigate({ to: "/customer/vehicles" });
   };
 
   return (
@@ -54,7 +54,7 @@ export function VehicleFormPage({ vehicleId, onDone }: VehicleFormPageProps) {
       {isEditing && !vehicle ? (
         <section className={styles.emptyState}>
           <h2>Vehicle not found</h2>
-          <Link to="/customer/cb/vehicles">Back to vehicles</Link>
+          <Link to="/customer/vehicles">Back to vehicles</Link>
         </section>
       ) : (
         <VehicleForm vehicle={vehicle} onSubmit={handleSubmit} onCancel={handleCancel} />

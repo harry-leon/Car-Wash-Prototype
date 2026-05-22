@@ -1,22 +1,7 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { VehiclesPage } from "@/modules/customer-booking/pages/VehiclesPage";
-import { VehicleFormPage } from "@/modules/customer-booking/pages/VehicleFormPage";
-
-type VehicleSearch = { editId?: string };
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/customer/cb/vehicles")({
-  validateSearch: (search: Record<string, unknown>): VehicleSearch => ({
-    editId: typeof search.editId === "string" ? search.editId : undefined,
-  }),
-  component: VehiclesRoute,
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: "/customer/vehicles", search });
+  },
 });
-
-function VehiclesRoute() {
-  const { editId } = Route.useSearch();
-
-  if (editId) {
-    return <VehicleFormPage vehicleId={editId} />;
-  }
-
-  return <VehiclesPage />;
-}

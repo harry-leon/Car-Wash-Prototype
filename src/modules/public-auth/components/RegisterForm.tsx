@@ -21,10 +21,18 @@ export function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) return toast.error(t("Full name is required.", "Vui lòng nhập họ và tên."));
-    if (!emailOrPhone.trim()) return toast.error(t("Email or phone is required.", "Vui lòng nhập email hoặc số điện thoại."));
-    if (password.length < 6) return toast.error(t("Password must be at least 6 characters.", "Mật khẩu phải có ít nhất 6 ký tự."));
-    if (password !== confirmPassword) return toast.error(t("Passwords do not match.", "Mật khẩu xác nhận không khớp."));
+    if (!fullName.trim())
+      return toast.error(t("Full name is required.", "Vui lòng nhập họ và tên."));
+    if (!emailOrPhone.trim())
+      return toast.error(
+        t("Email or phone is required.", "Vui lòng nhập email hoặc số điện thoại."),
+      );
+    if (password.length < 6)
+      return toast.error(
+        t("Password must be at least 6 characters.", "Mật khẩu phải có ít nhất 6 ký tự."),
+      );
+    if (password !== confirmPassword)
+      return toast.error(t("Passwords do not match.", "Mật khẩu xác nhận không khớp."));
 
     setSubmitting(true);
     await new Promise((r) => setTimeout(r, 800));
@@ -32,8 +40,13 @@ export function RegisterForm() {
     // Mock register: log in as Customer with default values
     // membershipTier = Member, availablePoints = 0, lifetimePoints = 0
     loginAs("Customer");
-    toast.success(t("Account created! Welcome to AURA CAR CARE.", "Tạo tài khoản thành công! Chào mừng đến AURA CAR CARE."));
-    navigate({ to: "/customer/overview" });
+    toast.success(
+      t(
+        "Account created! Welcome to AURA CAR CARE.",
+        "Tạo tài khoản thành công! Chào mừng đến AURA CAR CARE.",
+      ),
+    );
+    navigate({ to: "/customer/home" });
   };
 
   return (

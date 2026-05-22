@@ -1,4 +1,3 @@
-import { HistoryTabs } from "../components/HistoryTabs";
 import { WashTable } from "../components/WashTable";
 import { useCustomerBooking } from "../routes";
 import type { WashHistoryRecord } from "../types/history.types";
@@ -21,7 +20,6 @@ export function WashHistoryPage() {
           </p>
         </div>
       </header>
-      <HistoryTabs activeTab="washes" />
       <WashTable washes={completedWashes} />
     </main>
   );

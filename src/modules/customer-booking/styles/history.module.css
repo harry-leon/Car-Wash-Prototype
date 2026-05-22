@@ -124,6 +124,83 @@
   background: rgba(0, 102, 255, 0.035);
 }
 
+.clickableRow {
+  cursor: pointer;
+}
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(4px);
+}
+
+.detailDrawer {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  width: min(420px, 92vw);
+  min-height: 100%;
+  padding: 26px;
+  background: #ffffff;
+  box-shadow: -18px 0 54px -34px rgba(15, 23, 42, 0.55);
+  animation: drawerIn 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.detailDrawer > span {
+  color: var(--cb-primary);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.detailDrawer h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.drawerClose {
+  justify-self: end;
+  min-height: 38px;
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: var(--cb-text);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.drawerList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.drawerList div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--cb-border);
+  border-radius: 13px;
+  background: rgba(0, 102, 255, 0.035);
+}
+
+.drawerList dt {
+  color: var(--cb-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.drawerList dd {
+  margin: 0;
+  font-weight: 950;
+}
+
 .statusBadge,
 .comboBadge {
   display: inline-flex;
@@ -173,8 +250,7 @@
 }
 
 .transactionEARN,
-.transactionBONUS,
-.transactionREFUND {
+.transactionBONUS {
   color: #056035;
   background: rgba(0, 200, 83, 0.13);
 }
@@ -189,6 +265,11 @@
   background: rgba(14, 165, 233, 0.15);
 }
 
+.transactionEXPIRE {
+  color: #3f3f46;
+  background: rgba(113, 113, 122, 0.16);
+}
+
 .pointsPositive {
   color: #087443;
   font-weight: 950;
@@ -197,6 +278,17 @@
 .pointsNegative {
   color: #b42318;
   font-weight: 950;
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 680px) {
