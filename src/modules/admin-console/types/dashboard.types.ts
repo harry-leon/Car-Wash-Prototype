@@ -24,4 +24,7 @@ export interface AdminBookingRow {
   servicePackage: string;
   scheduledTime: string;
   status: BookingStatus;
+  staffName: string;
+  checkInTime: string;
+  assignedStaffId?: string;
 }

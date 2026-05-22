@@ -30,9 +30,12 @@ export function BookingForm() {
     vehicles,
   } = useCustomerBooking();
   const defaultVehicle = vehicles.find((vehicle) => vehicle.isDefault) ?? vehicles[0];
+  const activeServicePackages = servicePackages.filter(
+    (servicePackage) => servicePackage.status === "ACTIVE",
+  );
   const [selection, setSelection] = useState<BookingSelection>({
     vehicleId: bookingDraft.vehicleId ?? defaultVehicle?.id ?? "",
-    packageId: bookingDraft.packageId ?? servicePackages[0]?.id ?? "",
+    packageId: bookingDraft.packageId ?? activeServicePackages[0]?.id ?? servicePackages[0]?.id ?? "",
     scheduledDate: bookingDraft.scheduledDate ?? getTomorrowDate(),
     scheduledTime: bookingDraft.scheduledTime ?? "10:30",
     promoCode: bookingDraft.promoCode ?? "",
@@ -47,8 +50,8 @@ export function BookingForm() {
 
   const selectedVehicle = vehicles.find((vehicle) => vehicle.id === selection.vehicleId);
   const selectedPackage =
-    servicePackages.find((servicePackage) => servicePackage.id === selection.packageId) ??
-    servicePackages[0];
+    activeServicePackages.find((servicePackage) => servicePackage.id === selection.packageId) ??
+    activeServicePackages[0] ?? servicePackages[0];
   const selectedAddons = serviceAddons.filter((addon) => selection.addonIds.includes(addon.id));
   const selectedPromotion = promotions.find((promotion) => promotion.code === selection.promoCode);
   const promoEligible = selectedPromotion
@@ -247,7 +250,7 @@ export function BookingForm() {
               value={selection.packageId}
               onChange={(event) => updateSelection({ packageId: event.target.value })}
             >
-              {servicePackages.map((servicePackage) => (
+              {activeServicePackages.map((servicePackage) => (
                 <option key={servicePackage.id} value={servicePackage.id}>
                   {servicePackage.name} - {servicePackage.price.toLocaleString()} VND /{" "}
                   {servicePackage.durationMinutes} min

@@ -8,6 +8,7 @@ import {
   type BookingsFilterState,
 } from "../components/AdminBookingsFilters";
 import { AdminBookingsTable } from "../components/AdminBookingsTable";
+import { BookingDetailDrawer } from "../components/BookingDetailDrawer";
 import type { AdminBookingRow, BookingStatus } from "../types/dashboard.types";
 import {
   type Booking as StoreBooking,
@@ -58,9 +59,17 @@ function toAdminRow(booking: StoreBooking): AdminBookingRow {
 }
 
 export function AdminBookingsPage() {
-  const { bookings, updateBookingStatus, hydrated } = useCarwashStore();
+  const {
+    bookings,
+    updateBookingStatus,
+    washSessions,
+    staffMembers,
+    assignStaffToSession,
+    hydrated,
+  } = useCarwashStore();
   const [filters, setFilters] = React.useState<BookingsFilterState>(INITIAL_FILTERS);
   const [pageIndex, setPageIndex] = React.useState(0);
+  const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null);
 
   const rows = React.useMemo(
     () =>
@@ -70,8 +79,29 @@ export function AdminBookingsPage() {
             new Date(`${b.dateISO} ${b.timeSlot}`).getTime() -
             new Date(`${a.dateISO} ${a.timeSlot}`).getTime(),
         )
-        .map(toAdminRow),
-    [bookings],
+        .map((booking) => {
+          const session = washSessions.find((item) => item.bookingId === booking.id);
+          const status: BookingStatus =
+            booking.washStatus === "In Progress" && booking.status === "Checked-in"
+              ? "IN_PROGRESS"
+              : STORE_TO_DASHBOARD_STATUS[booking.status];
+
+          return {
+            id: booking.id,
+            code: booking.id,
+            customerName: booking.customerName ?? "—",
+            vehiclePlate: booking.vehiclePlate,
+            servicePackage: booking.services.join(", "),
+            scheduledTime: booking.scheduledAt,
+            status,
+            staffName: session?.staffName ?? "Not assigned",
+            assignedStaffId: session?.staffId,
+            checkInTime: booking.checkInAt
+              ? new Date(booking.checkInAt).toLocaleString()
+              : "Not checked in",
+          };
+        }),
+    [bookings, washSessions],
   );
 
   const filtered = React.useMemo(() => {
@@ -108,6 +138,29 @@ export function AdminBookingsPage() {
     () => filtered.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE),
     [filtered, pageIndex],
   );
+
+  const selectedBooking = React.useMemo(
+    () => bookings.find((booking) => booking.id === selectedBookingId) ?? null,
+    [bookings, selectedBookingId],
+  );
+
+  const selectedSession = React.useMemo(
+    () => washSessions.find((session) => session.bookingId === selectedBookingId) ?? null,
+    [washSessions, selectedBookingId],
+  );
+
+  const handleAssignStaff = (staffId: string) => {
+    if (!selectedSession) {
+      toast.error("No active session available to assign staff.");
+      return;
+    }
+    try {
+      assignStaffToSession(selectedSession.id, staffId);
+      toast.success("Staff assignment updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to assign staff.");
+    }
+  };
 
   const handleChangeStatus = (id: string, next: BookingStatus) => {
     const storeStatus = DASHBOARD_TO_STORE_STATUS[next];
@@ -175,7 +228,23 @@ export function AdminBookingsPage() {
             Loading bookings…
           </Card>
         ) : (
-          <AdminBookingsTable rows={pageRows} onChangeStatus={handleChangeStatus} />
+          <>
+            <AdminBookingsTable
+              rows={pageRows}
+              onChangeStatus={handleChangeStatus}
+              onRowClick={(id) => setSelectedBookingId(id)}
+            />
+            <BookingDetailDrawer
+              open={Boolean(selectedBooking)}
+              onOpenChange={(open) => {
+                if (!open) setSelectedBookingId(null);
+              }}
+              booking={selectedBooking}
+              session={selectedSession ?? undefined}
+              staffMembers={staffMembers}
+              onAssignStaff={handleAssignStaff}
+            />
+          </>
         )}
       </div>
     </div>

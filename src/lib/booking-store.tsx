@@ -106,7 +106,7 @@ export function useCurrentVehicles(): Vehicle[] {
 
 export function useAvailableServices(): Service[] {
   const store = useCarwashStore();
-  return store.services;
+  return store.services.filter((service) => service.status === "ACTIVE");
 }
 
 export const STATUS_STYLES: Record<BookingStatus, string> = {

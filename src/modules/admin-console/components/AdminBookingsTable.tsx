@@ -37,9 +37,10 @@ export const STATUS_TONE: Record<BookingStatus, string> = {
 interface Props {
   rows: AdminBookingRow[];
   onChangeStatus: (id: string, next: BookingStatus) => void;
+  onRowClick?: (id: string) => void;
 }
 
-export function AdminBookingsTable({ rows, onChangeStatus }: Props) {
+export function AdminBookingsTable({ rows, onChangeStatus, onRowClick }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/50 bg-card/60 backdrop-blur-xl">
       <Table>
@@ -50,6 +51,7 @@ export function AdminBookingsTable({ rows, onChangeStatus }: Props) {
             <TableHead>Vehicle plate</TableHead>
             <TableHead>Service package</TableHead>
             <TableHead>Scheduled time</TableHead>
+            <TableHead>Staff</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
@@ -57,18 +59,23 @@ export function AdminBookingsTable({ rows, onChangeStatus }: Props) {
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={8} className="py-10 text-center text-sm text-muted-foreground">
                 No bookings match the current filters.
               </TableCell>
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className={onRowClick ? "cursor-pointer hover:bg-muted/10" : undefined}
+                onClick={onRowClick ? () => onRowClick(row.id) : undefined}
+              >
                 <TableCell className="font-semibold">{row.code}</TableCell>
                 <TableCell>{row.customerName}</TableCell>
                 <TableCell className="font-mono text-xs">{row.vehiclePlate}</TableCell>
                 <TableCell>{row.servicePackage}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{row.scheduledTime}</TableCell>
+                <TableCell>{row.staffName}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[row.status]}`}>
                     {row.status.replace("_", " ")}
@@ -78,6 +85,7 @@ export function AdminBookingsTable({ rows, onChangeStatus }: Props) {
                   <Select
                     value={row.status}
                     onValueChange={(next) => onChangeStatus(row.id, next as BookingStatus)}
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <SelectTrigger className="ml-auto h-8 w-[150px] text-xs">
                       <SelectValue />

@@ -53,9 +53,10 @@ interface DraftState {
   name: string;
   price: string;
   icon: string;
+  status: "ACTIVE" | "INACTIVE";
 }
 
-const blankDraft: DraftState = { name: "", price: "", icon: "Droplets" };
+const blankDraft: DraftState = { name: "", price: "", icon: "Droplets", status: "ACTIVE" };
 
 export function WashPackagesPage() {
   const { services, addService, updateService, removeService, hydrated } = useCarwashStore();
@@ -76,6 +77,7 @@ export function WashPackagesPage() {
       name: service.name,
       price: String(service.price),
       icon: service.icon,
+      status: service.status,
     });
     setEditingId(service.id);
     setDialogOpen(true);
@@ -104,10 +106,20 @@ export function WashPackagesPage() {
     }
 
     if (editingId) {
-      updateService(editingId, { name: trimmedName, price: priceNumber, icon: draft.icon });
+      updateService(editingId, {
+        name: trimmedName,
+        price: priceNumber,
+        icon: draft.icon,
+        status: draft.status,
+      });
       toast.success(`${trimmedName} updated.`);
     } else {
-      addService({ name: trimmedName, price: priceNumber, icon: draft.icon });
+      addService({
+        name: trimmedName,
+        price: priceNumber,
+        icon: draft.icon,
+        status: draft.status,
+      });
       toast.success(`${trimmedName} added.`);
     }
     setDialogOpen(false);
@@ -180,6 +192,9 @@ export function WashPackagesPage() {
                           </div>
                         </div>
                       </div>
+                      <div className="flex flex-col items-end gap-1 text-right text-xs text-muted-foreground">
+                        <span>{service.status === "ACTIVE" ? "Active" : "Inactive"}</span>
+                      </div>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
@@ -250,6 +265,21 @@ export function WashPackagesPage() {
                 onChange={(event) => setDraft((prev) => ({ ...prev, price: event.target.value }))}
                 placeholder="120000"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="package-status">Status</Label>
+              <Select
+                value={draft.status}
+                onValueChange={(value) => setDraft((prev) => ({ ...prev, status: value as "ACTIVE" | "INACTIVE" }))}
+              >
+                <SelectTrigger id="package-status" className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Icon</Label>

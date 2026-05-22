@@ -4,6 +4,7 @@ import { ActiveComboCard } from "../components/ActiveComboCard";
 import { CustomerHomeHeader } from "../components/CustomerHomeHeader";
 import { PackageCard } from "../components/PackageCard";
 import { useCustomerBooking } from "../routes";
+import { useCarwashStore } from "@/lib/carwash-store";
 import type { BookingStatus } from "../types/booking.types";
 import type { CustomerProfile, MembershipTier } from "../types/customer.types";
 import styles from "../styles/customer-home.module.css";
@@ -55,6 +56,7 @@ export function CustomerHomePage() {
     setBookingDraft,
     vehicles,
   } = useCustomerBooking();
+  const { services } = useCarwashStore();
   const [activeTab, setActiveTab] = useState<"packages" | "combos">("packages");
   
   const linkedVehicle = activeCombo
@@ -68,6 +70,7 @@ export function CustomerHomePage() {
   const currentComboPackage = activeCombo
     ? comboPackages.find((comboPackage) => comboPackage.id === activeCombo.comboPackageId)
     : undefined;
+  const activeServicePackages = services.filter((servicePackage) => servicePackage.status === "ACTIVE");
   const inProgressBooking = bookings.find((booking) => booking.status === "IN_PROGRESS");
 
   const goToBooking = () => {
@@ -223,7 +226,7 @@ export function CustomerHomePage() {
         <div className={styles.tabContent}>
           {activeTab === "packages" ? (
             <div className={styles.packageGrid}>
-              {servicePackages.map((servicePackage) => (
+              {activeServicePackages.map((servicePackage) => (
                 <PackageCard
                   key={servicePackage.id}
                   actionLabel="Select and book"

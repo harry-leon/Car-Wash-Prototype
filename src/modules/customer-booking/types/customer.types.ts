@@ -31,6 +31,7 @@ export interface ServicePackage {
   durationMinutes: number;
   highlights: string[];
   recommendedFor: string;
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export interface ServiceAddon {

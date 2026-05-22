@@ -64,6 +64,11 @@ export interface Service {
   name: string;
   price: number;
   icon: string;
+  status: "ACTIVE" | "INACTIVE";
+  description?: string;
+  durationMinutes?: number;
+  highlights?: string[];
+  recommendedFor?: string;
 }
 
 export interface Booking {
@@ -456,10 +461,50 @@ const tierSeed: TierRule[] = [
 ];
 
 const serviceSeed: Service[] = [
-  { id: "basic", name: "Basic Wash", price: 120000, icon: "Droplets" },
-  { id: "premium", name: "Premium Detail", price: 280000, icon: "Sparkles" },
-  { id: "vacuum", name: "Interior Vacuum", price: 60000, icon: "Wind" },
-  { id: "ceramic", name: "Ceramic Coating", price: 450000, icon: "Shield" },
+  {
+    id: "basic",
+    name: "Basic Wash",
+    price: 120000,
+    icon: "Droplets",
+    status: "ACTIVE",
+    description: "Fast exterior wash with rinse, dry and glass finish.",
+    durationMinutes: 25,
+    highlights: ["Foam wash", "Quick dry", "Glass detail"],
+    recommendedFor: "Weekly maintenance",
+  },
+  {
+    id: "premium",
+    name: "Premium Detail",
+    price: 280000,
+    icon: "Sparkles",
+    status: "ACTIVE",
+    description: "Full exterior wash plus interior vacuum, dashboard wipe and scent.",
+    durationMinutes: 45,
+    highlights: ["Exterior wash", "Interior vacuum", "Fragrance"],
+    recommendedFor: "Family cars",
+  },
+  {
+    id: "vacuum",
+    name: "Interior Vacuum",
+    price: 60000,
+    icon: "Wind",
+    status: "ACTIVE",
+    description: "Focused interior vacuum for carpets, seats and trunk.",
+    durationMinutes: 20,
+    highlights: ["Carpet vacuum", "Seat cleaning", "Trunk refresh"],
+    recommendedFor: "Cabin cleanup",
+  },
+  {
+    id: "ceramic",
+    name: "Ceramic Coating",
+    price: 450000,
+    icon: "Shield",
+    status: "ACTIVE",
+    description: "Premium ceramic coating for lasting shine and protection.",
+    durationMinutes: 75,
+    highlights: ["Paint protection", "Gloss finish", "Long-lasting shine"],
+    recommendedFor: "Special care",
+  },
 ];
 
 const promotionSeed: Promotion[] = [
@@ -1145,6 +1190,36 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setCurrentStaffId(restoredActiveStaff.id);
     setVehiclesByCustomer(persisted.vehiclesByCustomer ?? vehicleSeed);
     setBookings(restoredBookings);
+
+    // If there are no persisted wash sessions, generate sessions for any bookings
+    // that are already Checked-in (or have a washStatus) so the admin UI shows
+    // assigned staff/state consistently.
+    const sourceServices = persisted.services ?? serviceSeed;
+    const sourceCustomers = persisted.customers ?? customerSeed;
+    const generatedFromBookings: WashSessionRecord[] = restoredBookings
+      .filter(
+        (b) => b.status === "Checked-in" || (b.washStatus ?? "") !== "",
+      )
+      .map((b) => {
+        const customer = sourceCustomers.find((c) => c.id === b.customerId);
+        const selectedServices = sourceServices.filter((s) => b.services.includes(s.name));
+        return {
+          id: crypto.randomUUID(),
+          bookingId: b.id,
+          customerId: b.customerId,
+          customerName: customer?.name ?? "Unknown",
+          staffId: "",
+          staffName: "",
+          vehicleType: b.vehicleType,
+          plate: b.vehiclePlate,
+          services: selectedServices,
+          subtotal: subtotalForServices(selectedServices),
+          status: (b.washStatus as WashStatus) ?? "Queued",
+          startedAt: b.checkInAt ?? new Date().toISOString(),
+          walkIn: b.isWalkIn,
+        };
+      });
+
     setWashSessions(
       restoredWashSessions.length > 0 || !persisted.sessionDraft
         ? restoredWashSessions
@@ -1165,7 +1240,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
               readyForCheckoutAt: new Date().toISOString(),
               walkIn: persisted.sessionDraft.walkIn,
             },
-          ],
+          ].concat(generatedFromBookings),
     );
     setSelectedBookingId(persisted.selectedBookingId ?? "B001");
     setSessionDraft(
@@ -2724,7 +2799,11 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     redeemReward,
     updateTiers: (next) => setPendingTierRules(next),
     addService: (service) => {
-      const created: Service = { ...service, id: crypto.randomUUID() };
+      const created: Service = {
+        ...service,
+        id: crypto.randomUUID(),
+        status: service.status ?? "ACTIVE",
+      };
       setServices((prev) => [...prev, created]);
       return created;
     },

@@ -12,7 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCarwashStore, type Booking, type BookingStatus } from "@/lib/carwash-store";
+import {
+  useCarwashStore,
+  type Booking,
+  type BookingStatus,
+} from "@/lib/carwash-store";
+import { BookingDetailDrawer } from "../components/BookingDetailDrawer";
 import { KpiCard } from "../components/KpiCard";
 import type { KpiMetric } from "../types/dashboard.types";
 import styles from "../styles/admin-dashboard.module.css";
@@ -45,9 +50,18 @@ function pctDelta(current: number, previous: number): number {
 }
 
 export function AdminDashboardPage() {
-  const { bookings, transactions, promotions, hydrated } = useCarwashStore();
+  const {
+    bookings,
+    transactions,
+    promotions,
+    washSessions,
+    staffMembers,
+    assignStaffToSession,
+    hydrated,
+  } = useCarwashStore();
   const [dateFilter, setDateFilter] = React.useState("");
   const [page, setPage] = React.useState(1);
+  const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     setPage(1);
@@ -134,9 +148,34 @@ export function AdminDashboardPage() {
     return sortedBookings.filter((b) => b.dateISO === dateFilter);
   }, [sortedBookings, dateFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const selectedBooking = React.useMemo(
+    () => bookings.find((booking) => booking.id === selectedBookingId) ?? null,
+    [bookings, selectedBookingId],
+  );
+
+  const selectedSession = React.useMemo(
+    () => washSessions.find((session) => session.bookingId === selectedBookingId) ?? null,
+    [washSessions, selectedBookingId],
+  );
+
+  const dashboardRows = React.useMemo(
+    () =>
+      filtered.map((booking) => {
+        const session = washSessions.find((item) => item.bookingId === booking.id);
+        return {
+          ...booking,
+          staffName: session?.staffName ?? "Not assigned",
+          checkInTime: booking.checkInAt
+            ? new Date(booking.checkInAt).toLocaleString()
+            : "Not checked in",
+        };
+      }),
+    [filtered, washSessions],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(dashboardRows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageRows = dashboardRows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   return (
     <div className={`p-4 md:p-8 lg:p-10 ${styles.page}`}>
@@ -146,10 +185,10 @@ export function AdminDashboardPage() {
             <LayoutDashboard className="h-3.5 w-3.5" /> Admin Workspace
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Operations dashboard
+            Check-in Center
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Snapshot of today&apos;s bookings, completion rate, loyalty issuance and active campaigns. Numbers update in real time as bookings, transactions and promotions change across the app.
+            Snapshot of today&apos;s bookings, staff assignments, and check-in flow. Numbers update in real time as bookings, transactions, and promotions change across the app.
           </p>
         </div>
 
@@ -211,20 +250,21 @@ export function AdminDashboardPage() {
                       <TableHead>Customer</TableHead>
                       <TableHead>Vehicle</TableHead>
                       <TableHead>Service</TableHead>
-                      <TableHead>Scheduled</TableHead>
+                      <TableHead>Check-in Time</TableHead>
+                      <TableHead>Staff</TableHead>
                       <TableHead className="text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {pageRows.map((row) => (
-                      <BookingRow key={row.id} row={row} />
+                      <BookingRow key={row.id} row={row} onSelect={() => setSelectedBookingId(row.id)} />
                     ))}
                   </TableBody>
                 </Table>
                 <PagerBar
                   page={safePage}
                   totalPages={totalPages}
-                  totalRows={filtered.length}
+                  totalRows={dashboardRows.length}
                   pageSize={PAGE_SIZE}
                   onPrev={() => setPage((p) => Math.max(1, p - 1))}
                   onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -233,19 +273,34 @@ export function AdminDashboardPage() {
             )}
           </CardContent>
         </Card>
+        <BookingDetailDrawer
+          open={Boolean(selectedBooking)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedBookingId(null);
+          }}
+          booking={selectedBooking}
+          session={selectedSession ?? undefined}
+          staffMembers={staffMembers}
+          onAssignStaff={(staffId) => {
+            if (selectedSession) {
+              assignStaffToSession(selectedSession.id, staffId);
+            }
+          }}
+        />
       </div>
     </div>
   );
 }
 
-function BookingRow({ row }: { row: Booking }) {
+function BookingRow({ row, onSelect }: { row: Booking & { staffName: string; checkInTime: string }; onSelect: () => void }) {
   return (
-    <TableRow>
+    <TableRow className="cursor-pointer hover:bg-accent/10" onClick={onSelect}>
       <TableCell className="font-semibold">{row.id}</TableCell>
       <TableCell>{row.customerName ?? "—"}</TableCell>
       <TableCell className="font-mono text-xs">{row.vehiclePlate}</TableCell>
       <TableCell>{row.services.join(", ")}</TableCell>
-      <TableCell className="text-xs text-muted-foreground">{row.scheduledAt}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{row.checkInTime}</TableCell>
+      <TableCell>{row.staffName}</TableCell>
       <TableCell className="text-right">
         <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[row.status]}`}>
           {row.status}

@@ -37,6 +37,7 @@ export const mockServicePackages: ServicePackage[] = [
     durationMinutes: 25,
     highlights: ["Foam wash", "Tire shine", "Quick dry"],
     recommendedFor: "Weekly maintenance",
+    status: "ACTIVE",
   },
   {
     id: "pkg-premium",
@@ -46,6 +47,7 @@ export const mockServicePackages: ServicePackage[] = [
     durationMinutes: 45,
     highlights: ["Exterior wash", "Interior vacuum", "Fragrance"],
     recommendedFor: "Family cars",
+    status: "ACTIVE",
   },
   {
     id: "pkg-detail",
@@ -55,6 +57,7 @@ export const mockServicePackages: ServicePackage[] = [
     durationMinutes: 75,
     highlights: ["Wax boost", "Rim care", "Leather wipe"],
     recommendedFor: "Before trips or events",
+    status: "ACTIVE",
   },
 ];
 
