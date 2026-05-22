@@ -239,6 +239,9 @@ export function CustomerBookingForm({ onBooked }: { onBooked: () => void }) {
             placeholder="Special instructions for staff..."
             className="min-h-28 rounded-xl border-border/50 bg-background/50 text-sm shadow-sm"
           />
+          <p className="mt-2 text-xs font-medium text-muted-foreground">
+            Inappropriate words are automatically masked as *** before the note is saved.
+          </p>
         </Card>
 
         <Card className="rounded-[1.5rem] border-border/50 bg-card/60 p-8 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">

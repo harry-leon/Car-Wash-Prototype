@@ -11,6 +11,8 @@ import {
 import appCss from "../styles.css?url";
 import { CarwashStoreProvider } from "@/lib/carwash-store";
 import { Toaster } from "@/components/ui/sonner";
+import { CustomerReminderWatcher } from "@/components/customer-reminder-watcher";
+import { LanguageProvider } from "@/modules/public-auth/components/LanguageSwitcher";
 
 function NotFoundComponent() {
   return (
@@ -111,10 +113,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CarwashStoreProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
-      </CarwashStoreProvider>
+      <LanguageProvider>
+        <CarwashStoreProvider>
+          <CustomerReminderWatcher />
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </CarwashStoreProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

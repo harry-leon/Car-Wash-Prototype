@@ -34,8 +34,10 @@ export interface Booking {
   totalPrice: number;
   scheduledAt: string;
   dateISO: string;
+  timeSlot: string;
   status: BookingStatus;
   notes?: string;
+  reminderMinutesBefore?: number;
   isWalkIn?: boolean;
   checkInAt?: string;
   washStatus?: WashStatus;
@@ -73,8 +75,10 @@ export function useBookings() {
       totalPrice: booking.totalPrice,
       scheduledAt: booking.scheduledAt,
       dateISO: booking.dateISO,
+      timeSlot: booking.timeSlot,
       status: booking.status,
       notes: booking.notes,
+      reminderMinutesBefore: booking.reminderMinutesBefore,
       isWalkIn: booking.isWalkIn,
       checkInAt: booking.checkInAt,
       washStatus: booking.washStatus,
@@ -88,6 +92,7 @@ export function useBookings() {
     })),
     addBooking: store.createBookingFromLegacy,
     updateStatus: store.updateBookingStatus,
+    setReminder: store.setBookingReminder,
     selectedBookingId: store.selectedBookingId,
     setSelectedBookingId: store.setSelectedBookingId,
     transactions: scopedTransactions,

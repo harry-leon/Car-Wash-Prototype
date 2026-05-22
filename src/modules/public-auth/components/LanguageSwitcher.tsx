@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Moon, Sun } from "lucide-react";
 
 export type Lang = "en" | "vi";
 export type Theme = "light" | "dark";
@@ -18,17 +19,30 @@ const LanguageContext = React.createContext<LanguageContextValue>({
   theme: "light",
   setTheme: () => {},
   t: (en) => en,
-  formatPrice: (p) => `${p.toLocaleString()} VND`,
+  formatPrice: (price) => `${price.toLocaleString()} VND`,
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = React.useState<Lang>("en");
+  const [lang, setLangState] = React.useState<Lang>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("aura-lang") as Lang) || "en";
+    }
+    return "en";
+  });
   const [theme, setThemeState] = React.useState<Theme>(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("aura-theme") as Theme) || "light";
     }
     return "light";
   });
+
+  const setLang = React.useCallback((next: Lang) => {
+    setLangState(next);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("aura-lang", next);
+      document.documentElement.lang = next;
+    }
+  }, []);
 
   const setTheme = React.useCallback((next: Theme) => {
     setThemeState(next);
@@ -39,19 +53,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
+    document.documentElement.lang = lang;
+    localStorage.setItem("aura-lang", lang);
+  }, [lang]);
+
+  React.useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("aura-theme", theme);
   }, [theme]);
 
-  const t = React.useCallback(
-    (en: string, vi: string) => (lang === "vi" ? vi : en),
-    [lang],
-  );
+  const t = React.useCallback((en: string, vi: string) => (lang === "vi" ? vi : en), [lang]);
 
   const formatPrice = React.useCallback(
     (price: number) =>
-      lang === "vi"
-        ? `${price.toLocaleString("vi-VN")} ₫`
-        : `${price.toLocaleString("en-US")} VND`,
+      lang === "vi" ? `${price.toLocaleString("vi-VN")} ₫` : `${price.toLocaleString("en-US")} VND`,
     [lang],
   );
 
@@ -68,17 +83,30 @@ export function useLanguage() {
 
 export function LanguageSwitcher({ className }: { className?: string }) {
   const { lang, setLang } = useLanguage();
+
   return (
-    <div className={`inline-flex items-center rounded-full border border-border/60 bg-background/60 p-0.5 backdrop-blur-sm ${className ?? ""}`}>
+    <div
+      className={`inline-flex items-center rounded-full border border-border/60 bg-background/60 p-0.5 backdrop-blur-sm ${className ?? ""}`}
+    >
       <button
+        type="button"
         onClick={() => setLang("en")}
-        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${lang === "en" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+          lang === "en"
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
       >
         EN
       </button>
       <button
+        type="button"
         onClick={() => setLang("vi")}
-        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${lang === "vi" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+        className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+          lang === "vi"
+            ? "bg-primary text-primary-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
       >
         VI
       </button>
@@ -88,13 +116,16 @@ export function LanguageSwitcher({ className }: { className?: string }) {
 
 export function ThemeSwitcher({ className }: { className?: string }) {
   const { theme, setTheme } = useLanguage();
+  const Icon = theme === "dark" ? Sun : Moon;
+
   return (
     <button
+      type="button"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      aria-label="Toggle theme"
-      className={`flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/60 backdrop-blur-sm text-sm transition-all hover:bg-accent hover:scale-110 ${className ?? ""}`}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      className={`flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/60 backdrop-blur-sm transition-all hover:bg-accent hover:scale-110 ${className ?? ""}`}
     >
-      {theme === "dark" ? "☀️" : "🌙"}
+      <Icon className="h-4 w-4" />
     </button>
   );
 }
