@@ -2,6 +2,7 @@ import type { Booking } from "../types/booking.types";
 import type { ActiveCombo } from "../types/customer.types";
 import type { Vehicle } from "../types/vehicle.types";
 import { vehicleImageFallbackByType } from "../mock/vehicles.mock";
+import { useCustomerBooking } from "../routes";
 import styles from "../styles/vehicles.module.css";
 
 interface VehicleCardProps {
@@ -45,6 +46,35 @@ export function VehicleCard({
   onSetDefault,
   vehicle,
 }: VehicleCardProps) {
+  const { language } = useCustomerBooking();
+  const copy =
+    language === "vi"
+      ? {
+          default: "Mặc định",
+          combo: "Có combo",
+          type: "Loại xe",
+          color: "Màu xe",
+          washes: "Lượt rửa",
+          next: "Lịch tiếp theo",
+          none: "Chưa có lịch",
+          edit: "Sửa",
+          delete: "Xóa",
+          hint: "Nhấn vào card để đặt làm xe mặc định",
+          ready: "Sẵn sàng đặt lịch",
+        }
+      : {
+          default: "Default",
+          combo: "Combo linked",
+          type: "Type",
+          color: "Color",
+          washes: "Washes",
+          next: "Next booking",
+          none: "Not scheduled",
+          edit: "Edit",
+          delete: "Delete",
+          hint: "Click card to set default",
+          ready: "Ready to book",
+        };
   const isComboLinked =
     activeCombo?.linkedVehicleId === vehicle.id && activeCombo.remainingUses > 0;
   const vehicleImageUrl = vehicle.imageUrl ?? vehicleImageFallbackByType[vehicle.vehicleType];
@@ -53,6 +83,7 @@ export function VehicleCard({
     <article
       className={`${styles.vehicleCard} ${vehicle.isDefault ? styles.vehicleCardDefault : ""}`}
       onClick={() => onSetDefault(vehicle.id)}
+      title={copy.hint}
     >
       <div className={styles.vehicleImage} aria-hidden="true">
         <img
@@ -84,32 +115,32 @@ export function VehicleCard({
             {vehicle.isDefault ? (
               <span className={styles.defaultBadge}>
                 <i aria-hidden="true" />
-                Default checkout
+                {copy.default}
               </span>
             ) : null}
-            {isComboLinked ? <span className={styles.comboBadge}>Combo linked</span> : null}
+            {isComboLinked ? <span className={styles.comboBadge}>{copy.combo}</span> : null}
           </div>
         </div>
 
         <dl className={styles.vehicleMeta}>
           <div>
-            <dt>Type</dt>
+            <dt>{copy.type}</dt>
             <dd>{vehicle.vehicleType}</dd>
           </div>
           <div>
-            <dt>Color</dt>
+            <dt>{copy.color}</dt>
             <dd>{vehicle.color}</dd>
           </div>
           <div>
-            <dt>Completed washes</dt>
+            <dt>{copy.washes}</dt>
             <dd>{completedWashCount}</dd>
           </div>
           <div>
-            <dt>Next booking</dt>
+            <dt>{copy.next}</dt>
             <dd>
               {nextBooking
                 ? `${nextBooking.scheduledDate} ${nextBooking.scheduledTime}`
-                : "Not scheduled"}
+                : copy.none}
             </dd>
           </div>
         </dl>
@@ -126,7 +157,7 @@ export function VehicleCard({
             </div>
             <div>
               <dt>Status</dt>
-              <dd>{nextBooking ? nextBooking.status.replaceAll("_", " ") : "Ready to book"}</dd>
+              <dd>{nextBooking ? nextBooking.status.replaceAll("_", " ") : copy.ready}</dd>
             </div>
           </dl>
         </section>
@@ -140,7 +171,7 @@ export function VehicleCard({
             onEdit(vehicle.id);
           }}
         >
-          Edit
+          {copy.edit}
         </button>
         <button
           type="button"
@@ -150,7 +181,7 @@ export function VehicleCard({
             onDelete(vehicle.id);
           }}
         >
-          Delete
+          {copy.delete}
         </button>
       </div>
     </article>
