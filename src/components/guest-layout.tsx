@@ -23,19 +23,26 @@ export function GuestLayout({
       </div>
 
       <div className="w-full max-w-6xl z-10 grid gap-0 lg:grid-cols-[1fr_480px] overflow-hidden rounded-[2.5rem] border border-border/50 bg-card/40 backdrop-blur-xl shadow-2xl transition-all duration-500">
-        
         {/* Left Side: Information / Branding */}
         <div className="relative hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-primary/10 via-transparent to-indigo-500/10">
           <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(to_bottom_right,white,transparent)]" />
-          
+
           <div className="relative z-10">
-            <Link to="/login" className="inline-flex items-center gap-3 group">
+            <Link to="/" className="inline-flex items-center gap-3 group">
               <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg transition-transform group-hover:scale-105 overflow-hidden p-0.5">
-                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[14px] object-cover" />
+                <img
+                  src="/logo.png"
+                  alt="AURA CAR CARE logo"
+                  className="h-full w-full rounded-[14px] object-cover"
+                />
               </div>
               <div>
-                <div className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">AURA CAR CARE</div>
-                <div className="text-sm font-medium text-muted-foreground">Smart Car Wash System</div>
+                <div className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                  AURA CAR CARE
+                </div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  Smart Car Wash System
+                </div>
               </div>
             </Link>
           </div>
@@ -49,8 +56,8 @@ export function GuestLayout({
               Elevate your car wash operations.
             </h2>
             <p className="mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
-              Experience a unified ecosystem for customers, staff, and administrators. 
-              Secure, fast, and remarkably intuitive.
+              Experience a unified ecosystem for customers, staff, and administrators. Secure, fast,
+              and remarkably intuitive.
             </p>
 
             <div className="mt-10 grid gap-4 grid-cols-2">
@@ -82,9 +89,13 @@ export function GuestLayout({
         <div className="flex flex-col p-6 md:p-10 lg:p-12 bg-card/80 backdrop-blur-md relative border-l border-border/50">
           {/* Mobile Header */}
           <div className="mb-8 flex lg:hidden items-center justify-between">
-             <Link to="/login" className="inline-flex items-center gap-3 group">
+            <Link to="/" className="inline-flex items-center gap-3 group">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-md overflow-hidden p-0.5">
-                <img src="/logo.png" alt="AURA CAR CARE logo" className="h-full w-full rounded-[10px] object-cover" />
+                <img
+                  src="/logo.png"
+                  alt="AURA CAR CARE logo"
+                  className="h-full w-full rounded-[10px] object-cover"
+                />
               </div>
               <div>
                 <div className="font-bold tracking-tight">AURA CAR CARE</div>
@@ -97,10 +108,8 @@ export function GuestLayout({
               <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
               <p className="mt-2 text-sm text-muted-foreground">{description}</p>
             </div>
-            
-            <div className="animate-in slide-in-from-bottom-4 duration-500 fade-in">
-              {children}
-            </div>
+
+            <div className="animate-in slide-in-from-bottom-4 duration-500 fade-in">{children}</div>
           </div>
 
           {footer ? (
@@ -116,8 +125,15 @@ export function GuestLayout({
 
 function FeatureCard({ title, text, delay }: { title: string; text: string; delay?: string }) {
   return (
-    <div className={cn("group rounded-2xl border border-border/50 bg-background/40 p-5 backdrop-blur-md transition-all hover:bg-background/60 hover:shadow-md hover:border-primary/30 hover:-translate-y-1", delay)}>
-      <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{title}</div>
+    <div
+      className={cn(
+        "group rounded-2xl border border-border/50 bg-background/40 p-5 backdrop-blur-md transition-all hover:bg-background/60 hover:shadow-md hover:border-primary/30 hover:-translate-y-1",
+        delay,
+      )}
+    >
+      <div className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+        {title}
+      </div>
       <div className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{text}</div>
     </div>
   );

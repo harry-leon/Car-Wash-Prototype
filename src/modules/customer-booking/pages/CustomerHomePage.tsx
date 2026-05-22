@@ -52,13 +52,16 @@ export function CustomerHomePage() {
     bookings,
     comboPackages,
     customer,
+    redeemPointsForVoucher,
     servicePackages,
     setBookingDraft,
     vehicles,
   } = useCustomerBooking();
   const { services } = useCarwashStore();
   const [activeTab, setActiveTab] = useState<"packages" | "combos">("packages");
-  
+  const [redeemPoints, setRedeemPoints] = useState(50);
+  const [redeemMessage, setRedeemMessage] = useState("");
+
   const linkedVehicle = activeCombo
     ? vehicles.find((vehicle) => vehicle.id === activeCombo.linkedVehicleId)
     : undefined;
@@ -74,11 +77,12 @@ export function CustomerHomePage() {
   const inProgressBooking = bookings.find((booking) => booking.status === "IN_PROGRESS");
 
   const goToBooking = () => {
-    navigate({ to: "/customer/cb/booking" });
+    navigate({ to: "/customer/bookings/new" });
   };
 
   const handlePackageBooking = (packageId: string) => {
     setBookingDraft({
+      mode: "SINGLE_PACKAGE",
       packageId,
       useActiveCombo: false,
       vehicleId: defaultVehicle?.id,
@@ -100,6 +104,7 @@ export function CustomerHomePage() {
     const upgradeAmount = Math.max(0, selectedCombo.price - currentComboPackage.price);
 
     setBookingDraft({
+      mode: "SINGLE_PACKAGE",
       packageId: selectedCombo.packageIds[0] ?? servicePackages[0]?.id,
       comboUpgradePackageId: selectedCombo.id,
       comboUpgradeAmount: upgradeAmount,
@@ -107,6 +112,36 @@ export function CustomerHomePage() {
       vehicleId: defaultVehicle?.id,
     });
     goToBooking();
+  };
+
+  const handleComboBooking = () => {
+    if (!activeCombo || !linkedVehicle || !currentComboPackage) {
+      return;
+    }
+
+    setBookingDraft({
+      mode: "COMBO",
+      useActiveCombo: true,
+      vehicleId: linkedVehicle.id,
+      packageId: currentComboPackage.packageIds[0] ?? servicePackages[0]?.id,
+      voucherId: "",
+      addonIds: [],
+      paymentMethod: "",
+    });
+    goToBooking();
+  };
+
+  const handleRedeemVoucher = () => {
+    try {
+      const voucher = redeemPointsForVoucher(redeemPoints);
+      setRedeemMessage(
+        `${voucher.code} created: ${voucher.discountAmount.toLocaleString()} VND off, valid until ${
+          voucher.expiresAt
+        }.`,
+      );
+    } catch (error) {
+      setRedeemMessage(error instanceof Error ? error.message : "Unable to create voucher.");
+    }
   };
 
   return (
@@ -161,7 +196,7 @@ export function CustomerHomePage() {
               12 minutes.
             </p>
           </div>
-          <Link className={styles.trackCta} to="/customer/cb/history">
+          <Link className={styles.trackCta} to="/customer/bookings">
             Track wash
             <svg
               className={styles.ctaArrow}
@@ -179,7 +214,41 @@ export function CustomerHomePage() {
         </section>
       ) : null}
 
-      {activeCombo ? <ActiveComboCard combo={activeCombo} linkedVehicle={linkedVehicle} /> : null}
+      {activeCombo ? (
+        <ActiveComboCard
+          combo={activeCombo}
+          linkedVehicle={linkedVehicle}
+          onBookWash={handleComboBooking}
+        />
+      ) : null}
+
+      <section className={styles.voucherPanel}>
+        <div>
+          <span className={styles.sectionEyebrow}>Points to voucher</span>
+          <h2>Redeem points before checkout</h2>
+          <p>
+            Available points create discount vouchers. Checkout can apply only one valid voucher.
+          </p>
+        </div>
+        <div className={styles.redeemControl}>
+          <label>
+            <span>Points</span>
+            <input
+              type="number"
+              min={50}
+              max={200}
+              step={10}
+              value={redeemPoints}
+              onChange={(event) => setRedeemPoints(Number(event.target.value))}
+            />
+          </label>
+          <strong>{(redeemPoints * 1000).toLocaleString()} VND voucher</strong>
+          <button type="button" onClick={handleRedeemVoucher}>
+            Generate voucher
+          </button>
+        </div>
+        {redeemMessage ? <p className={styles.redeemMessage}>{redeemMessage}</p> : null}
+      </section>
 
       <section className={styles.tabSection}>
         <div className={styles.tabHeaderRow}>
@@ -199,7 +268,7 @@ export function CustomerHomePage() {
               Combos & Subscriptions
             </button>
           </div>
-          <Link className={styles.mainCta} to="/customer/cb/booking">
+          <Link className={styles.mainCta} to="/customer/bookings/new">
             Book a Wash
           </Link>
         </div>
@@ -209,15 +278,15 @@ export function CustomerHomePage() {
             <div>
               <span className={styles.sectionEyebrow}>Wash plan</span>
               <h2>Packages for your next visit</h2>
-              <p>Choose a one-time wash when you want to pay by cash, card, points, or promo.</p>
+              <p>Choose a one-time wash and apply one voucher during checkout.</p>
             </div>
           ) : (
             <div>
               <span className={styles.sectionEyebrow}>Combo upgrade</span>
               <h2>Upgrade your active combo</h2>
               <p>
-                Current plan: {currentComboPackage?.name ?? "No active combo"}. Lower-tier combos are
-                locked; upgrades charge only the price difference at checkout.
+                Current plan: {currentComboPackage?.name ?? "No active combo"}. Lower-tier combos
+                are locked; upgrades charge only the price difference at checkout.
               </p>
             </div>
           )}
@@ -240,7 +309,8 @@ export function CustomerHomePage() {
               {comboPackages.map((comboPackage) => {
                 const isActive = comboPackage.id === activeCombo?.comboPackageId;
                 const isUpgrade =
-                  Boolean(currentComboPackage) && comboPackage.price > (currentComboPackage?.price ?? 0);
+                  Boolean(currentComboPackage) &&
+                  comboPackage.price > (currentComboPackage?.price ?? 0);
                 const upgradeAmount = currentComboPackage
                   ? Math.max(0, comboPackage.price - currentComboPackage.price)
                   : 0;
@@ -281,4 +351,3 @@ export function CustomerHomePage() {
     </main>
   );
 }
-

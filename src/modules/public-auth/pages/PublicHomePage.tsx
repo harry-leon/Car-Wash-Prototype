@@ -6,7 +6,7 @@ import { PublicFooter } from "../components/PublicFooter";
 import { HeroSection } from "../components/HeroSection";
 import { PackagePreviewCard } from "../components/PackagePreviewCard";
 import { ComboPreviewCard } from "../components/ComboPreviewCard";
-import { LanguageProvider, useLanguage } from "../components/LanguageSwitcher";
+import { useLanguage } from "../components/LanguageSwitcher";
 import { HOMEPAGE_DATA } from "../mock/homepage.mock";
 
 // Unsplash real car wash images (free to use)
@@ -38,7 +38,12 @@ function useScrollReveal(threshold = 0.15) {
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
       { threshold },
     );
     observer.observe(el);
@@ -64,7 +69,10 @@ function PhotoGallery() {
       <div className="mx-auto max-w-7xl">
         <div
           className="text-center mb-12 transition-all duration-700"
-          style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(30px)" }}
+          style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(30px)",
+          }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary mb-4">
             📸 {t("Our Facility", "Cơ Sở Của Chúng Tôi")}
@@ -94,7 +102,9 @@ function PhotoGallery() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white text-xs font-semibold">{t(img.caption.en, img.caption.vi)}</p>
+                <p className="text-white text-xs font-semibold">
+                  {t(img.caption.en, img.caption.vi)}
+                </p>
               </div>
               {active === i && (
                 <div className="absolute inset-0 ring-2 ring-primary ring-offset-2 rounded-2xl pointer-events-none" />
@@ -115,8 +125,12 @@ function PhotoGallery() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-6 left-6 text-white">
-            <p className="text-lg font-bold">{t(CAR_WASH_IMAGES[active].caption.en, CAR_WASH_IMAGES[active].caption.vi)}</p>
-            <p className="text-sm opacity-80">AURA CAR CARE — {t("Ho Chi Minh City", "TP. Hồ Chí Minh")}</p>
+            <p className="text-lg font-bold">
+              {t(CAR_WASH_IMAGES[active].caption.en, CAR_WASH_IMAGES[active].caption.vi)}
+            </p>
+            <p className="text-sm opacity-80">
+              AURA CAR CARE — {t("Ho Chi Minh City", "TP. Hồ Chí Minh")}
+            </p>
           </div>
           {/* Dot navigation */}
           <div className="absolute bottom-6 right-6 flex gap-2">
@@ -138,7 +152,12 @@ function PhotoGallery() {
 function WaveDivider({ flip = false }: { flip?: boolean }) {
   return (
     <div className={`relative h-16 overflow-hidden ${flip ? "scale-y-[-1]" : ""}`}>
-      <svg viewBox="0 0 1440 64" xmlns="http://www.w3.org/2000/svg" className="absolute bottom-0 w-full" preserveAspectRatio="none">
+      <svg
+        viewBox="0 0 1440 64"
+        xmlns="http://www.w3.org/2000/svg"
+        className="absolute bottom-0 w-full"
+        preserveAspectRatio="none"
+      >
         <path
           d="M0,32 C360,64 720,0 1080,32 C1260,48 1380,24 1440,32 L1440,64 L0,64 Z"
           className="fill-accent/30"
@@ -155,13 +174,22 @@ function WaveDivider({ flip = false }: { flip?: boolean }) {
   );
 }
 
-function RevealSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function RevealSection({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   const { ref, visible } = useScrollReveal();
   return (
     <div
       ref={ref}
       className={`transition-all duration-700 ${className}`}
-      style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(32px)" }}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(32px)",
+      }}
     >
       {children}
     </div>
@@ -355,22 +383,36 @@ function HomepageContent() {
         <RevealSection>
           <div className="mx-auto max-w-4xl text-center space-y-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-blue-500/10 p-12 shadow-xl relative overflow-hidden">
             {/* Decorative water drops */}
-            <div className="absolute top-4 right-8 text-4xl opacity-10 pointer-events-none" style={{ animation: "spin 20s linear infinite" }}>💧</div>
-            <div className="absolute bottom-4 left-8 text-3xl opacity-10 pointer-events-none" style={{ animation: "spin 15s linear infinite reverse" }}>💧</div>
+            <div
+              className="absolute top-4 right-8 text-4xl opacity-10 pointer-events-none"
+              style={{ animation: "spin 20s linear infinite" }}
+            >
+              💧
+            </div>
+            <div
+              className="absolute bottom-4 left-8 text-3xl opacity-10 pointer-events-none"
+              style={{ animation: "spin 15s linear infinite reverse" }}
+            >
+              💧
+            </div>
             <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
 
             <h2 className="text-3xl md:text-4xl font-extrabold relative z-10">
               {t("Ready to Book Your First Wash?", "Sẵn Sàng Đặt Lịch Rửa Xe?")}
             </h2>
             <p className="text-muted-foreground relative z-10">
-              {t("Join thousands of happy car owners in HCMC.", "Hàng nghìn chủ xe tại TP.HCM đã tin tưởng chúng tôi.")}
+              {t(
+                "Join thousands of happy car owners in HCMC.",
+                "Hàng nghìn chủ xe tại TP.HCM đã tin tưởng chúng tôi.",
+              )}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
               <Link
                 to="/register"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90 hover:-translate-y-1 transition-all"
               >
-                {t("Create Free Account", "Tạo Tài Khoản Miễn Phí")} <ArrowRight className="h-5 w-5" />
+                {t("Create Free Account", "Tạo Tài Khoản Miễn Phí")}{" "}
+                <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 to="/login"
@@ -389,9 +431,5 @@ function HomepageContent() {
 }
 
 export function PublicHomePage() {
-  return (
-    <LanguageProvider>
-      <HomepageContent />
-    </LanguageProvider>
-  );
+  return <HomepageContent />;
 }

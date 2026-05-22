@@ -291,6 +291,7 @@
   background: linear-gradient(135deg, #ffffff, #c7f9df);
   font-weight: 950;
   text-decoration: none;
+  cursor: pointer;
   box-shadow: 0 16px 34px -24px rgba(255, 255, 255, 0.8);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -440,7 +441,8 @@
 }
 
 @keyframes pulseIndicatorglow {
-  0%, 100% {
+  0%,
+  100% {
     filter: drop-shadow(0 0 2px rgba(0, 102, 255, 0.3));
     opacity: 0.95;
   }
@@ -739,6 +741,80 @@
   margin-top: 12px;
 }
 
+.voucherPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.46fr);
+  gap: 14px;
+  align-items: center;
+  border: 1px solid var(--cb-border);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--cb-shadow);
+}
+
+.voucherPanel h2,
+.voucherPanel p {
+  margin: 0;
+}
+
+.voucherPanel p {
+  color: var(--cb-muted);
+  line-height: 1.5;
+}
+
+.redeemControl {
+  display: grid;
+  grid-template-columns: minmax(86px, 1fr) minmax(120px, auto) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.redeemControl label {
+  display: grid;
+  gap: 6px;
+}
+
+.redeemControl label span {
+  color: var(--cb-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.redeemControl input {
+  min-height: 42px;
+  border: 1px solid rgba(16, 24, 40, 0.12);
+  border-radius: 12px;
+  padding: 0 12px;
+  font: inherit;
+  font-weight: 900;
+}
+
+.redeemControl strong {
+  align-self: center;
+  color: var(--cb-primary);
+  font-size: 0.9rem;
+}
+
+.redeemControl button {
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 72%, white);
+  border-radius: 12px;
+  padding: 0 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--cb-primary), #0047b3);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.redeemMessage {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  color: #056035;
+  font-weight: 850;
+}
+
 .tabHeaderRow {
   display: flex;
   align-items: center;
@@ -805,7 +881,8 @@
   .homeHeader,
   .activeCombo,
   .sectionHeader,
-  .washTracker {
+  .washTracker,
+  .voucherPanel {
     grid-template-columns: 1fr;
     align-items: stretch;
     flex-direction: column;
@@ -845,5 +922,9 @@
   .mainCta {
     width: 100%;
     text-align: center;
+  }
+
+  .redeemControl {
+    grid-template-columns: 1fr;
   }
 }

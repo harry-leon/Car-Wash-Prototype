@@ -1,4 +1,5 @@
 export type MembershipTier = "Silver" | "Gold" | "Diamond";
+export type CustomerLanguage = "en" | "vi";
 
 export interface CustomerProfile {
   id: string;
@@ -53,10 +54,29 @@ export interface ComboPackage {
   packageIds: string[];
 }
 
-export interface Promotion {
+export type VoucherSource =
+  | "MANUAL"
+  | "POINT_REDEEM"
+  | "TIER_BENEFIT"
+  | "NEW_CUSTOMER"
+  | "CAMPAIGN";
+export type VoucherStatus = "ACTIVE" | "USED" | "EXPIRED" | "DISABLED";
+
+export interface Voucher {
+  id: string;
   code: string;
+  systemCode: string;
+  ownerCustomerId: string;
   label: string;
   discountAmount: number;
   eligibleTiers: MembershipTier[];
+  source: VoucherSource;
+  status: VoucherStatus;
+  expiresAt: string;
+  usageLimit: number;
+  usedCount: number;
+  disabled?: boolean;
   newCustomersOnly?: boolean;
 }
+
+export type Promotion = Voucher;

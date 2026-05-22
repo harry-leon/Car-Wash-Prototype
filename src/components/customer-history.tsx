@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car, Clock, Eye, X } from "lucide-react";
+import { BellRing, Car, Clock, Eye, X } from "lucide-react";
 import { Booking, STATUS_STYLES, fmtBookingMoney, useBookings } from "@/lib/booking-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
-  const { bookings, transactions, updateStatus, setSelectedBookingId } = useBookings();
+  const { bookings, transactions, updateStatus, setSelectedBookingId, setReminder } = useBookings();
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
 
@@ -43,6 +51,22 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
   const renderCard = (booking: Booking) => {
     const cancellable = booking.status === "Pending" || booking.status === "Confirmed";
     const trackable = booking.status !== "Cancelled";
+    const reminderValue = booking.reminderMinutesBefore
+      ? String(booking.reminderMinutesBefore)
+      : "none";
+
+    const handleReminderChange = (value: string) => {
+      const minutes = value === "none" ? null : Number(value);
+      setReminder(booking.id, minutes);
+      if (minutes && "Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      toast.success(
+        minutes
+          ? `Reminder set ${minutes} minutes before check-in for ${booking.id}.`
+          : `Reminder removed for ${booking.id}.`,
+      );
+    };
 
     return (
       <Card
@@ -91,6 +115,27 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
               </div>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              {cancellable && (
+                <div className="min-w-[170px]">
+                  <Select value={reminderValue} onValueChange={handleReminderChange}>
+                    <SelectTrigger
+                      className="h-9 rounded-xl border-border/60 bg-background/60 text-xs font-semibold"
+                      aria-label={`Reminder for booking ${booking.id}`}
+                    >
+                      <BellRing className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                      <SelectValue placeholder="Reminder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">No reminder</SelectItem>
+                        <SelectItem value="15">15 min before</SelectItem>
+                        <SelectItem value="30">30 min before</SelectItem>
+                        <SelectItem value="60">60 min before</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -219,6 +264,14 @@ export function CustomerHistory({ onTrack }: { onTrack: () => void }) {
                   <Info label="Phone" value={detailBooking.customerPhone ?? "-"} />
                   <Info label="Vehicle type" value={detailBooking.vehicleType} />
                   <Info label="Scheduled" value={detailBooking.scheduledAt} />
+                  <Info
+                    label="Reminder"
+                    value={
+                      detailBooking.reminderMinutesBefore
+                        ? `${detailBooking.reminderMinutesBefore} minutes before check-in`
+                        : "None"
+                    }
+                  />
                   <Info label="Services" value={detailBooking.services.join(", ")} />
                   <Info
                     label="Booking total"

@@ -1,6 +1,6 @@
 import type { Booking } from "./booking.types";
 
-export type PointTransactionType = "EARN" | "REDEEM" | "REFUND" | "BONUS" | "ADJUSTMENT";
+export type PointTransactionType = "EARN" | "REDEEM" | "BONUS" | "ADJUSTMENT" | "EXPIRE";
 
 export interface PointTransaction {
   id: string;

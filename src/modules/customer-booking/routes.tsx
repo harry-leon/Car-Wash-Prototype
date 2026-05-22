@@ -5,9 +5,9 @@ import {
   mockActiveCombo,
   mockComboPackages,
   mockCustomer,
-  mockPromotions,
   mockServiceAddons,
   mockServicePackages,
+  mockVouchers,
 } from "./mock/customer.mock";
 import { mockPointTransactions } from "./mock/history.mock";
 import { mockVehicles } from "./mock/vehicles.mock";
@@ -15,35 +15,37 @@ import type { Booking, BookingSelection, BookingSummary } from "./types/booking.
 import type {
   ActiveCombo,
   ComboPackage,
+  CustomerLanguage,
   CustomerProfile,
-  Promotion,
   ServiceAddon,
   ServicePackage,
+  Voucher,
 } from "./types/customer.types";
 import type { PointTransaction } from "./types/history.types";
 import type { Vehicle, VehicleFormValues } from "./types/vehicle.types";
 
 export const customerBookingRoutes = {
-  home: "/customer/cb/home",
-  vehicles: "/customer/cb/vehicles",
-  vehiclesNew: "/customer/cb/vehicles",
-  vehiclesEdit: "/customer/cb/vehicles",
-  booking: "/customer/cb/booking",
-  historyBookings: "/customer/cb/history",
-  historyWashes: "/customer/cb/history",
-  historyPoints: "/customer/cb/history",
+  home: "/customer/home",
+  vehicles: "/customer/vehicles",
+  vehiclesNew: "/customer/vehicles",
+  vehiclesEdit: "/customer/vehicles",
+  booking: "/customer/bookings/new",
+  historyBookings: "/customer/bookings",
+  historyWashes: "/customer/bookings",
+  historyPoints: "/customer/bookings",
 } as const;
 
 export type CustomerRouteKey = keyof typeof customerBookingRoutes;
 
 interface CustomerBookingState {
+  language: CustomerLanguage;
   customer: CustomerProfile;
   activeCombo: ActiveCombo | null;
   bookingDraft: Partial<BookingSelection>;
   servicePackages: ServicePackage[];
   serviceAddons: ServiceAddon[];
   comboPackages: ComboPackage[];
-  promotions: Promotion[];
+  vouchers: Voucher[];
   vehicles: Vehicle[];
   bookings: Booking[];
   pointTransactions: PointTransaction[];
@@ -55,28 +57,42 @@ interface ConfirmBookingResult {
 }
 
 export interface CustomerBookingStore extends CustomerBookingState {
+  setLanguage: (language: CustomerLanguage) => void;
   addVehicle: (values: VehicleFormValues) => Vehicle;
   updateVehicle: (id: string, values: VehicleFormValues) => Vehicle;
   deleteVehicle: (id: string) => void;
   setDefaultVehicle: (id: string) => void;
   setBookingDraft: (draft: Partial<BookingSelection>) => void;
   clearBookingDraft: () => void;
+  redeemPointsForVoucher: (points: number) => Voucher;
   upgradeActiveCombo: (comboPackageId: string) => ActiveCombo;
   confirmBooking: (selection: BookingSelection, summary: BookingSummary) => ConfirmBookingResult;
 }
 
 type Listener = () => void;
 
-const pointValueVnd = 100;
+const voucherValuePerPoint = 1000;
+const minimumVoucherPoints = 50;
+const maximumVoucherPoints = 200;
+const maximumActivePointVouchers = 3;
+
+function getInitialLanguage(): CustomerLanguage {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  return window.localStorage.getItem("customer-booking-language") === "vi" ? "vi" : "en";
+}
 
 let state: CustomerBookingState = {
+  language: getInitialLanguage(),
   customer: { ...mockCustomer },
   activeCombo: { ...mockActiveCombo },
   bookingDraft: {},
   servicePackages: [...mockServicePackages],
   serviceAddons: [...mockServiceAddons],
   comboPackages: [...mockComboPackages],
-  promotions: [...mockPromotions],
+  vouchers: [...mockVouchers],
   vehicles: [...mockVehicles],
   bookings: [...mockBookings],
   pointTransactions: [...mockPointTransactions],
@@ -127,7 +143,34 @@ function addDays(date: Date, days: number) {
   return nextDate.toISOString().slice(0, 10);
 }
 
+function getMembershipTier(lifetimePoints: number) {
+  if (lifetimePoints >= 12000) return "Diamond";
+  if (lifetimePoints >= 5000) return "Gold";
+  return "Silver";
+}
+
+function isVoucherUsable(voucher: Voucher, customer: CustomerProfile, today = new Date()) {
+  const expiresAt = new Date(`${voucher.expiresAt}T23:59:59`);
+
+  return (
+    voucher.ownerCustomerId === customer.id &&
+    voucher.status === "ACTIVE" &&
+    !voucher.disabled &&
+    expiresAt >= today &&
+    voucher.usedCount < voucher.usageLimit &&
+    voucher.eligibleTiers.includes(customer.tier) &&
+    (!voucher.newCustomersOnly || customer.isNewCustomer)
+  );
+}
+
 const actions = {
+  setLanguage(language: CustomerLanguage) {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("customer-booking-language", language);
+    }
+
+    setState((current) => ({ ...current, language }));
+  },
   addVehicle(values: VehicleFormValues) {
     const vehicle = buildVehicle(values);
     setState((current) => {
@@ -195,6 +238,65 @@ const actions = {
       ...current,
       bookingDraft: {},
     }));
+  },
+  redeemPointsForVoucher(points: number) {
+    const redeemPoints = Math.floor(points);
+    const activePointVoucherCount = state.vouchers.filter(
+      (voucher) => voucher.source === "POINT_REDEEM" && isVoucherUsable(voucher, state.customer),
+    ).length;
+
+    if (redeemPoints < minimumVoucherPoints) {
+      throw new Error("Minimum redeem is 50 points.");
+    }
+
+    if (redeemPoints > maximumVoucherPoints) {
+      throw new Error("Maximum redeem per voucher is 200 points.");
+    }
+
+    if (redeemPoints > state.customer.availablePoints) {
+      throw new Error("Not enough available points.");
+    }
+
+    if (activePointVoucherCount >= maximumActivePointVouchers) {
+      throw new Error("Only 3 active point vouchers are allowed at the same time.");
+    }
+
+    const now = new Date();
+    const voucherValue = redeemPoints * voucherValuePerPoint;
+    const voucher: Voucher = {
+      id: `voucher-point-${Date.now()}`,
+      code: `POINT${Math.round(voucherValue / 1000)}K`,
+      systemCode: `SYS-POINT-${state.customer.id}-${Date.now()}`,
+      ownerCustomerId: state.customer.id,
+      label: `${redeemPoints} points voucher`,
+      discountAmount: voucherValue,
+      eligibleTiers: ["Silver", "Gold", "Diamond"],
+      source: "POINT_REDEEM",
+      status: "ACTIVE",
+      expiresAt: addDays(now, 30),
+      usageLimit: 1,
+      usedCount: 0,
+    };
+
+    const pointTransaction: PointTransaction = {
+      id: `pt-voucher-${Date.now()}`,
+      type: "REDEEM",
+      points: -redeemPoints,
+      description: `Redeemed ${redeemPoints} points into ${voucherValue.toLocaleString()} VND voucher`,
+      createdAt: now.toISOString(),
+    };
+
+    setState((current) => ({
+      ...current,
+      customer: {
+        ...current.customer,
+        availablePoints: Math.max(0, current.customer.availablePoints - redeemPoints),
+      },
+      vouchers: [voucher, ...current.vouchers],
+      pointTransactions: [pointTransaction, ...current.pointTransactions],
+    }));
+
+    return voucher;
   },
   upgradeActiveCombo(comboPackageId: string) {
     const targetPackage = state.comboPackages.find(
@@ -274,6 +376,12 @@ const actions = {
         durationMinutes: summary.package.durationMinutes,
       },
       addOns: summary.addOns,
+      mode: selection.mode,
+      comboId: selection.useActiveCombo ? state.activeCombo?.id : undefined,
+      comboName: selection.useActiveCombo ? state.activeCombo?.comboName : undefined,
+      remainingComboUsesAtBooking: selection.useActiveCombo
+        ? state.activeCombo?.remainingUses
+        : undefined,
       scheduledDate: selection.scheduledDate,
       scheduledTime: selection.scheduledTime,
       status: "CONFIRMED",
@@ -282,27 +390,17 @@ const actions = {
         addOnTotal: summary.addOnTotal,
         comboUpgradeAmount: summary.comboUpgradeAmount || undefined,
         comboUpgradeName: summary.comboUpgradeName,
-        promoCode: selection.promoCode || undefined,
-        promoDiscount: summary.promoDiscount,
-        pointsRedeemed: summary.pointsRedeemed,
-        pointDeductionValue: summary.pointDeductionValue,
+        voucherId: summary.voucherId,
+        voucherCode: summary.voucherCode,
+        voucherLabel: summary.voucherLabel,
+        voucherDiscount: summary.voucherDiscount,
+        paymentMethod: summary.paymentMethod,
+        paymentStatus: summary.paymentStatus,
         paidViaCombo: summary.paidViaCombo,
         finalAmount: summary.finalAmount,
       },
       createdAt: new Date().toISOString(),
     };
-
-    const pointTransaction: PointTransaction | undefined =
-      summary.pointsRedeemed > 0
-        ? {
-            id: `pt-${Date.now()}`,
-            type: "REDEEM",
-            points: -summary.pointsRedeemed,
-            description: `Redeemed points for ${summary.package.name}`,
-            bookingCode: booking.bookingCode,
-            createdAt: booking.createdAt,
-          }
-        : undefined;
 
     const upgradedComboPackage = selection.comboUpgradePackageId
       ? state.comboPackages.find(
@@ -314,7 +412,7 @@ const actions = {
       ...current,
       customer: {
         ...current.customer,
-        availablePoints: Math.max(0, current.customer.availablePoints - summary.pointsRedeemed),
+        tier: getMembershipTier(current.customer.lifetimePoints),
       },
       activeCombo: upgradedComboPackage
         ? {
@@ -330,12 +428,17 @@ const actions = {
           }
         : current.activeCombo,
       bookings: [booking, ...current.bookings],
-      pointTransactions: pointTransaction
-        ? [pointTransaction, ...current.pointTransactions]
-        : current.pointTransactions,
+      vouchers: summary.voucherId
+        ? current.vouchers.map((voucher) =>
+            voucher.id === summary.voucherId
+              ? { ...voucher, status: "USED", usedCount: voucher.usedCount + 1 }
+              : voucher,
+          )
+        : current.vouchers,
+      pointTransactions: current.pointTransactions,
     }));
 
-    return { booking, pointTransaction };
+    return { booking };
   },
 };
 
@@ -368,8 +471,12 @@ export function CustomerBookingModuleLayout() {
   );
 }
 
-export function getPointDeductionValue(points: number) {
-  return points * pointValueVnd;
+export function getVoucherValue(points: number) {
+  return points * voucherValuePerPoint;
+}
+
+export function getUsableVouchers(vouchers: Voucher[], customer: CustomerProfile) {
+  return vouchers.filter((voucher) => isVoucherUsable(voucher, customer));
 }
 
 export const customerBookingRouteManifest = [

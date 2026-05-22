@@ -5,6 +5,7 @@ import type {
   Promotion,
   ServiceAddon,
   ServicePackage,
+  Voucher,
 } from "../types/customer.types";
 
 export const mockCustomer: CustomerProfile = {
@@ -169,22 +170,62 @@ export const mockComboPackages: ComboPackage[] = [
 
 export const mockPromotions: Promotion[] = [
   {
+    id: "voucher-tier-gold25",
     code: "GOLD25",
+    systemCode: "SYS-TIER-GOLD-25K",
+    ownerCustomerId: "cus-001",
     label: "Gold member benefit",
     discountAmount: 25000,
     eligibleTiers: ["Gold", "Diamond"],
+    source: "TIER_BENEFIT",
+    status: "ACTIVE",
+    expiresAt: "2026-06-30",
+    usageLimit: 999,
+    usedCount: 0,
   },
   {
+    id: "voucher-tier-diamond50",
     code: "DIAMOND50",
+    systemCode: "SYS-TIER-DIAMOND-50K",
+    ownerCustomerId: "cus-001",
     label: "Diamond priority reward",
     discountAmount: 50000,
     eligibleTiers: ["Diamond"],
+    source: "TIER_BENEFIT",
+    status: "ACTIVE",
+    expiresAt: "2026-06-30",
+    usageLimit: 999,
+    usedCount: 0,
   },
   {
+    id: "voucher-welcome15",
     code: "WELCOME15",
+    systemCode: "SYS-WELCOME-15K",
+    ownerCustomerId: "cus-001",
     label: "New customer welcome offer",
     discountAmount: 15000,
     eligibleTiers: ["Silver", "Gold", "Diamond"],
+    source: "NEW_CUSTOMER",
+    status: "ACTIVE",
+    expiresAt: "2026-06-21",
+    usageLimit: 1,
+    usedCount: 0,
     newCustomersOnly: true,
   },
+  {
+    id: "voucher-point-001",
+    code: "POINT50K",
+    systemCode: "SYS-POINT-CUS001-50K",
+    ownerCustomerId: "cus-001",
+    label: "Redeemed point voucher",
+    discountAmount: 50000,
+    eligibleTiers: ["Silver", "Gold", "Diamond"],
+    source: "POINT_REDEEM",
+    status: "ACTIVE",
+    expiresAt: "2026-06-15",
+    usageLimit: 1,
+    usedCount: 0,
+  },
 ];
+
+export const mockVouchers: Voucher[] = mockPromotions;
