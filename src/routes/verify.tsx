@@ -133,7 +133,7 @@ export function VerifyPage() {
     ? `${pending.countryCode} ${pending.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1***$3")}`
     : pendingPhoneChange
       ? `${pendingPhoneChange.countryCode} ${pendingPhoneChange.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1***$3")}`
-    : "your phone";
+      : "your phone";
   const activeChallenge = pending ?? pendingPhoneChange;
   const expiresAt = activeChallenge ? new Date(activeChallenge.otpExpiresAt) : null;
 
@@ -142,85 +142,87 @@ export function VerifyPage() {
       title="Verify your number"
       description="Confirm the 6-digit OTP to activate the new customer account."
     >
-        <div className="mx-auto w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
-          <div className="flex items-center justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+        <div className="flex items-center justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-center text-xl font-semibold tracking-tight">Verify your number</h1>
-          <p className="mt-1 text-center text-sm text-muted-foreground">
-            We sent a 6-digit code to <span className="font-medium text-foreground">{masked}</span>
-          </p>
+        </div>
+        <h1 className="mt-4 text-center text-xl font-semibold tracking-tight">
+          Verify your number
+        </h1>
+        <p className="mt-1 text-center text-sm text-muted-foreground">
+          We sent a 6-digit code to <span className="font-medium text-foreground">{masked}</span>
+        </p>
 
-          <div className="mt-6 flex justify-center gap-2" onPaste={handlePaste}>
-            {digits.map((digit, index) => (
-              <input
-                key={index}
-                ref={(element) => {
-                  refs.current[index] = element;
-                }}
-                value={digit}
-                onChange={(event) => handleChange(index, event.target.value)}
-                onKeyDown={(event) => handleKey(index, event)}
-                inputMode="numeric"
-                maxLength={1}
-                className={cn(
-                  "h-12 w-10 rounded-lg border bg-background text-center text-xl font-semibold shadow-sm transition-all sm:h-14 sm:w-12",
-                  "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40",
-                  digit ? "border-primary bg-primary/5" : "border-border",
-                )}
-              />
-            ))}
-          </div>
+        <div className="mt-6 flex justify-center gap-2" onPaste={handlePaste}>
+          {digits.map((digit, index) => (
+            <input
+              key={index}
+              ref={(element) => {
+                refs.current[index] = element;
+              }}
+              value={digit}
+              onChange={(event) => handleChange(index, event.target.value)}
+              onKeyDown={(event) => handleKey(index, event)}
+              inputMode="numeric"
+              maxLength={1}
+              className={cn(
+                "h-12 w-10 rounded-lg border bg-background text-center text-xl font-semibold shadow-sm transition-all sm:h-14 sm:w-12",
+                "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40",
+                digit ? "border-primary bg-primary/5" : "border-border",
+              )}
+            />
+          ))}
+        </div>
 
-          <div className="mt-5 text-center text-sm text-muted-foreground">
-            {secondsLeft > 0 ? (
-              <>
-                OTP expires in <span className="font-medium text-foreground">{secondsLeft}s</span>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                className="font-medium text-primary hover:underline"
-              >
-                Resend code
-              </button>
-            )}
-          </div>
-
-          <Button
-            className="mt-6 w-full"
-            size="lg"
-            disabled={!ready || verifying}
-            onClick={handleVerify}
-          >
-            {verifying ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Verifying...
-              </>
-            ) : (
-              "Verify & Complete"
-            )}
-          </Button>
-
-          <div className="mt-4 text-center">
-            <Link
-              to="/register"
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        <div className="mt-5 text-center text-sm text-muted-foreground">
+          {secondsLeft > 0 ? (
+            <>
+              OTP expires in <span className="font-medium text-foreground">{secondsLeft}s</span>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="font-medium text-primary hover:underline"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to registration
-            </Link>
-          </div>
-          {expiresAt && (
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Code expires at <strong>{expiresAt.toLocaleTimeString()}</strong>. Prototype OTP: use{" "}
-              <strong>{activeChallenge?.otpCode}</strong>.
-            </p>
+              Resend code
+            </button>
           )}
         </div>
-      </GuestLayout>
+
+        <Button
+          className="mt-6 w-full"
+          size="lg"
+          disabled={!ready || verifying}
+          onClick={handleVerify}
+        >
+          {verifying ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Verifying...
+            </>
+          ) : (
+            "Verify & Complete"
+          )}
+        </Button>
+
+        <div className="mt-4 text-center">
+          <Link
+            to="/register"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to registration
+          </Link>
+        </div>
+        {expiresAt && (
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Code expires at <strong>{expiresAt.toLocaleTimeString()}</strong>. Prototype OTP: use{" "}
+            <strong>{activeChallenge?.otpCode}</strong>.
+          </p>
+        )}
+      </div>
+    </GuestLayout>
   );
 }

@@ -70,7 +70,8 @@ export function CustomersPage() {
             Customer directory
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Browse every account, filter by tier or status, and open a profile to review activity. List stays in sync with bookings, registrations and loyalty changes across the app.
+            Browse every account, filter by tier or status, and open a profile to review activity.
+            List stays in sync with bookings, registrations and loyalty changes across the app.
           </p>
         </div>
 

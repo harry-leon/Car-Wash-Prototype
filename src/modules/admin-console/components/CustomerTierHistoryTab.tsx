@@ -43,9 +43,16 @@ export function CustomerTierHistoryTab({ history }: Props) {
             <TableRow key={item.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`border font-bold ${TIER_TONE[item.fromTier]}`}>{item.fromTier}</Badge>
+                  <Badge
+                    variant="outline"
+                    className={`border font-bold ${TIER_TONE[item.fromTier]}`}
+                  >
+                    {item.fromTier}
+                  </Badge>
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  <Badge variant="outline" className={`border font-bold ${TIER_TONE[item.toTier]}`}>{item.toTier}</Badge>
+                  <Badge variant="outline" className={`border font-bold ${TIER_TONE[item.toTier]}`}>
+                    {item.toTier}
+                  </Badge>
                 </div>
               </TableCell>
               <TableCell className="text-xs text-muted-foreground">{item.changedAt}</TableCell>

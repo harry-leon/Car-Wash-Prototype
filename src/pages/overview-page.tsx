@@ -79,7 +79,7 @@ export function OverviewPage() {
                   text="Create account, verify OTP and seed first vehicle."
                 />
                 <FlowLink
-                  to="/customer/bookings/new"
+                  to="/customer/bookings"
                   icon={ClipboardList}
                   title="2. Book wash"
                   text="Create a booking using current customer vehicles."
@@ -160,7 +160,7 @@ export function OverviewPage() {
                 size="lg"
                 className="w-full shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
               >
-                <Link to="/customer/bookings/new" className="font-semibold text-sm">
+                <Link to="/customer/bookings" className="font-semibold text-sm">
                   Continue Main Flow
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

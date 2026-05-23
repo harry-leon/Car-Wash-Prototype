@@ -27,9 +27,24 @@ export const bookingTrend: BookingTrendPoint[] = [
 ];
 
 export const promotionEffectiveness: PromotionEffectivenessRow[] = [
-  { promotionName: "Summer Splash 2026", usage: 248, revenueImpact: 18_600_000, conversionRate: 32.4 },
-  { promotionName: "Welcome New Drivers", usage: 412, revenueImpact: 22_300_000, conversionRate: 41.5 },
-  { promotionName: "Gold Detail Bonus", usage: 96, revenueImpact: 11_800_000, conversionRate: 18.2 },
+  {
+    promotionName: "Summer Splash 2026",
+    usage: 248,
+    revenueImpact: 18_600_000,
+    conversionRate: 32.4,
+  },
+  {
+    promotionName: "Welcome New Drivers",
+    usage: 412,
+    revenueImpact: 22_300_000,
+    conversionRate: 41.5,
+  },
+  {
+    promotionName: "Gold Detail Bonus",
+    usage: 96,
+    revenueImpact: 11_800_000,
+    conversionRate: 18.2,
+  },
   { promotionName: "Mid-week Cleanse", usage: 73, revenueImpact: 4_900_000, conversionRate: 12.7 },
 ];
 

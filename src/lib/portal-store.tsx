@@ -38,7 +38,7 @@ export function usePortal() {
   const customer = store.customers.find((item) => item.id === store.currentCustomerId);
 
   return {
-        profile: customer
+    profile: customer
       ? {
           name: customer.name,
           email: customer.email,

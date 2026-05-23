@@ -1260,9 +1260,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     const sourceServices = persisted.services ?? serviceSeed;
     const sourceCustomers = persisted.customers ?? customerSeed;
     const generatedFromBookings: WashSessionRecord[] = restoredBookings
-      .filter(
-        (b) => b.status === "Checked-in" || (b.washStatus ?? "") !== "",
-      )
+      .filter((b) => b.status === "Checked-in" || (b.washStatus ?? "") !== "")
       .map((b) => {
         const customer = sourceCustomers.find((c) => c.id === b.customerId);
         const selectedServices = sourceServices.filter((s) => b.services.includes(s.name));
@@ -1438,6 +1436,9 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
 
   const logout = React.useCallback(() => {
     setIsAuthenticated(false);
+    setRole("Customer");
+    setSelectedBookingId(null);
+    setSessionDraft(null);
     if (typeof window !== "undefined") {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -1445,7 +1446,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         const payload = JSON.parse(raw) as PersistedStore;
         window.localStorage.setItem(
           STORAGE_KEY,
-          JSON.stringify({ ...payload, isAuthenticated: false }),
+          JSON.stringify({
+            ...payload,
+            isAuthenticated: false,
+            role: "Customer",
+            selectedBookingId: null,
+            sessionDraft: null,
+          }),
         );
       } catch {
         window.localStorage.removeItem(STORAGE_KEY);
@@ -2430,8 +2437,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       if (!session) {
         throw new Error("Wash session record is missing.");
       }
-      if (session.status === "Completed") {
-        throw new Error("Completed wash session cannot be reassigned.");
+      if (session.status !== "In Progress") {
+        throw new Error("Staff can only be reassigned while the wash session is in progress.");
       }
       const staff = staffMembers.find((item) => item.id === staffId && item.status === "Active");
       if (!staff) {

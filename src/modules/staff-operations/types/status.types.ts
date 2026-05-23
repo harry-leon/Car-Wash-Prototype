@@ -17,3 +17,12 @@ export const STAFF_BOOKING_STATUS_LABELS: Record<StaffBookingStatus, string> = {
   CANCELLED: "Cancelled",
   NO_SHOW: "No show",
 };
+
+export const STAFF_BOOKING_STATUS_LABELS_VI: Record<StaffBookingStatus, string> = {
+  CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
+  IN_PROGRESS: "Đang rửa",
+  COMPLETED: "Hoàn tất",
+  CANCELLED: "Đã hủy",
+  NO_SHOW: "Không đến",
+};

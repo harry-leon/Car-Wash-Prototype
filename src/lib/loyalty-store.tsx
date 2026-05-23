@@ -50,15 +50,17 @@ export function useLoyalty() {
     audit: store.tierHistory,
     activeCustomerId: store.currentCustomerId,
     setActiveCustomerId: store.setCurrentCustomerId,
-    updateTiers: (next: Array<{
-      name: TierName;
-      threshold: number;
-      minPoints?: number;
-      bookingWindowDays?: number;
-      discountPercent?: number;
-      multiplier: number;
-      perks: string;
-    }>) =>
+    updateTiers: (
+      next: Array<{
+        name: TierName;
+        threshold: number;
+        minPoints?: number;
+        bookingWindowDays?: number;
+        discountPercent?: number;
+        multiplier: number;
+        perks: string;
+      }>,
+    ) =>
       store.updateTiers(
         next.map((tier) => {
           const current = store.tiers.find((item) => item.name === tier.name);
@@ -82,11 +84,12 @@ export function useLoyalty() {
       startDate: string;
       endDate: string;
       stackable: boolean;
-    }) =>
-      store.addPromotion(promotion),
+    }) => store.addPromotion(promotion),
     togglePromotion: store.togglePromotion,
     computeTier: (points: number) =>
-      [...store.tiers].sort((a, b) => b.minPoints - a.minPoints).find((tier) => points >= tier.minPoints)?.name ?? "Member",
+      [...store.tiers]
+        .sort((a, b) => b.minPoints - a.minPoints)
+        .find((tier) => points >= tier.minPoints)?.name ?? "Member",
   };
 }
 

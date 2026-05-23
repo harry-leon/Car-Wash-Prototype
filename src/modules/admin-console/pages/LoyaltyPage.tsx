@@ -6,14 +6,8 @@ import { PointsAuditTable } from "../components/PointsAuditTable";
 import { Card } from "@/components/ui/card";
 import { useCarwashStore } from "@/lib/carwash-store";
 import type { TierRule } from "../mock/loyalty.mock";
-import type {
-  PointTransaction,
-  TierHistoryItem,
-} from "../types/customer.types";
-import {
-  ledgerEntryToPointTx,
-  tierToDisplay,
-} from "../lib/customer-mapping";
+import type { PointTransaction, TierHistoryItem } from "../types/customer.types";
+import { ledgerEntryToPointTx, tierToDisplay } from "../lib/customer-mapping";
 
 const TIER_PERKS: Record<string, string> = {
   Member: "Standard booking and base earning.",
@@ -23,13 +17,7 @@ const TIER_PERKS: Record<string, string> = {
 };
 
 export function LoyaltyPage() {
-  const {
-    tiers,
-    tierHistory,
-    ledger,
-    customers,
-    hydrated,
-  } = useCarwashStore();
+  const { tiers, tierHistory, ledger, customers, hydrated } = useCarwashStore();
 
   const tierRules: TierRule[] = React.useMemo(
     () =>
@@ -85,7 +73,8 @@ export function LoyaltyPage() {
             Loyalty governance
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Inspect tier thresholds, track tier promotion history and audit every loyalty point movement. All numbers reflect the live store.
+            Inspect tier thresholds, track tier promotion history and audit every loyalty point
+            movement. All numbers reflect the live store.
           </p>
         </div>
 

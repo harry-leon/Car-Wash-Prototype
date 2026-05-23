@@ -81,12 +81,18 @@ export function CustomerTable({ rows, onOpenDetail }: Props) {
                   {row.lifetimePoints.toLocaleString("vi-VN")}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={`border font-semibold ${ROLE_TONE[row.role]}`}>
+                  <Badge
+                    variant="outline"
+                    className={`border font-semibold ${ROLE_TONE[row.role]}`}
+                  >
                     {row.role}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[row.status]}`}>
+                  <Badge
+                    variant="outline"
+                    className={`border font-semibold ${STATUS_TONE[row.status]}`}
+                  >
                     {row.status}
                   </Badge>
                 </TableCell>

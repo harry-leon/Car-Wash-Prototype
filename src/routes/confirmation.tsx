@@ -35,8 +35,14 @@ export function ConfirmationPage() {
   if (!lastTransaction) {
     return (
       <div className="mx-auto max-w-xl p-10 text-center animate-in fade-in zoom-in-95 duration-500">
-        <PageHeader title="No recent transaction" subtitle="Complete a checkout to see the receipt." />
-        <Button asChild className="mt-8 rounded-xl font-bold px-8 shadow-md transition-all hover:shadow-lg hover:-translate-y-1">
+        <PageHeader
+          title="No recent transaction"
+          subtitle="Complete a checkout to see the receipt."
+        />
+        <Button
+          asChild
+          className="mt-8 rounded-xl font-bold px-8 shadow-md transition-all hover:shadow-lg hover:-translate-y-1"
+        >
           <Link to="/staff/dashboard">
             Start a new wash <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
@@ -47,7 +53,9 @@ export function ConfirmationPage() {
 
   const tx = lastTransaction;
   const current =
-    tx.customer.id !== "guest" ? customers.find((customer) => customer.id === tx.customer.id) : null;
+    tx.customer.id !== "guest"
+      ? customers.find((customer) => customer.id === tx.customer.id)
+      : null;
 
   return (
     <div className="mx-auto max-w-4xl p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -60,7 +68,9 @@ export function ConfirmationPage() {
         </div>
         <h1 className="text-4xl font-bold tracking-tight text-foreground">Payment Successful</h1>
         <p className="mt-3 text-sm font-medium text-muted-foreground bg-background/50 px-4 py-1.5 rounded-full border border-border/50 shadow-sm">
-          Transaction <span className="font-mono text-foreground font-bold tracking-wider">{tx.id}</span> • Paid via <span className="text-foreground font-bold">{tx.paymentMethod}</span>
+          Transaction{" "}
+          <span className="font-mono text-foreground font-bold tracking-wider">{tx.id}</span> • Paid
+          via <span className="text-foreground font-bold">{tx.paymentMethod}</span>
         </p>
       </div>
 
@@ -75,24 +85,36 @@ export function ConfirmationPage() {
               </h3>
               <TierBadge tier={tx.customer.tier} />
             </div>
-            
+
             <div className="mb-6 space-y-3 text-sm">
               <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
-                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Customer</span>
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                  Customer
+                </span>
                 <span className="font-bold text-foreground text-base">{tx.customer.name}</span>
               </div>
               <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
-                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Vehicle</span>
-                <span className="font-bold text-foreground">{tx.vehicleType} / <span className="font-mono tracking-wider">{tx.plate}</span></span>
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                  Vehicle
+                </span>
+                <span className="font-bold text-foreground">
+                  {tx.vehicleType} / <span className="font-mono tracking-wider">{tx.plate}</span>
+                </span>
               </div>
               <div className="flex justify-between items-center rounded-lg bg-background/50 p-3 border border-border/50">
-                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Date</span>
-                <span className="font-medium text-foreground">{new Date(tx.date).toLocaleString()}</span>
+                <span className="text-muted-foreground font-bold uppercase tracking-wider text-xs">
+                  Date
+                </span>
+                <span className="font-medium text-foreground">
+                  {new Date(tx.date).toLocaleString()}
+                </span>
               </div>
             </div>
-            
+
             <div className="space-y-2 border-t border-border/50 pt-6 text-sm">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">Services</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                Services
+              </div>
               {tx.services.map((service) => (
                 <div key={service.id} className="flex justify-between items-center px-2">
                   <span className="font-medium">{service.name}</span>
@@ -100,17 +122,39 @@ export function ConfirmationPage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="mt-6 space-y-2 border-t border-border/50 pt-6 text-sm bg-background/30 p-4 rounded-xl">
               <Line label="Subtotal" value={fmtMoney(tx.subtotal)} />
-              {tx.tierDiscount > 0 && <Line label={`Tier discount (${tx.customer.discountPct}%)`} value={`-${fmtMoney(tx.tierDiscount)}`} emerald />}
-              {tx.promoDiscount > 0 && <Line label={`Promo ${tx.promoCode}`} value={`-${fmtMoney(tx.promoDiscount)}`} emerald />}
-              {tx.pointsValue > 0 && <Line label={`Points used (${tx.pointsRedeemed})`} value={`-${fmtMoney(tx.pointsValue)}`} emerald />}
+              {tx.tierDiscount > 0 && (
+                <Line
+                  label={`Tier discount (${tx.customer.discountPct}%)`}
+                  value={`-${fmtMoney(tx.tierDiscount)}`}
+                  emerald
+                />
+              )}
+              {tx.promoDiscount > 0 && (
+                <Line
+                  label={`Promo ${tx.promoCode}`}
+                  value={`-${fmtMoney(tx.promoDiscount)}`}
+                  emerald
+                />
+              )}
+              {tx.pointsValue > 0 && (
+                <Line
+                  label={`Points used (${tx.pointsRedeemed})`}
+                  value={`-${fmtMoney(tx.pointsValue)}`}
+                  emerald
+                />
+              )}
             </div>
-            
+
             <div className="mt-6 flex items-end justify-between border-t border-border/50 pt-6">
-              <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-1">Final paid</span>
-              <span className="text-4xl font-bold tracking-tight text-emerald-600">{fmtMoney(tx.finalAmount)}</span>
+              <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                Final paid
+              </span>
+              <span className="text-4xl font-bold tracking-tight text-emerald-600">
+                {fmtMoney(tx.finalAmount)}
+              </span>
             </div>
           </div>
         </div>
@@ -132,7 +176,9 @@ export function ConfirmationPage() {
                   <span className="opacity-90 font-medium">Sign up to start earning points!</span>
                 ) : (
                   <div className="flex justify-between items-center bg-black/10 rounded-lg p-3 backdrop-blur-sm">
-                    <span className="opacity-90 font-bold uppercase tracking-wider text-xs">New balance</span>
+                    <span className="opacity-90 font-bold uppercase tracking-wider text-xs">
+                      New balance
+                    </span>
                     <span className="font-bold text-lg">{current?.points ?? 0} pts</span>
                   </div>
                 )}
@@ -150,10 +196,18 @@ export function ConfirmationPage() {
             >
               <Printer className="mr-2 h-5 w-5" /> Print Receipt
             </Button>
-            <Button variant="secondary" className="w-full h-12 rounded-xl font-bold bg-secondary/50 hover:bg-secondary shadow-sm transition-all" onClick={() => navigate({ to: getHomePath(role) })}>
+            <Button
+              variant="secondary"
+              className="w-full h-12 rounded-xl font-bold bg-secondary/50 hover:bg-secondary shadow-sm transition-all"
+              onClick={() => navigate({ to: getHomePath(role) })}
+            >
               Back to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button variant="outline" className="w-full h-12 rounded-xl font-bold border-border/50 hover:bg-background shadow-sm transition-all" asChild>
+            <Button
+              variant="outline"
+              className="w-full h-12 rounded-xl font-bold border-border/50 hover:bg-background shadow-sm transition-all"
+              asChild
+            >
               <Link to="/customer/transactions">View History</Link>
             </Button>
           </div>
@@ -167,7 +221,16 @@ function Line({ label, value, emerald }: { label: string; value: string; emerald
   return (
     <div className="flex justify-between items-center py-1">
       <span className="text-muted-foreground font-medium">{label}</span>
-      <span className={cn("font-bold", emerald ? "text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20" : "text-foreground")}>{value}</span>
+      <span
+        className={cn(
+          "font-bold",
+          emerald
+            ? "text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20"
+            : "text-foreground",
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }

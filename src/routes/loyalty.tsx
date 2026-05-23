@@ -80,7 +80,7 @@ export function LoyaltyPage() {
         <div
           className={cn(
             "relative overflow-hidden rounded-2xl bg-gradient-to-r p-6 sm:p-8 text-white shadow-xl ring-1 ring-white/10",
-            tierGradient(customer.tier)
+            tierGradient(customer.tier),
           )}
         >
           {/* Decorative glows */}
@@ -93,32 +93,48 @@ export function LoyaltyPage() {
               <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-white/80">
                 <Crown className="h-3.5 w-3.5" /> MEMBER
               </div>
-              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">{customer.tier} Member</div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                {customer.tier} Member
+              </div>
               <div className="mt-1 text-xs font-medium text-white/70">Since 15/02/2025</div>
             </div>
 
             {/* Col 2 */}
             <div className="flex-1 lg:border-r border-white/20 lg:px-6">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">CURRENT POINTS</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                CURRENT POINTS
+              </div>
               <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">
                 {customer.points.toLocaleString()} <span className="text-lg font-medium">pts</span>
               </div>
-              <div className="mt-1 text-xs font-medium text-white/70">≈ {(customer.points * 100).toLocaleString()} VND</div>
+              <div className="mt-1 text-xs font-medium text-white/70">
+                ≈ {(customer.points * 100).toLocaleString()} VND
+              </div>
             </div>
 
             {/* Col 3 */}
             <div className="flex-1 lg:border-r border-white/20 lg:px-6">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">NEXT TIER</div>
-              <div className="mt-2 text-2xl md:text-3xl font-bold text-amber-300 drop-shadow-sm tracking-tight">{nextTier?.name ?? "Max"}</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                NEXT TIER
+              </div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold text-amber-300 drop-shadow-sm tracking-tight">
+                {nextTier?.name ?? "Max"}
+              </div>
               <div className="mt-1 text-xs font-medium text-white/70">
-                {nextTier ? `${(target - customer.points).toLocaleString()} pts remaining` : "Top tier reached"}
+                {nextTier
+                  ? `${(target - customer.points).toLocaleString()} pts remaining`
+                  : "Top tier reached"}
               </div>
             </div>
 
             {/* Col 4 */}
             <div className="flex-1 lg:pl-6">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">POINTS EXPIRY</div>
-              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">31/12/2026</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                POINTS EXPIRY
+              </div>
+              <div className="mt-2 text-2xl md:text-3xl font-bold tracking-tight drop-shadow-sm">
+                31/12/2026
+              </div>
               <div className="mt-1 text-xs font-medium text-white/70">138 days left</div>
             </div>
           </div>
@@ -128,7 +144,9 @@ export function LoyaltyPage() {
               <>
                 <div className="mb-2.5 flex items-center justify-between text-sm font-semibold text-white/90">
                   <span>Progress to {nextTier.name} tier</span>
-                  <span>{customer.points.toLocaleString()} / {target.toLocaleString()} pts</span>
+                  <span>
+                    {customer.points.toLocaleString()} / {target.toLocaleString()} pts
+                  </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-black/20 p-0.5">
                   <div
@@ -148,15 +166,22 @@ export function LoyaltyPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <div className="flex items-center justify-between px-2">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">Rewards Marketplace</h2>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{rewards.length} perks available</span>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                Rewards Marketplace
+              </h2>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                {rewards.length} perks available
+              </span>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {rewards.map((reward) => {
                 const Icon = REWARD_ICONS[reward.icon] ?? Gift;
                 const affordable = customer.points >= reward.cost;
                 return (
-                  <Card key={reward.id} className="group relative overflow-hidden rounded-[1.5rem] border-border/50 bg-card/60 p-1 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1">
+                  <Card
+                    key={reward.id}
+                    className="group relative overflow-hidden rounded-[1.5rem] border-border/50 bg-card/60 p-1 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
+                  >
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     <CardContent className="relative z-10 p-5">
                       <div className="flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-gradient-to-br from-primary/10 to-indigo-500/10 text-primary shadow-inner group-hover:scale-105 transition-transform duration-300">
@@ -187,8 +212,15 @@ export function LoyaltyPage() {
               <h2 className="text-2xl font-bold tracking-tight text-foreground px-2">Your Perks</h2>
               <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg">
                 <CardContent className="p-6">
-                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Current Benefits</div>
-                  <Badge className={cn("px-3 py-1 text-sm font-bold shadow-sm", tierBadgeClass(customer.tier))}>
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                    Current Benefits
+                  </div>
+                  <Badge
+                    className={cn(
+                      "px-3 py-1 text-sm font-bold shadow-sm",
+                      tierBadgeClass(customer.tier),
+                    )}
+                  >
                     {customer.tier} Tier
                   </Badge>
                   <p className="mt-4 text-sm font-medium leading-relaxed text-foreground/90">
@@ -212,26 +244,43 @@ export function LoyaltyPage() {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground px-2">Point Ledger</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground px-2">
+                Point Ledger
+              </h2>
               <Card className="rounded-[1.5rem] border-border/50 bg-card/60 backdrop-blur-xl shadow-lg overflow-hidden">
                 <CardContent className="p-0">
                   <ul className="divide-y divide-border/50">
                     {customerLedger.length === 0 && (
-                      <li className="p-8 text-center text-sm font-medium text-muted-foreground">No activity yet.</li>
+                      <li className="p-8 text-center text-sm font-medium text-muted-foreground">
+                        No activity yet.
+                      </li>
                     )}
                     {customerLedger.map((entry) => (
-                      <li key={entry.id} className="flex items-center gap-4 p-5 transition-colors hover:bg-accent/20">
+                      <li
+                        key={entry.id}
+                        className="flex items-center gap-4 p-5 transition-colors hover:bg-accent/20"
+                      >
                         <div
                           className={cn(
                             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-inner",
-                            entry.delta > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600",
+                            entry.delta > 0
+                              ? "bg-emerald-500/10 text-emerald-600"
+                              : "bg-rose-500/10 text-rose-600",
                           )}
                         >
-                          {entry.delta > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                          {entry.delta > 0 ? (
+                            <TrendingUp className="h-4 w-4" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4" />
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-bold text-foreground">{entry.description}</div>
-                          <div className="mt-1 text-xs font-medium text-muted-foreground">{entry.date}</div>
+                          <div className="truncate text-sm font-bold text-foreground">
+                            {entry.description}
+                          </div>
+                          <div className="mt-1 text-xs font-medium text-muted-foreground">
+                            {entry.date}
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
                           <span
@@ -243,7 +292,10 @@ export function LoyaltyPage() {
                             {entry.delta > 0 ? "+" : ""}
                             {entry.delta}
                           </span>
-                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider bg-background/50">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] font-bold uppercase tracking-wider bg-background/50"
+                          >
                             {entry.type}
                           </Badge>
                         </div>

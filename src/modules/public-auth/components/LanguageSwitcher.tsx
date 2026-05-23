@@ -86,7 +86,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border border-border/60 bg-background/60 p-0.5 backdrop-blur-sm ${className ?? ""}`}
+      className={`inline-flex items-center rounded-full border border-border/70 bg-background/80 p-0.5 shadow-sm backdrop-blur-sm dark:bg-card/85 dark:shadow-[0_6px_16px_rgba(0,0,0,0.28)] ${className ?? ""}`}
     >
       <button
         type="button"
@@ -94,7 +94,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
           lang === "en"
             ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground dark:text-slate-300 dark:hover:bg-slate-700/80 dark:hover:text-white"
         }`}
       >
         EN
@@ -105,7 +105,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
           lang === "vi"
             ? "bg-primary text-primary-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground dark:text-slate-300 dark:hover:bg-slate-700/80 dark:hover:text-white"
         }`}
       >
         VI
@@ -123,7 +123,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
       type="button"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/60 backdrop-blur-sm transition-all hover:bg-accent hover:scale-110 ${className ?? ""}`}
+      className={`flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-accent hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:bg-card/85 dark:text-slate-100 dark:shadow-[0_6px_16px_rgba(0,0,0,0.28)] dark:hover:bg-slate-700/85 ${className ?? ""}`}
     >
       <Icon className="h-4 w-4" />
     </button>

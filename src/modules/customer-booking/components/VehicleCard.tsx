@@ -82,7 +82,6 @@ export function VehicleCard({
   return (
     <article
       className={`${styles.vehicleCard} ${vehicle.isDefault ? styles.vehicleCardDefault : ""}`}
-      onClick={() => onSetDefault(vehicle.id)}
       title={copy.hint}
     >
       <div className={styles.vehicleImage} aria-hidden="true">
@@ -164,6 +163,18 @@ export function VehicleCard({
       </div>
 
       <div className={styles.vehicleActions}>
+        {!vehicle.isDefault ? (
+          <button
+            type="button"
+            className={styles.defaultActionButton}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSetDefault(vehicle.id);
+            }}
+          >
+            {language === "vi" ? "Đặt làm mặc định" : "Set as default"}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={(event) => {

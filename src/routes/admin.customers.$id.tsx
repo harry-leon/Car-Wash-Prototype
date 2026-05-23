@@ -14,10 +14,5 @@ export const Route = createFileRoute("/admin/customers/$id")({
 function CustomerDetailRoute() {
   const { id } = useParams({ from: "/admin/customers/$id" });
   const navigate = useNavigate();
-  return (
-    <CustomerDetailPage
-      customerId={id}
-      onBack={() => navigate({ to: "/admin/customers" })}
-    />
-  );
+  return <CustomerDetailPage customerId={id} onBack={() => navigate({ to: "/admin/customers" })} />;
 }

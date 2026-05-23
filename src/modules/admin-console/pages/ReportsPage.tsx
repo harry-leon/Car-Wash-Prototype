@@ -36,9 +36,7 @@ export function ReportsPage() {
   const reportSummary: ReportSummary = React.useMemo(() => {
     const todays = bookings.filter((booking) => booking.dateISO === today);
     const monthly = bookings.filter((booking) => booking.dateISO.startsWith(monthStart));
-    const monthlyTransactions = transactions.filter((tx) =>
-      tx.date.startsWith(monthStart),
-    );
+    const monthlyTransactions = transactions.filter((tx) => tx.date.startsWith(monthStart));
     const todaysTransactions = transactions.filter((tx) => tx.date.startsWith(today));
     const completedMonth = monthly.filter((booking) => booking.status === "Completed");
     const noShowMonth = monthly.filter((booking) => booking.status === "No-show");
@@ -108,11 +106,7 @@ export function ReportsPage() {
     };
     ledger.forEach((entry) => {
       const key: PointSummaryRow["type"] =
-        entry.type === "Earned"
-          ? "EARN"
-          : entry.type === "Spent"
-            ? "REDEEM"
-            : "ADJUST";
+        entry.type === "Earned" ? "EARN" : entry.type === "Spent" ? "REDEEM" : "ADJUST";
       buckets[key].total += entry.delta;
       buckets[key].count += 1;
     });
@@ -136,7 +130,8 @@ export function ReportsPage() {
             Business reports
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Daily and monthly performance, booking trends, no-show analysis and promotion effectiveness — all derived from the live store.
+            Daily and monthly performance, booking trends, no-show analysis and promotion
+            effectiveness — all derived from the live store.
           </p>
         </div>
 
@@ -168,7 +163,10 @@ export function ReportsPage() {
                     <TableBody>
                       {promotionEffectiveness.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                          <TableCell
+                            colSpan={4}
+                            className="py-8 text-center text-sm text-muted-foreground"
+                          >
                             No promotions yet.
                           </TableCell>
                         </TableRow>
@@ -176,11 +174,15 @@ export function ReportsPage() {
                         promotionEffectiveness.map((row) => (
                           <TableRow key={row.promotionName}>
                             <TableCell className="font-semibold">{row.promotionName}</TableCell>
-                            <TableCell className="text-right">{row.usage.toLocaleString("vi-VN")}</TableCell>
+                            <TableCell className="text-right">
+                              {row.usage.toLocaleString("vi-VN")}
+                            </TableCell>
                             <TableCell className="text-right">
                               {(row.revenueImpact / 1_000_000).toFixed(1)}M ₫
                             </TableCell>
-                            <TableCell className="text-right font-semibold">{row.conversionRate.toFixed(1)}%</TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {row.conversionRate.toFixed(1)}%
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -191,7 +193,9 @@ export function ReportsPage() {
 
               <Card className="border-border/50 bg-card/60 shadow-lg backdrop-blur-xl">
                 <CardHeader className="border-b border-border/50 bg-accent/20 py-4">
-                  <CardTitle className="text-base font-semibold">Point transaction summary</CardTitle>
+                  <CardTitle className="text-base font-semibold">
+                    Point transaction summary
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <Table>
@@ -205,7 +209,10 @@ export function ReportsPage() {
                     <TableBody>
                       {pointSummary.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={3} className="py-8 text-center text-sm text-muted-foreground">
+                          <TableCell
+                            colSpan={3}
+                            className="py-8 text-center text-sm text-muted-foreground"
+                          >
                             No point movements yet.
                           </TableCell>
                         </TableRow>
@@ -213,13 +220,19 @@ export function ReportsPage() {
                         pointSummary.map((row) => (
                           <TableRow key={row.type}>
                             <TableCell>
-                              <Badge variant="outline" className="border font-semibold">{row.type}</Badge>
+                              <Badge variant="outline" className="border font-semibold">
+                                {row.type}
+                              </Badge>
                             </TableCell>
-                            <TableCell className={`text-right font-semibold ${row.total >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            <TableCell
+                              className={`text-right font-semibold ${row.total >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+                            >
                               {row.total >= 0 ? "+" : ""}
                               {row.total.toLocaleString("vi-VN")}
                             </TableCell>
-                            <TableCell className="text-right">{row.transactionCount.toLocaleString("vi-VN")}</TableCell>
+                            <TableCell className="text-right">
+                              {row.transactionCount.toLocaleString("vi-VN")}
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -234,9 +247,21 @@ export function ReportsPage() {
                 <CardTitle className="text-base font-semibold">No-show analysis</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 p-5 sm:grid-cols-3">
-                <Metric label="No-show rate" value={`${reportSummary.noShowRate.toFixed(1)}%`} hint="This month" />
-                <Metric label="Points earned" value={reportSummary.pointsEarned.toLocaleString("vi-VN")} hint="This month" />
-                <Metric label="Points redeemed" value={reportSummary.pointsRedeemed.toLocaleString("vi-VN")} hint="This month" />
+                <Metric
+                  label="No-show rate"
+                  value={`${reportSummary.noShowRate.toFixed(1)}%`}
+                  hint="This month"
+                />
+                <Metric
+                  label="Points earned"
+                  value={reportSummary.pointsEarned.toLocaleString("vi-VN")}
+                  hint="This month"
+                />
+                <Metric
+                  label="Points redeemed"
+                  value={reportSummary.pointsRedeemed.toLocaleString("vi-VN")}
+                  hint="This month"
+                />
               </CardContent>
             </Card>
           </>
@@ -249,7 +274,9 @@ export function ReportsPage() {
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
     <div className="rounded-xl border border-border/50 bg-background/40 p-4">
-      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
       <div className="mt-1.5 text-2xl font-bold tracking-tight text-foreground">{value}</div>
       <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
     </div>

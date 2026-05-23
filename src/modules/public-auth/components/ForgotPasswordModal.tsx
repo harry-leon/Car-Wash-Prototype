@@ -46,13 +46,16 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
   }, [countdown]);
 
   const handleSendOtp = async () => {
-    if (!phone.trim()) return toast.error(t("Enter your phone number.", "Vui lòng nhập số điện thoại."));
+    if (!phone.trim())
+      return toast.error(t("Enter your phone number.", "Vui lòng nhập số điện thoại."));
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1000));
     setLoading(false);
     setStep("otp");
     setCountdown(60);
-    toast.success(t(`OTP sent to ${phone}. Demo OTP: 123456`, `OTP đã gửi đến ${phone}. OTP demo: 123456`));
+    toast.success(
+      t(`OTP sent to ${phone}. Demo OTP: 123456`, `OTP đã gửi đến ${phone}. OTP demo: 123456`),
+    );
     setTimeout(() => otpRefs.current[0]?.focus(), 100);
   };
 
@@ -72,7 +75,8 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
 
   const handleVerifyOtp = async () => {
     const entered = otp.join("");
-    if (entered.length < 6) return toast.error(t("Enter all 6 digits.", "Vui lòng nhập đủ 6 chữ số."));
+    if (entered.length < 6)
+      return toast.error(t("Enter all 6 digits.", "Vui lòng nhập đủ 6 chữ số."));
     setLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
@@ -85,8 +89,12 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
   };
 
   const handleResetPassword = async () => {
-    if (newPassword.length < 6) return toast.error(t("Password must be at least 6 characters.", "Mật khẩu phải có ít nhất 6 ký tự."));
-    if (newPassword !== confirmPassword) return toast.error(t("Passwords do not match.", "Mật khẩu không khớp."));
+    if (newPassword.length < 6)
+      return toast.error(
+        t("Password must be at least 6 characters.", "Mật khẩu phải có ít nhất 6 ký tự."),
+      );
+    if (newPassword !== confirmPassword)
+      return toast.error(t("Passwords do not match.", "Mật khẩu không khớp."));
     setLoading(true);
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
@@ -113,7 +121,10 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
               {step === "done" && t("Password updated!", "Cập nhật thành công!")}
             </p>
           </div>
-          <button onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors">
+          <button
+            onClick={onClose}
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -122,13 +133,24 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
         <div className="flex items-center gap-0 px-6 pt-4">
           {["phone", "otp", "newPassword", "done"].map((s, i) => (
             <React.Fragment key={s}>
-              <div className={`h-2 w-2 rounded-full transition-all ${
-                step === s ? "bg-primary scale-125" :
-                ["phone","otp","newPassword","done"].indexOf(step) > i ? "bg-primary/60" : "bg-border"
-              }`} />
-              {i < 3 && <div className={`h-0.5 flex-1 transition-all ${
-                ["phone","otp","newPassword","done"].indexOf(step) > i ? "bg-primary/60" : "bg-border"
-              }`} />}
+              <div
+                className={`h-2 w-2 rounded-full transition-all ${
+                  step === s
+                    ? "bg-primary scale-125"
+                    : ["phone", "otp", "newPassword", "done"].indexOf(step) > i
+                      ? "bg-primary/60"
+                      : "bg-border"
+                }`}
+              />
+              {i < 3 && (
+                <div
+                  className={`h-0.5 flex-1 transition-all ${
+                    ["phone", "otp", "newPassword", "done"].indexOf(step) > i
+                      ? "bg-primary/60"
+                      : "bg-border"
+                  }`}
+                />
+              )}
             </React.Fragment>
           ))}
         </div>
@@ -159,7 +181,9 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     {t("Sending...", "Đang gửi...")}
                   </span>
-                ) : t("Send OTP", "Gửi Mã OTP")}
+                ) : (
+                  t("Send OTP", "Gửi Mã OTP")
+                )}
               </Button>
             </>
           )}
@@ -173,7 +197,9 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                   {otp.map((digit, i) => (
                     <input
                       key={i}
-                      ref={(el) => { otpRefs.current[i] = el; }}
+                      ref={(el) => {
+                        otpRefs.current[i] = el;
+                      }}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
@@ -188,7 +214,10 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                   {countdown > 0 ? (
                     <span>{t(`Resend in ${countdown}s`, `Gửi lại sau ${countdown}s`)}</span>
                   ) : (
-                    <button onClick={handleSendOtp} className="text-primary hover:underline font-medium">
+                    <button
+                      onClick={handleSendOtp}
+                      className="text-primary hover:underline font-medium"
+                    >
                       {t("Resend OTP", "Gửi lại OTP")}
                     </button>
                   )}
@@ -200,7 +229,9 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     {t("Verifying...", "Đang xác thực...")}
                   </span>
-                ) : t("Verify OTP", "Xác Nhận OTP")}
+                ) : (
+                  t("Verify OTP", "Xác Nhận OTP")
+                )}
               </Button>
             </>
           )}
@@ -213,14 +244,26 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                   <Label>{t("New Password", "Mật Khẩu Mới")}</Label>
                   <div className="relative group">
                     <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="••••••••" className="pl-10 h-12" />
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="pl-10 h-12"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>{t("Confirm Password", "Xác Nhận Mật Khẩu")}</Label>
                   <div className="relative group">
                     <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="pl-10 h-12" />
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="pl-10 h-12"
+                    />
                   </div>
                 </div>
               </div>
@@ -230,7 +273,9 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     {t("Updating...", "Đang cập nhật...")}
                   </span>
-                ) : t("Reset Password", "Đặt Lại Mật Khẩu")}
+                ) : (
+                  t("Reset Password", "Đặt Lại Mật Khẩu")
+                )}
               </Button>
             </>
           )}
@@ -242,9 +287,14 @@ export function ForgotPasswordModal({ open, onClose }: ForgotPasswordModalProps)
                 <Check className="h-8 w-8 text-green-500" />
               </div>
               <div>
-                <div className="font-bold text-lg">{t("Password Updated!", "Cập Nhật Thành Công!")}</div>
+                <div className="font-bold text-lg">
+                  {t("Password Updated!", "Cập Nhật Thành Công!")}
+                </div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  {t("You can now sign in with your new password.", "Bạn có thể đăng nhập bằng mật khẩu mới.")}
+                  {t(
+                    "You can now sign in with your new password.",
+                    "Bạn có thể đăng nhập bằng mật khẩu mới.",
+                  )}
                 </div>
               </div>
               <Button onClick={onClose} className="w-full h-12">

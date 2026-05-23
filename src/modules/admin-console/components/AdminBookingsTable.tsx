@@ -77,7 +77,10 @@ export function AdminBookingsTable({ rows, onChangeStatus, onRowClick }: Props) 
                 <TableCell className="text-xs text-muted-foreground">{row.scheduledTime}</TableCell>
                 <TableCell>{row.staffName}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[row.status]}`}>
+                  <Badge
+                    variant="outline"
+                    className={`border font-semibold ${STATUS_TONE[row.status]}`}
+                  >
                     {row.status.replace("_", " ")}
                   </Badge>
                 </TableCell>

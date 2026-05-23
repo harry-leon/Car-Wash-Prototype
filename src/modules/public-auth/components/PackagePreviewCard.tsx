@@ -13,7 +13,9 @@ export function PackagePreviewCard({ service }: { service: Service }) {
         <div className="text-3xl">{service.icon}</div>
         <div>
           <h3 className="font-bold text-foreground">{t(service.name, service.nameVi)}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{t(service.description, service.descriptionVi)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t(service.description, service.descriptionVi)}
+          </p>
         </div>
         <div className="flex items-center justify-between pt-2">
           <div>

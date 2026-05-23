@@ -30,7 +30,7 @@ export function BookingListPage() {
     return <Outlet />;
   }
 
-  return <RouteRedirect to="/customer/bookings" />;
+  return <RouteRedirect to="/customer/history" />;
 }
 
 export function CustomerBookingsContent() {
@@ -40,14 +40,15 @@ export function CustomerBookingsContent() {
     <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Customer bookings</h1>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+            Customer bookings
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Review current bookings, cancel valid ones and jump to the live tracker.
           </p>
         </div>
-        <CustomerHistory onTrack={() => navigate({ to: "/customer/bookings/tracker" })} />
+        <CustomerHistory onTrack={() => navigate({ to: "/customer/history/tracker" })} />
       </div>
     </div>
   );
 }
-

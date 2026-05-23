@@ -16,9 +16,7 @@ export function SettingsSection({ title, description, icon, children }: Props) {
           {icon}
           <span>{title}</span>
         </CardTitle>
-        {description ? (
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-        ) : null}
+        {description ? <p className="mt-1 text-xs text-muted-foreground">{description}</p> : null}
       </CardHeader>
       <CardContent className="space-y-4 p-5">{children}</CardContent>
     </Card>

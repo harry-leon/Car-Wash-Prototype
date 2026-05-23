@@ -16,7 +16,6 @@ import {
   ReceiptText,
   Settings2,
   Sparkles,
-  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
@@ -57,19 +56,18 @@ const CUSTOMER_NAV: NavGroup[] = [
         icon: LayoutDashboard,
         exact: true,
       },
-      { to: "/customer/profile", label: "Profile", labelVi: "Hồ sơ", icon: UserRound },
       { to: "/customer/vehicles", label: "Vehicles", labelVi: "Xe của tôi", icon: CarFront },
       {
-        to: "/customer/bookings/new",
-        label: "New Booking",
-        labelVi: "Đặt lịch mới",
+        to: "/customer/bookings",
+        label: "Booking",
+        labelVi: "Đặt lịch",
         icon: ClipboardList,
         exact: true,
       },
       {
-        to: "/customer/bookings",
-        label: "Bookings",
-        labelVi: "Lịch đặt",
+        to: "/customer/history",
+        label: "History",
+        labelVi: "Lịch sử",
         icon: ClipboardList,
         exact: true,
       },
@@ -181,14 +179,14 @@ export function AppShell({ role }: { role: Role }) {
     headerTitleVi = "Xe của tôi";
     headerSubtitle = "Add, edit, or remove your registered vehicles";
     headerSubtitleVi = "Thêm, sửa hoặc xóa xe đã đăng ký";
-  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings/new") {
+  } else if (pathname.includes("/cb/booking") || pathname === "/customer/bookings") {
     headerTitle = "Book a Wash";
     headerTitleVi = "Đặt lịch rửa xe";
     headerSubtitle = "Choose a wash, voucher, payment method, or active combo";
     headerSubtitleVi = "Chọn gói rửa, voucher, thanh toán hoặc combo";
-  } else if (pathname.includes("/cb/history") || pathname === "/customer/bookings") {
-    headerTitle = "Your Bookings";
-    headerTitleVi = "Lịch đặt của bạn";
+  } else if (pathname.includes("/cb/history") || pathname === "/customer/history") {
+    headerTitle = "Your History";
+    headerTitleVi = "Lịch sử của bạn";
     headerSubtitle = "Track and manage your wash appointments";
     headerSubtitleVi = "Theo dõi và quản lý lịch hẹn rửa xe";
   } else if (pathname.includes("/transactions")) {
@@ -373,7 +371,7 @@ export function AppShell({ role }: { role: Role }) {
             type="button"
             onClick={() => {
               logout();
-              navigate({ to: "/login" });
+              window.location.assign("/");
             }}
             className={cn(
               "flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 p-3 text-sm font-bold text-foreground transition-all hover:bg-accent hover:text-accent-foreground shadow-sm group",
@@ -409,18 +407,6 @@ export function AppShell({ role }: { role: Role }) {
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  window.location.assign("/");
-                }}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/60 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                title={t("Public home", "Trang chủ")}
-              >
-                <Home className="h-4 w-4" />
-              </button>
-
               <div className="flex items-center gap-2">
                 <ThemeSwitcher />
                 <LanguageSwitcher />

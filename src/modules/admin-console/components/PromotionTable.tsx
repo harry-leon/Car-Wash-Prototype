@@ -51,7 +51,13 @@ export function PromotionTable({ promotions, onEdit, onToggleActive }: Props) {
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {promo.targetTiers.map((tier) => (
-                      <Badge key={tier} variant="outline" className={`border font-bold ${TIER_TONE[tier]}`}>{tier}</Badge>
+                      <Badge
+                        key={tier}
+                        variant="outline"
+                        className={`border font-bold ${TIER_TONE[tier]}`}
+                      >
+                        {tier}
+                      </Badge>
                     ))}
                   </div>
                 </TableCell>
@@ -70,13 +76,25 @@ export function PromotionTable({ promotions, onEdit, onToggleActive }: Props) {
                     {promo.active ? "Active" : "Inactive"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{promo.usageCount.toLocaleString("vi-VN")}</TableCell>
+                <TableCell className="text-right">
+                  {promo.usageCount.toLocaleString("vi-VN")}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => onEdit(promo)} className="gap-1 text-xs">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onEdit(promo)}
+                      className="gap-1 text-xs"
+                    >
                       <Pencil className="h-3.5 w-3.5" /> Edit
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => onToggleActive(promo.id)} className="gap-1 text-xs">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onToggleActive(promo.id)}
+                      className="gap-1 text-xs"
+                    >
                       <Power className="h-3.5 w-3.5" /> {promo.active ? "Deactivate" : "Activate"}
                     </Button>
                   </div>

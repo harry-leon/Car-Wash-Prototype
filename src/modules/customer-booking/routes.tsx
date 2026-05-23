@@ -29,10 +29,10 @@ export const customerBookingRoutes = {
   vehicles: "/customer/vehicles",
   vehiclesNew: "/customer/vehicles",
   vehiclesEdit: "/customer/vehicles",
-  booking: "/customer/bookings/new",
-  historyBookings: "/customer/bookings",
-  historyWashes: "/customer/bookings",
-  historyPoints: "/customer/bookings",
+  booking: "/customer/bookings",
+  historyBookings: "/customer/history",
+  historyWashes: "/customer/history",
+  historyPoints: "/customer/history",
 } as const;
 
 export type CustomerRouteKey = keyof typeof customerBookingRoutes;
@@ -56,6 +56,11 @@ interface ConfirmBookingResult {
   pointTransaction?: PointTransaction;
 }
 
+interface BookingSyncOverride {
+  bookingCode?: string;
+  id?: string;
+}
+
 export interface CustomerBookingStore extends CustomerBookingState {
   setLanguage: (language: CustomerLanguage) => void;
   addVehicle: (values: VehicleFormValues) => Vehicle;
@@ -66,7 +71,11 @@ export interface CustomerBookingStore extends CustomerBookingState {
   clearBookingDraft: () => void;
   redeemPointsForVoucher: (points: number) => Voucher;
   upgradeActiveCombo: (comboPackageId: string) => ActiveCombo;
-  confirmBooking: (selection: BookingSelection, summary: BookingSummary) => ConfirmBookingResult;
+  confirmBooking: (
+    selection: BookingSelection,
+    summary: BookingSummary,
+    override?: BookingSyncOverride,
+  ) => ConfirmBookingResult;
 }
 
 type Listener = () => void;
@@ -352,7 +361,11 @@ const actions = {
 
     return upgradedCombo;
   },
-  confirmBooking(selection: BookingSelection, summary: BookingSummary) {
+  confirmBooking(
+    selection: BookingSelection,
+    summary: BookingSummary,
+    override?: BookingSyncOverride,
+  ) {
     const vehicle = state.vehicles.find((item) => item.id === selection.vehicleId);
 
     if (!vehicle) {
@@ -360,8 +373,8 @@ const actions = {
     }
 
     const booking: Booking = {
-      id: `bk-${Date.now()}`,
-      bookingCode: createBookingCode(),
+      id: override?.id ?? `bk-${Date.now()}`,
+      bookingCode: override?.bookingCode ?? createBookingCode(),
       vehicle: {
         vehicleId: vehicle.id,
         licensePlate: vehicle.licensePlate,
@@ -384,6 +397,7 @@ const actions = {
         : undefined,
       scheduledDate: selection.scheduledDate,
       scheduledTime: selection.scheduledTime,
+      note: selection.note.trim() || undefined,
       status: "CONFIRMED",
       payment: {
         originalPrice: summary.originalPrice,

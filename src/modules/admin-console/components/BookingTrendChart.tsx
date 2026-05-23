@@ -37,8 +37,18 @@ export function BookingTrendChart({ data }: Props) {
                 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="bookings" name="Bookings" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="completed" name="Completed" fill="hsl(var(--primary) / 0.5)" radius={[8, 8, 0, 0]} />
+              <Bar
+                dataKey="bookings"
+                name="Bookings"
+                fill="hsl(var(--primary))"
+                radius={[8, 8, 0, 0]}
+              />
+              <Bar
+                dataKey="completed"
+                name="Completed"
+                fill="hsl(var(--primary) / 0.5)"
+                radius={[8, 8, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

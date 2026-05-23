@@ -9,9 +9,9 @@ interface HistoryTabsProps {
 }
 
 const tabs: Array<{ key: HistoryTab; label: string; href: string }> = [
-  { key: "bookings", label: "Booking History", href: "/customer/bookings" },
-  { key: "washes", label: "Wash History", href: "/customer/bookings" },
-  { key: "points", label: "Point Transactions", href: "/customer/bookings" },
+  { key: "bookings", label: "Booking History", href: "/customer/history" },
+  { key: "washes", label: "Wash History", href: "/customer/history" },
+  { key: "points", label: "Point Transactions", href: "/customer/history" },
 ];
 
 export function HistoryTabs({ activeTab, onTabChange }: HistoryTabsProps) {

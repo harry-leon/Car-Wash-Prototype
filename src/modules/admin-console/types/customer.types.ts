@@ -43,12 +43,7 @@ export interface WashHistoryItem {
   amount: number;
 }
 
-export type PointTransactionType =
-  | "EARN"
-  | "REDEEM"
-  | "ADJUST"
-  | "EXPIRE"
-  | "REFUND";
+export type PointTransactionType = "EARN" | "REDEEM" | "ADJUST" | "EXPIRE" | "REFUND";
 
 export interface PointTransaction {
   id: string;

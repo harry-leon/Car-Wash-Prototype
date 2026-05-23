@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -74,7 +80,9 @@ function AuditPage() {
               <thead className="bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-6 py-4 font-bold border-b border-border/50">Timestamp</th>
-                  <th className="px-6 py-4 font-bold border-b border-border/50">Authorized Executive</th>
+                  <th className="px-6 py-4 font-bold border-b border-border/50">
+                    Authorized Executive
+                  </th>
                   <th className="px-6 py-4 font-bold border-b border-border/50">Target Customer</th>
                   <th className="px-6 py-4 font-bold border-b border-border/50">Adjustment</th>
                   <th className="px-6 py-4 font-bold border-b border-border/50">System Reason</th>
@@ -153,7 +161,10 @@ function AdjustDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all">
+        <Button
+          size="lg"
+          className="h-12 rounded-xl font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+        >
           <Plus className="mr-2 h-5 w-5" />
           Manually Adjust Points
         </Button>
@@ -167,14 +178,20 @@ function AdjustDialog({
         </DialogHeader>
         <div className="space-y-5 px-8 py-6">
           <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Customer</Label>
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Target Customer
+            </Label>
             <Select value={customerId} onValueChange={setCustomerId}>
               <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/60 font-semibold transition-all focus-visible:ring-primary/30">
                 <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border/50">
                 {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id} className="rounded-lg font-medium">
+                  <SelectItem
+                    key={customer.id}
+                    value={customer.id}
+                    className="rounded-lg font-medium"
+                  >
                     {customer.name} ({customer.points} pts)
                   </SelectItem>
                 ))}
@@ -182,7 +199,12 @@ function AdjustDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="delta" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Adjustment (positive or negative)</Label>
+            <Label
+              htmlFor="delta"
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+            >
+              Adjustment (positive or negative)
+            </Label>
             <Input
               id="delta"
               type="number"
@@ -193,7 +215,12 @@ function AdjustDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">System Reason</Label>
+            <Label
+              htmlFor="reason"
+              className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+            >
+              System Reason
+            </Label>
             <Textarea
               id="reason"
               placeholder="Goodwill, dispute resolution, refund offset…"
@@ -204,10 +231,19 @@ function AdjustDialog({
           </div>
         </div>
         <DialogFooter className="px-8 pb-8 pt-4 border-t border-border/50 bg-accent/10">
-          <Button variant="ghost" onClick={() => setOpen(false)} className="rounded-xl font-bold hover:bg-background/80">
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            className="rounded-xl font-bold hover:bg-background/80"
+          >
             Cancel
           </Button>
-          <Button onClick={submit} className="rounded-xl font-bold shadow-md shadow-primary/20 hover:shadow-lg">Record Adjustment</Button>
+          <Button
+            onClick={submit}
+            className="rounded-xl font-bold shadow-md shadow-primary/20 hover:shadow-lg"
+          >
+            Record Adjustment
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

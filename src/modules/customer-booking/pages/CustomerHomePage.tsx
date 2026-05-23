@@ -58,7 +58,6 @@ export function CustomerHomePage() {
     vehicles,
   } = useCustomerBooking();
   const { services } = useCarwashStore();
-  const [activeTab, setActiveTab] = useState<"packages" | "combos">("packages");
   const [redeemPoints, setRedeemPoints] = useState(50);
   const [redeemMessage, setRedeemMessage] = useState("");
 
@@ -73,11 +72,13 @@ export function CustomerHomePage() {
   const currentComboPackage = activeCombo
     ? comboPackages.find((comboPackage) => comboPackage.id === activeCombo.comboPackageId)
     : undefined;
-  const activeServicePackages = services.filter((servicePackage) => servicePackage.status === "ACTIVE");
+  const activeServicePackages = services.filter(
+    (servicePackage) => servicePackage.status === "ACTIVE",
+  );
   const inProgressBooking = bookings.find((booking) => booking.status === "IN_PROGRESS");
 
   const goToBooking = () => {
-    navigate({ to: "/customer/bookings/new" });
+    navigate({ to: "/customer/bookings" });
   };
 
   const handlePackageBooking = (packageId: string) => {
@@ -146,15 +147,38 @@ export function CustomerHomePage() {
 
   return (
     <main className={styles.page}>
-      <CustomerHomeHeader
-        customer={customer}
-        tierProgress={tierProgress}
-        activeBookingsCount={activeBookings.length}
-        defaultVehiclePlate={defaultVehicle?.licensePlate}
-      />
+      <div className={`${styles.mainActionWrapper} ${styles.fadeSection}`}>
+        <Link className={styles.mainCtaLarge} to="/customer/bookings">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v8" />
+            <path d="M8 12h8" />
+          </svg>
+          Book a Wash
+        </Link>
+      </div>
+
+      <div className={styles.fadeSection}>
+        <CustomerHomeHeader
+          customer={customer}
+          tierProgress={tierProgress}
+          activeBookingsCount={activeBookings.length}
+          defaultVehiclePlate={defaultVehicle?.licensePlate}
+        />
+      </div>
 
       {inProgressBooking ? (
-        <section className={styles.washTracker} aria-label="Current wash status">
+        <section
+          className={`${styles.washTracker} ${styles.fadeSection}`}
+          aria-label="Current wash status"
+        >
           <div className={styles.progressRingWrapper}>
             <svg className={styles.progressRingSvg} viewBox="0 0 100 100">
               <defs>
@@ -196,7 +220,7 @@ export function CustomerHomePage() {
               12 minutes.
             </p>
           </div>
-          <Link className={styles.trackCta} to="/customer/bookings">
+          <Link className={styles.trackCta} to="/customer/history">
             Track wash
             <svg
               className={styles.ctaArrow}
@@ -215,14 +239,16 @@ export function CustomerHomePage() {
       ) : null}
 
       {activeCombo ? (
-        <ActiveComboCard
-          combo={activeCombo}
-          linkedVehicle={linkedVehicle}
-          onBookWash={handleComboBooking}
-        />
+        <div className={styles.fadeSection}>
+          <ActiveComboCard
+            combo={activeCombo}
+            linkedVehicle={linkedVehicle}
+            onBookWash={handleComboBooking}
+          />
+        </div>
       ) : null}
 
-      <section className={styles.voucherPanel}>
+      <section className={`${styles.voucherPanel} ${styles.fadeSection}`}>
         <div>
           <span className={styles.sectionEyebrow}>Points to voucher</span>
           <h2>Redeem points before checkout</h2>
@@ -250,102 +276,76 @@ export function CustomerHomePage() {
         {redeemMessage ? <p className={styles.redeemMessage}>{redeemMessage}</p> : null}
       </section>
 
-      <section className={styles.tabSection}>
-        <div className={styles.tabHeaderRow}>
-          <div className={styles.tabButtonsContainer}>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === "packages" ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab("packages")}
-            >
-              One-time Wash
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === "combos" ? styles.tabBtnActive : ""}`}
-              onClick={() => setActiveTab("combos")}
-            >
-              Combos & Subscriptions
-            </button>
+      <section className={`${styles.contentSection} ${styles.fadeSection}`}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <span className={styles.sectionEyebrow}>Wash plan</span>
+            <h2>Packages for your next visit</h2>
+            <p>Choose a one-time wash and apply one voucher during checkout.</p>
           </div>
-          <Link className={styles.mainCta} to="/customer/bookings/new">
-            Book a Wash
-          </Link>
         </div>
-
-        <div className={styles.tabDescription}>
-          {activeTab === "packages" ? (
-            <div>
-              <span className={styles.sectionEyebrow}>Wash plan</span>
-              <h2>Packages for your next visit</h2>
-              <p>Choose a one-time wash and apply one voucher during checkout.</p>
-            </div>
-          ) : (
-            <div>
-              <span className={styles.sectionEyebrow}>Combo upgrade</span>
-              <h2>Upgrade your active combo</h2>
-              <p>
-                Current plan: {currentComboPackage?.name ?? "No active combo"}. Lower-tier combos
-                are locked; upgrades charge only the price difference at checkout.
-              </p>
-            </div>
-          )}
+        <div className={styles.packageGrid}>
+          {activeServicePackages.map((servicePackage) => (
+            <PackageCard
+              key={servicePackage.id}
+              actionLabel="Select and book"
+              servicePackage={servicePackage}
+              onSelect={handlePackageBooking}
+            />
+          ))}
         </div>
+      </section>
 
-        <div className={styles.tabContent}>
-          {activeTab === "packages" ? (
-            <div className={styles.packageGrid}>
-              {activeServicePackages.map((servicePackage) => (
-                <PackageCard
-                  key={servicePackage.id}
-                  actionLabel="Select and book"
-                  servicePackage={servicePackage}
-                  onSelect={handlePackageBooking}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className={styles.comboGrid}>
-              {comboPackages.map((comboPackage) => {
-                const isActive = comboPackage.id === activeCombo?.comboPackageId;
-                const isUpgrade =
-                  Boolean(currentComboPackage) &&
-                  comboPackage.price > (currentComboPackage?.price ?? 0);
-                const upgradeAmount = currentComboPackage
-                  ? Math.max(0, comboPackage.price - currentComboPackage.price)
-                  : 0;
+      <section className={`${styles.contentSection} ${styles.fadeSection}`}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <span className={styles.sectionEyebrow}>Combo & Subscriptions</span>
+            <h2>Upgrade your active combo</h2>
+            <p>
+              Current plan: {currentComboPackage?.name ?? "No active combo"}. Lower-tier combos are
+              locked; upgrades charge only the price difference at checkout.
+            </p>
+          </div>
+        </div>
+        <div className={styles.comboGrid}>
+          {comboPackages.map((comboPackage) => {
+            const isActive = comboPackage.id === activeCombo?.comboPackageId;
+            const isUpgrade =
+              Boolean(currentComboPackage) &&
+              comboPackage.price > (currentComboPackage?.price ?? 0);
+            const upgradeAmount = currentComboPackage
+              ? Math.max(0, comboPackage.price - currentComboPackage.price)
+              : 0;
 
-                return (
-                  <article
-                    key={comboPackage.id}
-                    className={`${styles.comboCard} ${isActive ? styles.comboCardActive : ""} ${
-                      !isActive && !isUpgrade ? styles.comboCardLocked : ""
-                    }`}
-                  >
-                    <div className={styles.comboCardTopline}>
-                      <span>
-                        {comboPackage.totalUses} washes / {comboPackage.validityDays} days
-                      </span>
-                      {isActive ? <em>Current combo</em> : null}
-                    </div>
-                    <h3>{comboPackage.name}</h3>
-                    <p>{comboPackage.description}</p>
-                    <div className={styles.comboPrice}>
-                      <strong>{comboPackage.price.toLocaleString()} VND</strong>
-                      <small>{comboPackage.savingsText}</small>
-                    </div>
-                    {isUpgrade ? (
-                      <button type="button" onClick={() => handleComboUpgrade(comboPackage.id)}>
-                        Upgrade +{upgradeAmount.toLocaleString()} VND
-                      </button>
-                    ) : (
-                      <b>{isActive ? "Active plan" : "Downgrade locked"}</b>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          )}
+            return (
+              <article
+                key={comboPackage.id}
+                className={`${styles.comboCard} ${isActive ? styles.comboCardActive : ""} ${
+                  !isActive && !isUpgrade ? styles.comboCardLocked : ""
+                }`}
+              >
+                <div className={styles.comboCardTopline}>
+                  <span>
+                    {comboPackage.totalUses} washes / {comboPackage.validityDays} days
+                  </span>
+                  {isActive ? <em>Current combo</em> : null}
+                </div>
+                <h3>{comboPackage.name}</h3>
+                <p>{comboPackage.description}</p>
+                <div className={styles.comboPrice}>
+                  <strong>{comboPackage.price.toLocaleString()} VND</strong>
+                  <small>{comboPackage.savingsText}</small>
+                </div>
+                {isUpgrade ? (
+                  <button type="button" onClick={() => handleComboUpgrade(comboPackage.id)}>
+                    Upgrade +{upgradeAmount.toLocaleString()} VND
+                  </button>
+                ) : (
+                  <b>{isActive ? "Active plan" : "Downgrade locked"}</b>
+                )}
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>

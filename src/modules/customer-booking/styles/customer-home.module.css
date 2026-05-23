@@ -8,12 +8,98 @@
   --cb-soft: color-mix(in srgb, var(--background, #f8fafc) 88%, #0066ff 12%);
   --cb-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 18px 48px -28px rgba(0, 102, 255, 0.45);
 
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   display: grid;
-  gap: 18px;
+  gap: 22px;
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 22px 0 46px;
   color: var(--cb-text);
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fadeSection {
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.fadeSection:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.fadeSection:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.fadeSection:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.fadeSection:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.fadeSection:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.fadeSection:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.fadeSection:nth-child(7) {
+  animation-delay: 0.35s;
+}
+
+.mainActionWrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: -4px;
+}
+
+.mainCtaLarge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1px solid color-mix(in srgb, var(--cb-primary) 70%, white);
+  border-radius: 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--cb-primary), #0047b3);
+  box-shadow: 0 14px 32px -18px rgba(0, 102, 255, 0.85);
+  font-size: 1.05rem;
+  font-weight: 900;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mainCtaLarge:hover,
+.mainCtaLarge:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 40px -15px rgba(0, 102, 255, 0.95);
+}
+
+.mainCtaLarge:active {
+  transform: translateY(0);
+}
+
+.mainCtaLarge svg {
+  width: 20px;
+  height: 20px;
+}
+
+.contentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .homeHeader,
@@ -78,6 +164,8 @@
   margin: 0;
   color: var(--cb-text);
   font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
   line-height: 1.08;
 }
 
@@ -233,14 +321,26 @@
   justify-content: space-between;
   gap: 22px;
   overflow: hidden;
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 16px;
   background:
-    linear-gradient(135deg, rgba(5, 23, 52, 0.96), rgba(8, 75, 77, 0.94)),
-    radial-gradient(circle at 90% 12%, rgba(0, 200, 83, 0.34), transparent 28%);
+    linear-gradient(135deg, #021a30, #044b4c),
+    radial-gradient(circle at 90% 10%, rgba(0, 255, 106, 0.4), transparent 30%);
   color: #f8fbff;
-  box-shadow: 0 24px 80px -48px rgba(0, 102, 255, 0.65);
+  box-shadow:
+    0 20px 60px -20px rgba(0, 102, 255, 0.6),
+    0 0 20px rgba(0, 255, 106, 0.1);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.activeCombo:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 25px 70px -20px rgba(0, 102, 255, 0.7),
+    0 0 30px rgba(0, 255, 106, 0.15);
 }
 
 .activeCombo h2 {

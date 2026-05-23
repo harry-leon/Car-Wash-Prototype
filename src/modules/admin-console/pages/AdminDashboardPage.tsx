@@ -1,9 +1,19 @@
 import * as React from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, LayoutDashboard, X } from "lucide-react";
+import { toast } from "sonner";
+import { getStaffAvailability } from "@/lib/staff-availability";
+import { useCarwashStore, type Booking, type StaffRecord } from "@/lib/carwash-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -12,26 +22,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  useCarwashStore,
-  type Booking,
-  type BookingStatus,
-} from "@/lib/carwash-store";
 import { BookingDetailDrawer } from "../components/BookingDetailDrawer";
 import { KpiCard } from "../components/KpiCard";
-import type { KpiMetric } from "../types/dashboard.types";
+import type { BookingStatus as DashboardStatus, KpiMetric } from "../types/dashboard.types";
 import styles from "../styles/admin-dashboard.module.css";
 
-const STATUS_TONE: Record<BookingStatus, string> = {
-  Pending: "bg-sky-500/10 text-sky-600 border-sky-500/30",
-  Confirmed: "bg-sky-500/10 text-sky-600 border-sky-500/30",
-  "Checked-in": "bg-violet-500/10 text-violet-600 border-violet-500/30",
-  Completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-  Cancelled: "bg-zinc-500/10 text-zinc-600 border-zinc-500/30",
-  "No-show": "bg-rose-500/10 text-rose-600 border-rose-500/30",
+const STATUS_TONE: Record<DashboardStatus, string> = {
+  CONFIRMED: "bg-sky-500/10 text-sky-600 border-sky-500/30",
+  CHECKED_IN: "bg-violet-500/10 text-violet-600 border-violet-500/30",
+  IN_PROGRESS: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+  COMPLETED: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+  CANCELLED: "bg-zinc-500/10 text-zinc-600 border-zinc-500/30",
+  NO_SHOW: "bg-rose-500/10 text-rose-600 border-rose-500/30",
 };
 
 const PAGE_SIZE = 8;
+
+type DashboardRow = Booking & {
+  staffName: string;
+  checkInTime: string;
+  dashboardStatus: DashboardStatus;
+  assignedStaffId?: string;
+  sessionId?: string;
+  sessionStatus?: string;
+};
 
 function todayISO() {
   const d = new Date();
@@ -47,6 +61,25 @@ function offsetISO(days: number) {
 function pctDelta(current: number, previous: number): number {
   if (previous === 0) return current === 0 ? 0 : 100;
   return Math.round(((current - previous) / previous) * 100);
+}
+
+function toDashboardStatus(booking: Booking, sessionStatus?: string): DashboardStatus {
+  if (sessionStatus === "In Progress") {
+    return "IN_PROGRESS";
+  }
+  if (booking.status === "Checked-in" || sessionStatus === "Queued") {
+    return "CHECKED_IN";
+  }
+  if (booking.status === "Completed") {
+    return "COMPLETED";
+  }
+  if (booking.status === "Cancelled") {
+    return "CANCELLED";
+  }
+  if (booking.status === "No-show") {
+    return "NO_SHOW";
+  }
+  return "CONFIRMED";
 }
 
 export function AdminDashboardPage() {
@@ -158,19 +191,53 @@ export function AdminDashboardPage() {
     [washSessions, selectedBookingId],
   );
 
-  const dashboardRows = React.useMemo(
+  const staffAvailability = React.useMemo(
+    () => getStaffAvailability(staffMembers, washSessions),
+    [staffMembers, washSessions],
+  );
+
+  const dashboardRows = React.useMemo<DashboardRow[]>(
     () =>
       filtered.map((booking) => {
         const session = washSessions.find((item) => item.bookingId === booking.id);
         return {
           ...booking,
+          dashboardStatus: toDashboardStatus(booking, session?.status),
           staffName: session?.staffName ?? "Not assigned",
+          assignedStaffId: session?.staffId || undefined,
+          sessionId: session?.id,
+          sessionStatus: session?.status,
           checkInTime: booking.checkInAt
             ? new Date(booking.checkInAt).toLocaleString()
             : "Not checked in",
         };
       }),
     [filtered, washSessions],
+  );
+
+  const selectedRow = React.useMemo(
+    () => dashboardRows.find((row) => row.id === selectedBookingId) ?? null,
+    [dashboardRows, selectedBookingId],
+  );
+
+  const getAssignableStaffOptions = React.useCallback(
+    (assignedStaffId?: string) =>
+      staffAvailability.filter(
+        (staff) => staff.availability === "Available" || staff.id === assignedStaffId,
+      ),
+    [staffAvailability],
+  );
+
+  const handleAssignStaff = React.useCallback(
+    (sessionId: string, staffId: string) => {
+      try {
+        assignStaffToSession(sessionId, staffId);
+        toast.success("Staff assignment updated.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to reassign staff.");
+      }
+    },
+    [assignStaffToSession],
   );
 
   const totalPages = Math.max(1, Math.ceil(dashboardRows.length / PAGE_SIZE));
@@ -188,7 +255,8 @@ export function AdminDashboardPage() {
             Check-in Center
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Snapshot of today&apos;s bookings, staff assignments, and check-in flow. Numbers update in real time as bookings, transactions, and promotions change across the app.
+            Snapshot of today&apos;s bookings, staff assignments, and check-in flow. Numbers update
+            in real time as bookings, transactions, and promotions change across the app.
           </p>
         </div>
 
@@ -201,9 +269,10 @@ export function AdminDashboardPage() {
         <Card className="overflow-hidden border-border/50 bg-card/60 shadow-xl backdrop-blur-xl">
           <CardHeader className="flex-col gap-3 border-b border-border/50 bg-accent/20 py-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle className="text-base font-semibold">Recent bookings</CardTitle>
+              <CardTitle className="text-base font-semibold">Check-in Center</CardTitle>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Current and historical bookings. Filter by date or page through results.
+                Track checked-in flow, assigned staff, and active wash sessions. Click a row to open
+                the detail drawer.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -232,7 +301,7 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             {!hydrated ? (
-              <EmptyState message="Loading bookings…" />
+              <EmptyState message="Loading bookings..." />
             ) : filtered.length === 0 ? (
               <EmptyState
                 message={
@@ -257,7 +326,13 @@ export function AdminDashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {pageRows.map((row) => (
-                      <BookingRow key={row.id} row={row} onSelect={() => setSelectedBookingId(row.id)} />
+                      <BookingRow
+                        key={row.id}
+                        row={row}
+                        staffOptions={getAssignableStaffOptions(row.assignedStaffId)}
+                        onAssignStaff={handleAssignStaff}
+                        onSelect={() => setSelectedBookingId(row.id)}
+                      />
                     ))}
                   </TableBody>
                 </Table>
@@ -273,6 +348,7 @@ export function AdminDashboardPage() {
             )}
           </CardContent>
         </Card>
+
         <BookingDetailDrawer
           open={Boolean(selectedBooking)}
           onOpenChange={(open) => {
@@ -280,10 +356,11 @@ export function AdminDashboardPage() {
           }}
           booking={selectedBooking}
           session={selectedSession ?? undefined}
+          currentStatus={selectedRow?.dashboardStatus}
           staffMembers={staffMembers}
           onAssignStaff={(staffId) => {
             if (selectedSession) {
-              assignStaffToSession(selectedSession.id, staffId);
+              handleAssignStaff(selectedSession.id, staffId);
             }
           }}
         />
@@ -292,18 +369,53 @@ export function AdminDashboardPage() {
   );
 }
 
-function BookingRow({ row, onSelect }: { row: Booking & { staffName: string; checkInTime: string }; onSelect: () => void }) {
+function BookingRow({
+  row,
+  staffOptions,
+  onAssignStaff,
+  onSelect,
+}: {
+  row: DashboardRow;
+  staffOptions: Array<Pick<StaffRecord, "id" | "name">>;
+  onAssignStaff: (sessionId: string, staffId: string) => void;
+  onSelect: () => void;
+}) {
+  const canReassignStaff = row.dashboardStatus === "IN_PROGRESS" && Boolean(row.sessionId);
+
   return (
     <TableRow className="cursor-pointer hover:bg-accent/10" onClick={onSelect}>
       <TableCell className="font-semibold">{row.id}</TableCell>
-      <TableCell>{row.customerName ?? "—"}</TableCell>
+      <TableCell>{row.customerName ?? "-"}</TableCell>
       <TableCell className="font-mono text-xs">{row.vehiclePlate}</TableCell>
       <TableCell>{row.services.join(", ")}</TableCell>
       <TableCell className="text-xs text-muted-foreground">{row.checkInTime}</TableCell>
-      <TableCell>{row.staffName}</TableCell>
+      <TableCell onClick={(event) => event.stopPropagation()}>
+        {canReassignStaff && row.sessionId ? (
+          <Select
+            value={row.assignedStaffId ?? ""}
+            onValueChange={(staffId) => onAssignStaff(row.sessionId!, staffId)}
+          >
+            <SelectTrigger className="h-8 w-[180px] text-xs">
+              <SelectValue placeholder={row.staffName} />
+            </SelectTrigger>
+            <SelectContent>
+              {staffOptions.map((staff) => (
+                <SelectItem key={staff.id} value={staff.id} className="text-xs">
+                  {staff.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="text-sm">{row.staffName}</span>
+        )}
+      </TableCell>
       <TableCell className="text-right">
-        <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[row.status]}`}>
-          {row.status}
+        <Badge
+          variant="outline"
+          className={`border font-semibold ${STATUS_TONE[row.dashboardStatus]}`}
+        >
+          {row.dashboardStatus.replaceAll("_", " ")}
         </Badge>
       </TableCell>
     </TableRow>
@@ -335,10 +447,11 @@ function PagerBar({
 }) {
   const start = totalRows === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(totalRows, page * pageSize);
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 px-4 py-3 text-xs text-muted-foreground">
       <span>
-        Showing <strong className="text-foreground">{start}</strong>–
+        Showing <strong className="text-foreground">{start}</strong>-
         <strong className="text-foreground">{end}</strong> of {totalRows}
       </span>
       <div className="flex items-center gap-2">

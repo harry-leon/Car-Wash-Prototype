@@ -195,12 +195,19 @@ export function useOperationStaffOptions(): StaffOption[] {
 }
 
 export function getOperationHourOptions(bookings: OperationBooking[]): OperationHourOption[] {
+  return getOperationHourOptionsByLocale(bookings, "en-US");
+}
+
+export function getOperationHourOptionsByLocale(
+  bookings: OperationBooking[],
+  locale: string,
+): OperationHourOption[] {
   return Array.from(
     new Map(
       bookings.map((booking) => {
         const date = new Date(booking.scheduledAt);
         const value = String(date.getHours()).padStart(2, "0");
-        const label = new Intl.DateTimeFormat("en-US", {
+        const label = new Intl.DateTimeFormat(locale, {
           hour: "2-digit",
           minute: "2-digit",
         }).format(date);
@@ -211,16 +218,24 @@ export function getOperationHourOptions(bookings: OperationBooking[]): Operation
 }
 
 export function formatOperationTime(value?: string) {
+  return formatOperationTimeByLocale(value, "en-US");
+}
+
+export function formatOperationTimeByLocale(value: string | undefined, locale: string) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
 }
 
 export function formatOperationDateTime(value?: string) {
+  return formatOperationDateTimeByLocale(value, "en-US");
+}
+
+export function formatOperationDateTimeByLocale(value: string | undefined, locale: string) {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     hour: "2-digit",

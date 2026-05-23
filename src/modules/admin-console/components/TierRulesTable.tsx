@@ -36,7 +36,9 @@ export function TierRulesTable({ rules }: Props) {
             {rules.map((rule) => (
               <TableRow key={rule.tier}>
                 <TableCell>
-                  <Badge variant="outline" className={`border font-bold ${TIER_TONE[rule.tier]}`}>{rule.tier}</Badge>
+                  <Badge variant="outline" className={`border font-bold ${TIER_TONE[rule.tier]}`}>
+                    {rule.tier}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   {rule.minLifetimePoints.toLocaleString("vi-VN")}

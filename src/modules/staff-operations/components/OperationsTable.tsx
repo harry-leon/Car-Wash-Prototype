@@ -9,9 +9,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { formatOperationTime } from "../mock/operations.mock";
+import { useLanguage } from "@/modules/public-auth/components/LanguageSwitcher";
+import { formatOperationTimeByLocale } from "../mock/operations.mock";
 import type { OperationBooking } from "../types/operations.types";
 import type { StaffBookingStatus } from "../types/status.types";
+import { translateServiceLabel } from "../utils/service-labels";
 import { BookingStatusBadge } from "./BookingStatusBadge";
 import styles from "../styles/operations-board.module.css";
 
@@ -21,40 +23,43 @@ interface OperationsTableProps {
 }
 
 export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProps) {
+  const { lang, t } = useLanguage();
+  const locale = lang === "vi" ? "vi-VN" : "en-US";
+
   return (
     <div className={styles.tableShell}>
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/35 hover:bg-muted/35">
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Booking code
+          <TableRow className={styles.tableHeaderRow}>
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Booking code", "Mã booking")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Customer name
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Customer name", "Khách hàng")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Vehicle plate
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Vehicle plate", "Biển số xe")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Service package
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Service package", "Gói dịch vụ")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Assigned staff
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Assigned staff", "Nhân viên phụ trách")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Scheduled time
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Scheduled time", "Giờ hẹn")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Check-in time
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Check-in time", "Giờ check-in")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Estimated finish
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Estimated finish", "Dự kiến hoàn tất")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider">
-              Status
+            <TableHead className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Status", "Trạng thái")}
             </TableHead>
-            <TableHead className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider">
-              Action
+            <TableHead className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-foreground/80">
+              {t("Action", "Thao tác")}
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -62,7 +67,10 @@ export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProp
           {bookings.length === 0 && (
             <TableRow>
               <TableCell colSpan={10} className={styles.emptyState}>
-                No bookings match the selected filters.
+                {t(
+                  "No bookings match the selected filters.",
+                  "Không có booking nào khớp bộ lọc đã chọn.",
+                )}
               </TableCell>
             </TableRow>
           )}
@@ -70,7 +78,7 @@ export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProp
             const action = actionForStatus(booking.status);
             const Icon = action.icon;
             return (
-              <TableRow key={booking.id}>
+              <TableRow key={booking.id} className={styles.tableRow}>
                 <TableCell className="px-4 py-4">
                   <span className={styles.bookingCode}>{booking.bookingCode}</span>
                 </TableCell>
@@ -83,18 +91,22 @@ export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProp
                   <div className={styles.mutedCell}>{booking.vehicleModel}</div>
                 </TableCell>
                 <TableCell className="max-w-[230px] px-4 py-4">
-                  <div className="font-semibold leading-snug">{booking.servicePackage}</div>
-                  <div className={styles.mutedCell}>{booking.packageDurationMinutes} minutes</div>
+                  <div className="font-semibold leading-snug">
+                    {translateServiceLabel(booking.servicePackage, lang)}
+                  </div>
+                  <div className={styles.mutedCell}>
+                    {booking.packageDurationMinutes} {t("minutes", "phút")}
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-4 font-semibold">{booking.assignedStaff}</TableCell>
                 <TableCell className="px-4 py-4 font-semibold">
-                  {formatOperationTime(booking.scheduledAt)}
+                  {formatOperationTimeByLocale(booking.scheduledAt, locale)}
                 </TableCell>
                 <TableCell className="px-4 py-4 font-semibold">
-                  {formatOperationTime(booking.checkinTime)}
+                  {formatOperationTimeByLocale(booking.checkinTime, locale)}
                 </TableCell>
                 <TableCell className="px-4 py-4 font-semibold">
-                  {formatOperationTime(booking.estimatedFinishTime)}
+                  {formatOperationTimeByLocale(booking.estimatedFinishTime, locale)}
                 </TableCell>
                 <TableCell className="px-4 py-4">
                   <BookingStatusBadge status={booking.status} />
@@ -107,7 +119,7 @@ export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProp
                     className={cn("rounded-lg font-bold", action.emphasis)}
                   >
                     <Icon data-icon="inline-start" />
-                    {action.label}
+                    {t(action.label, action.labelVi)}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -121,25 +133,26 @@ export function OperationsTable({ bookings, onOpenBooking }: OperationsTableProp
 
 function actionForStatus(status: StaffBookingStatus): {
   label: string;
+  labelVi: string;
   icon: typeof Eye;
   variant: "default" | "outline" | "secondary";
   emphasis?: string;
 } {
   if (status === "CONFIRMED") {
-    return { label: "Check-in", icon: CheckCircle2, variant: "default" };
+    return { label: "Check-in", labelVi: "Check-in", icon: CheckCircle2, variant: "default" };
   }
 
   if (status === "CHECKED_IN") {
-    return { label: "Start wash", icon: Play, variant: "secondary" };
+    return { label: "Start wash", labelVi: "Bắt đầu rửa", icon: Play, variant: "secondary" };
   }
 
   if (status === "IN_PROGRESS") {
-    return { label: "View wash", icon: Eye, variant: "outline" };
+    return { label: "View wash", labelVi: "Xem ca rửa", icon: Eye, variant: "outline" };
   }
 
   if (status === "COMPLETED") {
-    return { label: "View", icon: Eye, variant: "outline" };
+    return { label: "View", labelVi: "Xem", icon: Eye, variant: "outline" };
   }
 
-  return { label: "Closed", icon: CircleSlash, variant: "outline" };
+  return { label: "Closed", labelVi: "Đã đóng", icon: CircleSlash, variant: "outline" };
 }

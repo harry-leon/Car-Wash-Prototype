@@ -61,6 +61,7 @@ export interface Booking {
   remainingComboUsesAtBooking?: number;
   scheduledDate: string;
   scheduledTime: string;
+  note?: string;
   status: BookingStatus;
   payment: BookingPaymentSnapshot;
   createdAt: string;
@@ -72,6 +73,7 @@ export interface BookingSelection {
   packageId: string;
   scheduledDate: string;
   scheduledTime: string;
+  note: string;
   voucherId: string;
   addonIds: string[];
   comboUpgradePackageId?: string;
@@ -85,6 +87,7 @@ export interface BookingSummary {
   package: ServicePackage;
   scheduledDate: string;
   scheduledTime: string;
+  note?: string;
   originalPrice: number;
   addOns: BookingAddonSnapshot[];
   addOnTotal: number;

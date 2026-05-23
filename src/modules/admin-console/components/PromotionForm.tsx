@@ -20,11 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { CustomerTier } from "../types/customer.types";
-import type {
-  Promotion,
-  PromotionDraft,
-  PromotionType,
-} from "../types/promotion.types";
+import type { Promotion, PromotionDraft, PromotionType } from "../types/promotion.types";
 
 const ALL_TIERS: CustomerTier[] = ["MEMBER", "SILVER", "GOLD", "DIAMOND"];
 
@@ -141,13 +137,18 @@ export function PromotionForm({ open, onOpenChange, initialPromotion, onSubmit }
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="promo-type">Type</Label>
-              <Select value={draft.type} onValueChange={(next) => updateType(next as PromotionType)}>
+              <Select
+                value={draft.type}
+                onValueChange={(next) => updateType(next as PromotionType)}
+              >
                 <SelectTrigger id="promo-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(TYPE_LABEL) as PromotionType[]).map((type) => (
-                    <SelectItem key={type} value={type}>{TYPE_LABEL[type]}</SelectItem>
+                    <SelectItem key={type} value={type}>
+                      {TYPE_LABEL[type]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -174,7 +175,9 @@ export function PromotionForm({ open, onOpenChange, initialPromotion, onSubmit }
                 id="promo-start"
                 type="date"
                 value={draft.startDate}
-                onChange={(event) => setDraft((prev) => ({ ...prev, startDate: event.target.value }))}
+                onChange={(event) =>
+                  setDraft((prev) => ({ ...prev, startDate: event.target.value }))
+                }
               />
             </div>
             <div className="space-y-1.5">
@@ -190,7 +193,9 @@ export function PromotionForm({ open, onOpenChange, initialPromotion, onSubmit }
 
           {draft.type === "SELECTED_TIERS" ? (
             <div className="space-y-2 rounded-xl border border-border/50 bg-background/40 p-3">
-              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Target tiers</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Target tiers
+              </Label>
               <div className="flex flex-wrap gap-3">
                 {ALL_TIERS.map((tier) => (
                   <label key={tier} className="flex cursor-pointer items-center gap-2 text-sm">
@@ -208,7 +213,9 @@ export function PromotionForm({ open, onOpenChange, initialPromotion, onSubmit }
           <div className="flex items-center justify-between rounded-xl border border-border/50 bg-background/40 p-3">
             <div>
               <div className="text-sm font-semibold">Active</div>
-              <div className="text-xs text-muted-foreground">Inactive promotions stay in the list but are not applied at checkout.</div>
+              <div className="text-xs text-muted-foreground">
+                Inactive promotions stay in the list but are not applied at checkout.
+              </div>
             </div>
             <Switch
               checked={draft.active}

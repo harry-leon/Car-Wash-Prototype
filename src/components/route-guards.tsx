@@ -41,7 +41,7 @@ export function RequireRole({ allowed, children }: { allowed: Role[]; children: 
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
-      navigate({ to: "/login", replace: true });
+      navigate({ to: "/", replace: true });
     }
   }, [hydrated, isAuthenticated, navigate]);
 
@@ -50,7 +50,7 @@ export function RequireRole({ allowed, children }: { allowed: Role[]; children: 
   }
 
   if (!isAuthenticated) {
-    return <PendingState message="Redirecting to sign in..." />;
+    return <PendingState message="Redirecting to public page..." />;
   }
 
   if (!allowed.includes(role)) {

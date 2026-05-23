@@ -52,7 +52,9 @@ export function CustomerWashHistoryTab({ history }: Props) {
                     <Star
                       key={index}
                       className={`h-3.5 w-3.5 ${
-                        index < item.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"
+                        index < item.rating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/40"
                       }`}
                     />
                   ))}

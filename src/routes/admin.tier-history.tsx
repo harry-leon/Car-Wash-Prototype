@@ -58,7 +58,9 @@ function AuditPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Tier Audit & Evolution Log</h1>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+              Tier Audit & Evolution Log
+            </h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
               Read-only timeline of every membership change across the system.
             </p>
@@ -72,7 +74,7 @@ function AuditPage() {
                 onClick={() => setFilter(f)}
                 className={cn(
                   "rounded-lg font-bold transition-all",
-                  filter === f ? "shadow-md" : "hover:bg-background/80"
+                  filter === f ? "shadow-md" : "hover:bg-background/80",
                 )}
               >
                 {f}
@@ -87,11 +89,21 @@ function AuditPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="border-border/50">
-                    <TableHead className="font-bold text-xs uppercase tracking-wider pl-6 py-4">Date / Time</TableHead>
-                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">Customer</TableHead>
-                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">Movement</TableHead>
-                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">Trigger</TableHead>
-                    <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-6 py-4">Authorized By</TableHead>
+                    <TableHead className="font-bold text-xs uppercase tracking-wider pl-6 py-4">
+                      Date / Time
+                    </TableHead>
+                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">
+                      Customer
+                    </TableHead>
+                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">
+                      Movement
+                    </TableHead>
+                    <TableHead className="font-bold text-xs uppercase tracking-wider py-4">
+                      Trigger
+                    </TableHead>
+                    <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-6 py-4">
+                      Authorized By
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-border/50">
@@ -104,22 +116,45 @@ function AuditPage() {
                         <TableCell className="pl-6 py-4 font-mono text-sm font-semibold text-muted-foreground">
                           {a.date}
                         </TableCell>
-                        <TableCell className="py-4 text-sm font-bold text-foreground">{a.customerName}</TableCell>
+                        <TableCell className="py-4 text-sm font-bold text-foreground">
+                          {a.customerName}
+                        </TableCell>
                         <TableCell className="py-4">
                           <div className="flex items-center gap-3">
-                            <Badge className={cn("border shadow-sm text-xs font-bold px-2 py-0.5", tierBadgeClass(a.previousTier))}>
+                            <Badge
+                              className={cn(
+                                "border shadow-sm text-xs font-bold px-2 py-0.5",
+                                tierBadgeClass(a.previousTier),
+                              )}
+                            >
                               {a.previousTier}
                             </Badge>
                             <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
-                            <Badge className={cn("border shadow-sm text-xs font-bold px-2 py-0.5", tierBadgeClass(a.newTier))}>
+                            <Badge
+                              className={cn(
+                                "border shadow-sm text-xs font-bold px-2 py-0.5",
+                                tierBadgeClass(a.newTier),
+                              )}
+                            >
                               {a.newTier}
                             </Badge>
-                            {isUp && <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 ml-1"><ArrowUpRight className="h-3.5 w-3.5" /></div>}
-                            {isDown && <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 ml-1"><ArrowDownRight className="h-3.5 w-3.5" /></div>}
+                            {isUp && (
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 ml-1">
+                                <ArrowUpRight className="h-3.5 w-3.5" />
+                              </div>
+                            )}
+                            {isDown && (
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 ml-1">
+                                <ArrowDownRight className="h-3.5 w-3.5" />
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="py-4">
-                          <Badge variant="outline" className="text-xs font-semibold bg-background/50 text-muted-foreground px-2.5 py-1">
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-semibold bg-background/50 text-muted-foreground px-2.5 py-1"
+                          >
                             {a.trigger}
                           </Badge>
                         </TableCell>

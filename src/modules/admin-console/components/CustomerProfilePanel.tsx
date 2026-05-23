@@ -11,11 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type {
-  CustomerRole,
-  CustomerRow,
-  CustomerStatus,
-} from "../types/customer.types";
+import type { CustomerRole, CustomerRow, CustomerStatus } from "../types/customer.types";
 import { ROLE_TONE, STATUS_TONE, TIER_TONE } from "./CustomerTable";
 
 interface Props {
@@ -48,14 +44,25 @@ export function CustomerProfilePanel({
       <CardContent className="space-y-6 p-6">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16 border border-border/50">
-            <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-primary/10 text-base font-bold text-primary">
+              {initials}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="text-lg font-bold text-foreground">{customer.name}</div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <Badge variant="outline" className={`border font-bold ${TIER_TONE[customer.tier]}`}>{customer.tier}</Badge>
-              <Badge variant="outline" className={`border font-semibold ${ROLE_TONE[draftRole]}`}>{draftRole}</Badge>
-              <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[draftStatus]}`}>{draftStatus}</Badge>
+              <Badge variant="outline" className={`border font-bold ${TIER_TONE[customer.tier]}`}>
+                {customer.tier}
+              </Badge>
+              <Badge variant="outline" className={`border font-semibold ${ROLE_TONE[draftRole]}`}>
+                {draftRole}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={`border font-semibold ${STATUS_TONE[draftStatus]}`}
+              >
+                {draftStatus}
+              </Badge>
             </div>
           </div>
         </div>
@@ -79,7 +86,9 @@ export function CustomerProfilePanel({
             <Coins className="h-4 w-4" />
             <span className="text-foreground">
               <strong>{customer.availablePoints.toLocaleString("vi-VN")}</strong> available /{" "}
-              <span className="text-muted-foreground">{customer.lifetimePoints.toLocaleString("vi-VN")} lifetime</span>
+              <span className="text-muted-foreground">
+                {customer.lifetimePoints.toLocaleString("vi-VN")} lifetime
+              </span>
             </span>
           </div>
         </div>
@@ -91,7 +100,9 @@ export function CustomerProfilePanel({
             Admin overrides (mock)
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Role</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Role
+            </Label>
             <Select value={draftRole} onValueChange={(next) => onRoleChange(next as CustomerRole)}>
               <SelectTrigger>
                 <SelectValue />
@@ -104,8 +115,13 @@ export function CustomerProfilePanel({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</Label>
-            <Select value={draftStatus} onValueChange={(next) => onStatusChange(next as CustomerStatus)}>
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Status
+            </Label>
+            <Select
+              value={draftStatus}
+              onValueChange={(next) => onStatusChange(next as CustomerStatus)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

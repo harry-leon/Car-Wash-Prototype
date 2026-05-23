@@ -27,4 +27,6 @@ export interface AdminBookingRow {
   staffName: string;
   checkInTime: string;
   assignedStaffId?: string;
+  sessionId?: string;
+  sessionStatus?: string;
 }

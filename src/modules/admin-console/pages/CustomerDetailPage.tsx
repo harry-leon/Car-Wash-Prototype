@@ -20,11 +20,7 @@ import {
   tierToDisplay,
   vehicleToDisplay,
 } from "../lib/customer-mapping";
-import type {
-  CustomerRole,
-  CustomerStatus,
-  TierHistoryItem,
-} from "../types/customer.types";
+import type { CustomerRole, CustomerStatus, TierHistoryItem } from "../types/customer.types";
 import styles from "../styles/customers.module.css";
 
 interface Props {
@@ -33,14 +29,8 @@ interface Props {
 }
 
 export function CustomerDetailPage({ customerId, onBack }: Props) {
-  const {
-    customers,
-    ledger,
-    bookings,
-    vehiclesByCustomer,
-    tierHistory,
-    updateCustomerById,
-  } = useCarwashStore();
+  const { customers, ledger, bookings, vehiclesByCustomer, tierHistory, updateCustomerById } =
+    useCarwashStore();
 
   const customerRecord = customers.find((row) => row.id === customerId);
   const customer = React.useMemo(() => {
@@ -217,7 +207,8 @@ export function CustomerDetailPage({ customerId, onBack }: Props) {
                   <ProfileField label="Status" value={draftStatus} />
                 </div>
                 <p className="mt-6 text-xs text-muted-foreground">
-                  Status changes persist to the shared store. Role overrides are local to this view in this prototype.
+                  Status changes persist to the shared store. Role overrides are local to this view
+                  in this prototype.
                 </p>
               </div>
             </TabsContent>

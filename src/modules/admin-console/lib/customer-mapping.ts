@@ -1,10 +1,4 @@
-import type {
-  Booking,
-  CustomerRecord,
-  LedgerEntry,
-  Tier,
-  Vehicle,
-} from "@/lib/carwash-store";
+import type { Booking, CustomerRecord, LedgerEntry, Tier, Vehicle } from "@/lib/carwash-store";
 import type {
   CustomerBookingItem,
   CustomerRow,
@@ -51,7 +45,9 @@ export function displayStatusToStore(status: CustomerStatus): CustomerRecord["st
 
 function lifetimePointsFor(customerId: string, ledger: LedgerEntry[]) {
   return ledger
-    .filter((entry) => entry.customerId === customerId && entry.type === "Earned" && entry.delta > 0)
+    .filter(
+      (entry) => entry.customerId === customerId && entry.type === "Earned" && entry.delta > 0,
+    )
     .reduce((sum, entry) => sum + entry.delta, 0);
 }
 

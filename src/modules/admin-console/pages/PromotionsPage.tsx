@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PromotionForm } from "../components/PromotionForm";
 import { PromotionTable } from "../components/PromotionTable";
-import {
-  type Promotion as StorePromotion,
-  type Tier,
-  useCarwashStore,
-} from "@/lib/carwash-store";
+import { type Promotion as StorePromotion, type Tier, useCarwashStore } from "@/lib/carwash-store";
 import type {
   Promotion as DisplayPromotion,
   PromotionDraft,
@@ -114,7 +110,8 @@ export function PromotionsPage() {
               Promotions catalog
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Create, edit and deactivate promotions targeting specific tiers or audiences. Edits sync with the live store and apply at checkout.
+              Create, edit and deactivate promotions targeting specific tiers or audiences. Edits
+              sync with the live store and apply at checkout.
             </p>
           </div>
           <Button onClick={handleOpenCreate} className="gap-2">

@@ -21,7 +21,10 @@ const ICONS: Record<KpiMetric["icon"], React.ComponentType<{ className?: string 
   Sparkles,
 };
 
-const TONE_STYLES: Record<KpiMetric["tone"], { ring: string; iconBg: string; iconText: string; accent: string }> = {
+const TONE_STYLES: Record<
+  KpiMetric["tone"],
+  { ring: string; iconBg: string; iconText: string; accent: string }
+> = {
   primary: {
     ring: "border-primary/30",
     iconBg: "bg-primary/10",
@@ -70,7 +73,9 @@ export function KpiCard({ metric }: { metric: KpiMetric }) {
         styles.kpiCard,
       )}
     >
-      <div className={cn("absolute inset-0 bg-gradient-to-br to-transparent opacity-60", tone.accent)} />
+      <div
+        className={cn("absolute inset-0 bg-gradient-to-br to-transparent opacity-60", tone.accent)}
+      />
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -95,7 +100,13 @@ export function KpiCard({ metric }: { metric: KpiMetric }) {
             {metric.delta}% so hôm qua
           </div>
         </div>
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl", tone.iconBg, tone.iconText)}>
+        <div
+          className={cn(
+            "flex h-11 w-11 items-center justify-center rounded-xl",
+            tone.iconBg,
+            tone.iconText,
+          )}
+        >
           <Icon className="h-5 w-5" />
         </div>
       </div>

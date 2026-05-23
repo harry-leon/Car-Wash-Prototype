@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useCustomerBooking } from "../routes";
 import styles from "../styles/booking.module.css";
 
-const availableTimes = [
+const MOCK_BOOKING_MONTH = "2026-05";
+const BASE_TIME_SLOTS = [
   "08:00",
   "08:30",
   "09:00",
@@ -21,8 +22,38 @@ const availableTimes = [
   "17:00",
   "17:30",
   "18:00",
-  "18:30",
 ];
+const FULLY_BOOKED_DATES = ["2026-05-04", "2026-05-12", "2026-05-19", "2026-05-28"];
+const EXTRA_BLOCKED_SLOTS: Record<string, string[]> = {
+  "2026-05-01": ["08:00", "08:30", "14:30", "15:30"],
+  "2026-05-02": ["08:30", "10:30", "15:30"],
+  "2026-05-03": ["09:00", "10:00", "13:30", "17:30"],
+  "2026-05-05": ["09:30", "10:00", "14:00"],
+  "2026-05-06": ["08:00", "11:00", "14:30"],
+  "2026-05-07": ["09:00", "15:00", "17:00"],
+  "2026-05-08": ["10:00", "13:00", "16:00"],
+  "2026-05-09": ["08:30", "09:30", "14:30", "16:30"],
+  "2026-05-10": ["09:00", "13:00", "15:30"],
+  "2026-05-11": ["08:30", "10:30", "16:00"],
+  "2026-05-13": ["08:00", "09:00", "14:00", "17:30"],
+  "2026-05-14": ["09:30", "10:00", "16:30"],
+  "2026-05-15": ["08:30", "13:00", "15:00"],
+  "2026-05-16": ["09:30", "10:30", "14:30", "16:00"],
+  "2026-05-17": ["08:00", "13:00", "14:00"],
+  "2026-05-18": ["09:00", "11:00", "15:30"],
+  "2026-05-20": ["08:00", "10:00", "14:30"],
+  "2026-05-21": ["08:30", "09:30", "16:30"],
+  "2026-05-22": ["09:00", "13:30", "17:00"],
+  "2026-05-23": ["08:00", "10:30", "11:00"],
+  "2026-05-24": ["08:30", "09:00", "14:00", "15:00"],
+  "2026-05-25": ["09:30", "13:30", "17:30"],
+  "2026-05-26": ["08:00", "10:00", "15:30"],
+  "2026-05-27": ["08:30", "09:30", "16:00"],
+  "2026-05-29": ["09:00", "11:00", "14:30"],
+  "2026-05-30": ["08:30", "10:30", "13:30"],
+  "2026-05-31": ["09:00", "10:00", "15:00", "16:30"],
+};
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function toIsoDate(date: Date) {
   const year = date.getFullYear();
@@ -32,73 +63,66 @@ function toIsoDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function getMonthValue(date: string) {
-  return date.slice(0, 7);
-}
-
-function getMonthOptions() {
-  const current = new Date();
-
-  return Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(current.getFullYear(), current.getMonth() + index, 1);
-    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-
-    return {
-      value,
-      label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      shortLabel: date.toLocaleDateString("en-US", { month: "2-digit", year: "numeric" }),
-    };
-  });
-}
-
-function getMonthDates(monthValue: string) {
+function getMonthGrid(monthValue: string) {
   const [year, month] = monthValue.split("-").map(Number);
-  const firstDay = new Date(year, month - 1, 1);
+  const firstDayOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
+  const leadingEmptyCells = (firstDayOfMonth.getDay() + 6) % 7;
+  const totalCells = Math.ceil((leadingEmptyCells + daysInMonth) / 7) * 7;
 
-  return Array.from({ length: daysInMonth }, (_, index) => {
-    const date = new Date(firstDay);
-    date.setDate(index + 1);
+  return Array.from({ length: totalCells }, (_, index) => {
+    const dayNumber = index - leadingEmptyCells + 1;
+
+    if (dayNumber < 1 || dayNumber > daysInMonth) {
+      return null;
+    }
+
+    const date = new Date(year, month - 1, dayNumber);
 
     return {
       iso: toIsoDate(date),
-      day: date.toLocaleDateString("en-US", { weekday: "short" }),
-      date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      dayNumber,
     };
   });
 }
 
-function isPastDate(isoDate: string) {
-  return isoDate < toIsoDate(new Date());
+function formatDateLabel(isoDate: string) {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function isSlotAvailableFor(isoDate: string, slot: string, occupiedSlots: Set<string>) {
-  return (
-    !isPastDate(isoDate) &&
-    !occupiedSlots.has(`${isoDate}|${slot}`) &&
-    !getMockUnavailableSlots(isoDate).has(slot)
-  );
-}
+function getMockOpenSlots(isoDate: string) {
+  if (FULLY_BOOKED_DATES.includes(isoDate)) {
+    return [];
+  }
 
-function getMockUnavailableSlots(isoDate: string) {
   const date = new Date(`${isoDate}T00:00:00`);
-  const dayOfWeek = date.getDay();
+  const blocked = new Set<string>(["11:00"]);
+  const weekend = date.getDay() === 0 || date.getDay() === 6;
   const dayOfMonth = date.getDate();
-  const blocked = new Set<string>(["11:00", "13:00"]);
 
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    ["09:30", "10:00", "14:30", "16:00"].forEach((slot) => blocked.add(slot));
+  if (weekend) {
+    ["09:30", "10:00", "14:30"].forEach((slot) => blocked.add(slot));
   }
 
   if (dayOfMonth % 2 === 0) {
-    ["08:30", "15:30"].forEach((slot) => blocked.add(slot));
+    ["08:00", "16:00"].forEach((slot) => blocked.add(slot));
   }
 
   if (dayOfMonth % 3 === 0) {
-    ["10:30", "17:30"].forEach((slot) => blocked.add(slot));
+    ["13:00", "17:30"].forEach((slot) => blocked.add(slot));
   }
 
-  return blocked;
+  (EXTRA_BLOCKED_SLOTS[isoDate] ?? []).forEach((slot) => blocked.add(slot));
+
+  return BASE_TIME_SLOTS.filter((slot) => !blocked.has(slot));
+}
+
+function getOpenSlotsForDate(isoDate: string, occupiedSlots: Set<string>) {
+  return getMockOpenSlots(isoDate).filter((slot) => !occupiedSlots.has(`${isoDate}|${slot}`));
 }
 
 interface BookingTimePickerProps {
@@ -121,171 +145,170 @@ export function BookingTimePicker({
     language === "vi"
       ? {
           month: "Tháng đặt lịch",
-          slots: "khung giờ trống trong ngày đã chọn. Khung xám đã được đặt hoặc giữ cho vận hành.",
-          dateLabel: "Ngày đặt lịch",
-          available: "Còn trống",
-          unavailable: "Không khả dụng",
-          open: "Trống",
+          scheduleTitle: "Chọn khung giờ còn trống trong ngày",
+          scheduleHint: "Chỉ hiển thị giờ còn trống để thao tác nhanh hơn.",
+          dayHint: "Ngày mờ là đã kín lịch.",
+          openSlots: "khung giờ còn trống",
+          fullyBooked: "Kín lịch",
+          open: "còn chỗ",
+          noSlots: "Không còn giờ trống trong ngày này. Vui lòng chọn ngày khác.",
         }
       : {
           month: "Booking month",
-          slots:
-            "slots available on the selected date. Gray slots are already booked or reserved for operations.",
-          dateLabel: "Booking date",
-          available: "Available",
-          unavailable: "Unavailable",
-          open: "Open",
+          scheduleTitle: "Choose an open time slot",
+          scheduleHint: "Only real open slots are shown to keep the screen clean.",
+          dayHint: "Dimmed days are fully booked.",
+          openSlots: "open slots",
+          fullyBooked: "Full",
+          open: "open",
+          noSlots: "No open slots left on this date. Please choose another day.",
         };
-  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const selectedMonth = getMonthValue(date);
-  const monthDates = useMemo(() => getMonthDates(selectedMonth), [selectedMonth]);
-  const monthOptions = useMemo(() => getMonthOptions(), []);
   const occupiedSlots = useMemo(() => new Set(occupiedSlotKeys), [occupiedSlotKeys]);
-  const selectedMonthOption =
-    monthOptions.find((option) => option.value === selectedMonth) ?? monthOptions[0];
-
-  const isSlotAvailable = (isoDate: string, slot: string) => {
-    return isSlotAvailableFor(isoDate, slot, occupiedSlots);
-  };
-
-  const getFirstAvailableSlot = (isoDate: string) => {
-    return availableTimes.find((slot) => isSlotAvailable(isoDate, slot));
-  };
-
-  const selectedDateAvailableSlots = useMemo(
-    () => availableTimes.filter((slot) => isSlotAvailableFor(date, slot, occupiedSlots)),
-    [date, occupiedSlots],
+  const monthGrid = useMemo(() => getMonthGrid(MOCK_BOOKING_MONTH), []);
+  const monthDates = useMemo(
+    () => monthGrid.filter(Boolean) as Array<{ iso: string; dayNumber: number }>,
+    [monthGrid],
   );
-  const availableSlotCount = selectedDateAvailableSlots.length;
+  const selectedDate =
+    date.startsWith(MOCK_BOOKING_MONTH) && monthDates.some((entry) => entry.iso === date)
+      ? date
+      : (monthDates[0]?.iso ?? `${MOCK_BOOKING_MONTH}-01`);
+  const dayAvailability = useMemo(
+    () =>
+      new Map(
+        monthDates.map((entry) => [entry.iso, getOpenSlotsForDate(entry.iso, occupiedSlots)]),
+      ),
+    [monthDates, occupiedSlots],
+  );
+  const selectedDateSlots = dayAvailability.get(selectedDate) ?? [];
 
   useEffect(() => {
-    const nextSlot = selectedDateAvailableSlots[0];
+    const firstBookableDay = monthDates.find(
+      (entry) => (dayAvailability.get(entry.iso) ?? []).length > 0,
+    );
+    const shouldResetDate =
+      selectedDate !== date ||
+      ((dayAvailability.get(selectedDate) ?? []).length === 0 && !!firstBookableDay);
 
-    if (nextSlot && !selectedDateAvailableSlots.includes(time)) {
-      onTimeChange(nextSlot);
+    if (shouldResetDate && firstBookableDay) {
+      onDateChange(firstBookableDay.iso);
+      onTimeChange((dayAvailability.get(firstBookableDay.iso) ?? [])[0] ?? "");
+      return;
     }
-  }, [onTimeChange, selectedDateAvailableSlots, time]);
 
-  const handleMonthChange = (monthValue: string) => {
-    const firstDateInMonth = getMonthDates(monthValue).find((option) => !isPastDate(option.iso));
-    const nextDate = firstDateInMonth?.iso ?? `${monthValue}-01`;
-    const nextSlot = getFirstAvailableSlot(nextDate);
-
-    onDateChange(nextDate);
-    if (nextSlot) {
-      onTimeChange(nextSlot);
+    if (selectedDateSlots.length > 0 && !selectedDateSlots.includes(time)) {
+      onTimeChange(selectedDateSlots[0]);
     }
-    setMonthPickerOpen(false);
-  };
+  }, [
+    date,
+    dayAvailability,
+    monthDates,
+    onDateChange,
+    onTimeChange,
+    selectedDate,
+    selectedDateSlots,
+    time,
+  ]);
 
   const handleDateChange = (isoDate: string) => {
-    const nextSlot = isSlotAvailable(isoDate, time) ? time : getFirstAvailableSlot(isoDate);
+    const nextSlots = dayAvailability.get(isoDate) ?? [];
+
+    if (nextSlots.length === 0) {
+      return;
+    }
 
     onDateChange(isoDate);
-    if (nextSlot) {
-      onTimeChange(nextSlot);
+
+    if (!nextSlots.includes(time)) {
+      onTimeChange(nextSlots[0]);
     }
   };
 
   return (
-    <div className={styles.timePicker}>
-      <div
-        className={styles.monthPickerRow}
-        onClick={() => setMonthPickerOpen((current) => !current)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setMonthPickerOpen((current) => !current);
-          }
-        }}
-        role="button"
-        aria-expanded={monthPickerOpen}
-        tabIndex={0}
-      >
-        <div className={styles.monthPicker}>
+    <div className={styles.schedulePicker}>
+      <div className={styles.scheduleToolbar}>
+        <div className={styles.scheduleMonthBadge}>
           <span>{copy.month}</span>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setMonthPickerOpen((current) => !current);
-            }}
-          >
-            {selectedMonthOption.shortLabel}
-            <i aria-hidden="true" />
-          </button>
-          {monthPickerOpen ? (
-            <div className={styles.monthMenu} onClick={(event) => event.stopPropagation()}>
-              {monthOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={option.value === selectedMonth ? styles.monthMenuItemActive : ""}
-                  onClick={() => handleMonthChange(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
+          <strong>05/2026</strong>
         </div>
         <p>
-          {availableSlotCount} {copy.slots}
+          {selectedDateSlots.length} {copy.openSlots} on {formatDateLabel(selectedDate)}.{" "}
+          {copy.dayHint}
         </p>
       </div>
-      <div className={styles.dateGrid} role="radiogroup" aria-label={copy.dateLabel}>
-        {monthDates.map((option) => {
-          const availableCount = availableTimes.filter((slot) =>
-            isSlotAvailable(option.iso, slot),
-          ).length;
-          const disabled = isPastDate(option.iso) || availableCount === 0;
 
-          return (
-            <button
-              key={option.iso}
-              type="button"
-              className={option.iso === date ? styles.dateCardSelected : styles.dateCard}
-              onClick={() => handleDateChange(option.iso)}
-              aria-pressed={option.iso === date}
-              disabled={disabled}
-            >
-              <span>{option.day}</span>
-              <strong>{option.date}</strong>
-              <small>
-                {availableCount} {copy.open}
-              </small>
-            </button>
-          );
-        })}
-      </div>
-      <div className={styles.slotLegend} aria-hidden="true">
-        <span>
-          <i className={styles.legendAvailable} /> {copy.available}
-        </span>
-        <span>
-          <i className={styles.legendUnavailable} /> {copy.unavailable}
-        </span>
-      </div>
-      <div className={styles.timeSlots} role="radiogroup" aria-label={copy.dateLabel}>
-        {availableTimes.map((slot) => {
-          const available = isSlotAvailable(date, slot);
-          const selected = slot === time && available;
+      <div className={styles.scheduleSplitLayout}>
+        <section className={styles.scheduleCalendarPanel}>
+          <div className={styles.calendarWeekdays} aria-hidden="true">
+            {WEEKDAY_LABELS.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
 
-          return (
-            <button
-              key={slot}
-              type="button"
-              className={selected ? styles.timeSlotSelected : styles.timeSlot}
-              onClick={() => onTimeChange(slot)}
-              aria-pressed={selected}
-              disabled={!available}
-              title={available ? copy.available : copy.unavailable}
-            >
-              {slot}
-              <small>{available ? copy.open : copy.unavailable}</small>
-            </button>
-          );
-        })}
+          <div className={styles.calendarGrid} role="radiogroup" aria-label="Booking dates">
+            {monthGrid.map((entry, index) =>
+              entry ? (
+                <button
+                  key={entry.iso}
+                  type="button"
+                  className={
+                    entry.iso === selectedDate
+                      ? styles.calendarDaySelected
+                      : (dayAvailability.get(entry.iso) ?? []).length === 0
+                        ? styles.calendarDayDisabled
+                        : styles.calendarDay
+                  }
+                  onClick={() => handleDateChange(entry.iso)}
+                  disabled={(dayAvailability.get(entry.iso) ?? []).length === 0}
+                  aria-pressed={entry.iso === selectedDate}
+                >
+                  <strong>{entry.dayNumber}</strong>
+                  <small>
+                    {(dayAvailability.get(entry.iso) ?? []).length > 0
+                      ? `${(dayAvailability.get(entry.iso) ?? []).length} ${copy.open}`
+                      : copy.fullyBooked}
+                  </small>
+                </button>
+              ) : (
+                <span
+                  key={`blank-${index}`}
+                  className={styles.calendarDaySpacer}
+                  aria-hidden="true"
+                />
+              ),
+            )}
+          </div>
+        </section>
+
+        <section className={styles.scheduleSlotPanel}>
+          <div className={styles.scheduleSlotHeader}>
+            <h3>{copy.scheduleTitle}</h3>
+            <p>{copy.scheduleHint}</p>
+          </div>
+
+          {selectedDateSlots.length > 0 ? (
+            <div className={styles.scheduleSlotGrid} role="radiogroup" aria-label="Booking times">
+              {selectedDateSlots.map((slot) => {
+                const selected = slot === time;
+
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    className={selected ? styles.scheduleSlotSelected : styles.scheduleSlot}
+                    onClick={() => onTimeChange(slot)}
+                    aria-pressed={selected}
+                  >
+                    <strong>{slot}</strong>
+                    <small>{copy.open}</small>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.scheduleEmptyState}>{copy.noSlots}</div>
+          )}
+        </section>
       </div>
     </div>
   );

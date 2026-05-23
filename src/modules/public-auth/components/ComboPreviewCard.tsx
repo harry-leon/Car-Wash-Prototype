@@ -19,10 +19,14 @@ export function ComboPreviewCard({ combo }: { combo: ComboPackage }) {
     >
       {/* Badge */}
       {combo.badge && (
-        <div className={cn(
-          "absolute -top-3 left-6 rounded-full px-4 py-1 text-xs font-bold shadow-sm",
-          combo.highlight ? "bg-primary text-primary-foreground" : "bg-foreground text-background",
-        )}>
+        <div
+          className={cn(
+            "absolute -top-3 left-6 rounded-full px-4 py-1 text-xs font-bold shadow-sm",
+            combo.highlight
+              ? "bg-primary text-primary-foreground"
+              : "bg-foreground text-background",
+          )}
+        >
           {t(combo.badge, combo.badgeVi ?? combo.badge)}
         </div>
       )}
@@ -30,14 +34,20 @@ export function ComboPreviewCard({ combo }: { combo: ComboPackage }) {
       <div className="space-y-4">
         <div>
           <h3 className="text-lg font-extrabold text-foreground">{t(combo.name, combo.nameVi)}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{t(combo.description, combo.descriptionVi)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t(combo.description, combo.descriptionVi)}
+          </p>
         </div>
 
         {/* Pricing */}
         <div className="space-y-1">
-          <div className="text-3xl font-extrabold text-primary">{formatPrice(combo.comboPrice)}</div>
+          <div className="text-3xl font-extrabold text-primary">
+            {formatPrice(combo.comboPrice)}
+          </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground line-through">{formatPrice(combo.originalPrice)}</span>
+            <span className="text-sm text-muted-foreground line-through">
+              {formatPrice(combo.originalPrice)}
+            </span>
             <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-bold text-green-600">
               -{t("Save", "Tiết kiệm")} {formatPrice(savings)}
             </span>

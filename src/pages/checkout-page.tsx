@@ -57,7 +57,10 @@ export function CheckoutPage() {
     return (
       <div className="mx-auto max-w-xl p-10 text-center animate-in fade-in zoom-in-95 duration-500">
         <PageHeader title="No active session" subtitle="Start a wash session first." />
-        <Button asChild className="mt-8 rounded-xl font-bold px-8 shadow-md transition-all hover:shadow-lg hover:-translate-y-1">
+        <Button
+          asChild
+          className="mt-8 rounded-xl font-bold px-8 shadow-md transition-all hover:shadow-lg hover:-translate-y-1"
+        >
           <Link to="/staff/wash-session">
             <ArrowLeft className="mr-2 h-4 w-4" /> Start a new wash
           </Link>
@@ -82,7 +85,9 @@ export function CheckoutPage() {
   const safePoints = Math.min(pointsToRedeem, maxRedeem);
   const pointsValue = safePoints * 1000;
   const finalAmount = Math.max(0, afterPromo - pointsValue);
-  const pointsEarned = Math.floor(Math.floor(finalAmount / 10000) * (draft.customer.multiplier ?? 1));
+  const pointsEarned = Math.floor(
+    Math.floor(finalAmount / 10000) * (draft.customer.multiplier ?? 1),
+  );
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase();
@@ -158,7 +163,9 @@ export function CheckoutPage() {
                 </div>
               ))}
               <div className="flex justify-between items-center bg-primary/5 px-5 py-4 text-sm border-t border-border/50">
-                <span className="font-bold uppercase tracking-wider text-muted-foreground">Subtotal</span>
+                <span className="font-bold uppercase tracking-wider text-muted-foreground">
+                  Subtotal
+                </span>
                 <span className="text-base font-bold">{fmtMoney(subtotal)}</span>
               </div>
             </div>
@@ -176,8 +183,11 @@ export function CheckoutPage() {
                     <CheckCircle2 className="h-5 w-5" />
                   </div>
                   <span>
-                    <strong className="text-foreground">{draft.customer.tier} Membership</strong> applied -{" "}
-                    <span className="font-bold text-emerald-600">{draft.customer.discountPct}%</span>
+                    <strong className="text-foreground">{draft.customer.tier} Membership</strong>{" "}
+                    applied -{" "}
+                    <span className="font-bold text-emerald-600">
+                      {draft.customer.discountPct}%
+                    </span>
                   </span>
                 </div>
                 <span className="text-base font-bold text-emerald-600 self-end sm:self-auto">
@@ -200,7 +210,11 @@ export function CheckoutPage() {
                 />
               </div>
               {appliedPromo ? (
-                <Button variant="outline" onClick={removePromo} className="h-12 rounded-xl font-bold border-destructive/20 text-destructive hover:bg-destructive/10">
+                <Button
+                  variant="outline"
+                  onClick={removePromo}
+                  className="h-12 rounded-xl font-bold border-destructive/20 text-destructive hover:bg-destructive/10"
+                >
                   Remove
                 </Button>
               ) : (
@@ -232,9 +246,14 @@ export function CheckoutPage() {
               <div className="rounded-xl border border-border/50 bg-background/30 p-5 shadow-inner">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    Available: <span className="text-base text-foreground bg-background px-2 py-0.5 rounded-md border border-border/50 shadow-sm">{draft.customer.points} pts</span>
+                    Available:{" "}
+                    <span className="text-base text-foreground bg-background px-2 py-0.5 rounded-md border border-border/50 shadow-sm">
+                      {draft.customer.points} pts
+                    </span>
                   </span>
-                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">1 pt = 1.000 VND</span>
+                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+                    1 pt = 1.000 VND
+                  </span>
                 </div>
                 <div className="px-2">
                   <Slider
@@ -261,8 +280,10 @@ export function CheckoutPage() {
                     className="w-32 h-10 font-bold text-center rounded-lg"
                   />
                   <div className="flex items-center gap-2 text-sm font-bold ml-auto">
-                    <span className="text-muted-foreground">pts {"->"}</span> 
-                    <span className="text-base text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 shadow-sm">-{fmtMoney(pointsValue)}</span>
+                    <span className="text-muted-foreground">pts {"->"}</span>
+                    <span className="text-base text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 shadow-sm">
+                      -{fmtMoney(pointsValue)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -302,7 +323,9 @@ export function CheckoutPage() {
 
         <div className="lg:col-span-1">
           <div className="sticky top-6 rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
-            <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/50 pb-4 mb-6">Final Bill</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/50 pb-4 mb-6">
+              Final Bill
+            </div>
             <div className="space-y-4 text-sm">
               <Row label="Subtotal" value={fmtMoney(subtotal)} />
               {tierDiscount > 0 && (
@@ -313,27 +336,47 @@ export function CheckoutPage() {
                 />
               )}
               {promoDiscount > 0 && (
-                <Row label={`Promo ${appliedPromo}`} value={`-${fmtMoney(promoDiscount)}`} emerald />
+                <Row
+                  label={`Promo ${appliedPromo}`}
+                  value={`-${fmtMoney(promoDiscount)}`}
+                  emerald
+                />
               )}
               {pointsValue > 0 && (
-                <Row label={`Points (${safePoints} pts)`} value={`-${fmtMoney(pointsValue)}`} emerald />
+                <Row
+                  label={`Points (${safePoints} pts)`}
+                  value={`-${fmtMoney(pointsValue)}`}
+                  emerald
+                />
               )}
             </div>
             <div className="mt-6 flex flex-col gap-2 border-t border-border/50 pt-6">
               <div className="flex items-end justify-between">
-                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-1">Payable</span>
-                <span className="text-4xl font-bold tracking-tight text-foreground">{fmtMoney(finalAmount)}</span>
+                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                  Payable
+                </span>
+                <span className="text-4xl font-bold tracking-tight text-foreground">
+                  {fmtMoney(finalAmount)}
+                </span>
               </div>
               <div className="inline-flex items-center gap-1.5 self-end rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-600 border border-emerald-500/20">
                 Est. points earned: <span className="text-base">+ {pointsEarned}</span>
               </div>
             </div>
             <div className="mt-8 space-y-3">
-              <Button className="w-full h-14 rounded-xl text-lg font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5" onClick={processPayment} disabled={processing}>
+              <Button
+                className="w-full h-14 rounded-xl text-lg font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+                onClick={processPayment}
+                disabled={processing}
+              >
                 {processing ? "Processing..." : "Process Payment"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button asChild variant="outline" className="w-full h-12 rounded-xl font-bold border-border/50 bg-background/50 backdrop-blur-sm hover:bg-background transition-all">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full h-12 rounded-xl font-bold border-border/50 bg-background/50 backdrop-blur-sm hover:bg-background transition-all"
+              >
                 <Link to="/staff/wash-session">
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to wash details
                 </Link>
@@ -358,19 +401,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({
-  label,
-  value,
-  emerald,
-}: {
-  label: string;
-  value: string;
-  emerald?: boolean;
-}) {
+function Row({ label, value, emerald }: { label: string; value: string; emerald?: boolean }) {
   return (
     <div className="flex justify-between items-center p-2 rounded-lg transition-colors hover:bg-background/50 -mx-2">
       <span className="font-bold text-muted-foreground">{label}</span>
-      <span className={cn("font-bold text-base", emerald ? "text-emerald-600" : "text-foreground")}>{value}</span>
+      <span className={cn("font-bold text-base", emerald ? "text-emerald-600" : "text-foreground")}>
+        {value}
+      </span>
     </div>
   );
 }

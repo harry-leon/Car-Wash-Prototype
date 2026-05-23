@@ -7,7 +7,13 @@ import { RouteRedirect } from "@/components/route-redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
@@ -24,7 +30,9 @@ export function WashSessionPage() {
   const { role } = useCarwashStore();
   const { customers, draft, setDraft } = useWashStore();
   const navigate = useNavigate();
-  const [customerId, setCustomerId] = React.useState<string>(draft?.customer.id ?? customers[0]?.id ?? "guest");
+  const [customerId, setCustomerId] = React.useState<string>(
+    draft?.customer.id ?? customers[0]?.id ?? "guest",
+  );
   const [vehicleType, setVehicleType] = React.useState<string>(draft?.vehicleType ?? "Sedan");
   const [plate, setPlate] = React.useState<string>(draft?.plate ?? "");
   const [selectedServices, setSelectedServices] = React.useState<string[]>(
@@ -75,7 +83,9 @@ export function WashSessionPage() {
     <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 border-b border-border/50 pb-6">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Wash session processing</h1>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+            Wash session processing
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Confirm the checked-in vehicle, selected services and session subtotal before checkout.
           </p>
@@ -92,24 +102,30 @@ export function WashSessionPage() {
                 </h3>
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider">Select customer</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider">
+                      Select customer
+                    </Label>
                     <Select value={customerId} onValueChange={setCustomerId}>
                       <SelectTrigger className="h-12 rounded-xl border-border/50 bg-background/50 backdrop-blur-sm shadow-sm font-medium">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-border/50">
                         {customers.map((item) => (
-                          <SelectItem key={item.id} value={item.id} className="rounded-lg font-medium">
-                            <span className="flex items-center gap-2">
-                              {item.name}
-                            </span>
+                          <SelectItem
+                            key={item.id}
+                            value={item.id}
+                            className="rounded-lg font-medium"
+                          >
+                            <span className="flex items-center gap-2">{item.name}</span>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="rounded-xl border border-border/50 bg-background/50 p-4 shadow-sm backdrop-blur-sm transition-all hover:shadow-md hover:bg-background/80">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Selected</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Selected
+                    </div>
                     <div className="mt-1 text-base font-bold text-foreground">{customer.name}</div>
                     <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
                       {customer.tier} / {customer.points} pts
@@ -142,7 +158,12 @@ export function WashSessionPage() {
                             : "border-border/50 bg-background/50 hover:border-primary/40 hover:bg-background hover:-translate-y-1 hover:shadow-sm",
                         )}
                       >
-                        <Icon className={cn("h-8 w-8 transition-colors", active ? "text-primary" : "text-muted-foreground")} />
+                        <Icon
+                          className={cn(
+                            "h-8 w-8 transition-colors",
+                            active ? "text-primary" : "text-muted-foreground",
+                          )}
+                        />
                         <span className="text-sm font-bold">{vehicle.label}</span>
                       </button>
                     );
@@ -193,17 +214,23 @@ export function WashSessionPage() {
                         <div
                           className={cn(
                             "flex h-6 w-6 items-center justify-center rounded-md border transition-colors",
-                            active ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30",
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/30",
                           )}
                         >
                           {active && <Check className="h-4 w-4" />}
                         </div>
                         <div>
                           <div className="text-sm font-bold text-foreground">{service.name}</div>
-                          <div className="text-xs font-medium text-muted-foreground mt-0.5">Admin-configured</div>
+                          <div className="text-xs font-medium text-muted-foreground mt-0.5">
+                            Admin-configured
+                          </div>
                         </div>
                       </div>
-                      <div className="text-base font-bold text-primary">{fmtMoney(service.price)}</div>
+                      <div className="text-base font-bold text-primary">
+                        {fmtMoney(service.price)}
+                      </div>
                     </button>
                   );
                 })}
@@ -213,11 +240,17 @@ export function WashSessionPage() {
 
           <div>
             <div className="sticky top-6 rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl">
-              <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/50 pb-4 mb-4">Summary</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-primary border-b border-border/50 pb-4 mb-4">
+                Summary
+              </div>
               <div className="space-y-3">
                 <Row label="Customer" value={customer.name} />
                 <Row label="Vehicle" value={vehicleType} />
-                <Row label="Plate" value={plate ? plate.toUpperCase() : "-"} className="font-mono tracking-wider" />
+                <Row
+                  label="Plate"
+                  value={plate ? plate.toUpperCase() : "-"}
+                  className="font-mono tracking-wider"
+                />
                 <Row label="Services" value={String(services.length)} />
               </div>
               <div className="mt-6 space-y-2 border-t border-border/50 pt-6">
@@ -229,10 +262,18 @@ export function WashSessionPage() {
                 ))}
               </div>
               <div className="mt-6 flex items-end justify-between border-t border-border/50 pt-6">
-                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Initial total</span>
-                <span className="text-3xl font-bold tracking-tight text-foreground">{fmtMoney(subtotal)}</span>
+                <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  Initial total
+                </span>
+                <span className="text-3xl font-bold tracking-tight text-foreground">
+                  {fmtMoney(subtotal)}
+                </span>
               </div>
-              <Button className="mt-8 w-full h-12 rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5" size="lg" onClick={handleProceed}>
+              <Button
+                className="mt-8 w-full h-12 rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+                size="lg"
+                onClick={handleProceed}
+              >
                 Proceed to Checkout
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

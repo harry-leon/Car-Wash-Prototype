@@ -3,10 +3,7 @@ import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  AdminBookingsFilters,
-  type BookingsFilterState,
-} from "../components/AdminBookingsFilters";
+import { AdminBookingsFilters, type BookingsFilterState } from "../components/AdminBookingsFilters";
 import { AdminBookingsTable } from "../components/AdminBookingsTable";
 import { BookingDetailDrawer } from "../components/BookingDetailDrawer";
 import type { AdminBookingRow, BookingStatus } from "../types/dashboard.types";
@@ -187,7 +184,8 @@ export function AdminBookingsPage() {
             All bookings
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Inspect every booking in the system, filter by status/date/customer and override status when needed. List stays in sync with the live store.
+            Inspect every booking in the system, filter by status/date/customer and override status
+            when needed. List stays in sync with the live store.
           </p>
         </div>
 
@@ -195,7 +193,8 @@ export function AdminBookingsPage() {
           <AdminBookingsFilters value={filters} onChange={setFilters} />
           <div className="mt-3 flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
-              Showing <strong className="text-foreground">{pageRows.length}</strong> of {filtered.length} bookings
+              Showing <strong className="text-foreground">{pageRows.length}</strong> of{" "}
+              {filtered.length} bookings
             </span>
             <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/70 px-3 py-2 text-[11px] font-semibold text-muted-foreground">
               <Button

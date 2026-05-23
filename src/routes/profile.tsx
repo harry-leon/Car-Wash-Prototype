@@ -1,6 +1,20 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Crown, Loader2, Sparkles, TrendingUp, User, Phone, Mail, Calendar, ShieldCheck, MessageSquare, History, Edit2, CheckCircle2 } from "lucide-react";
+import {
+  Crown,
+  Loader2,
+  Sparkles,
+  TrendingUp,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  ShieldCheck,
+  MessageSquare,
+  History,
+  Edit2,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +22,13 @@ import { Label } from "@/components/ui/label";
 import { nextTierInfo, usePortal } from "@/lib/portal-store";
 import { RouteRedirect } from "@/components/route-redirect";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/profile")({
   component: () => <RouteRedirect to="/customer/profile" />,
@@ -28,7 +48,9 @@ export function ProfilePage() {
   const [email, setEmail] = React.useState(profile?.email ?? "");
   const [phone, setPhone] = React.useState(profile?.phone ?? "");
   const [countryCode, setCountryCode] = React.useState(profile?.countryCode ?? "+84");
-  const [status, setStatus] = React.useState<"Active" | "Inactive" | "Blocked">(profile?.status ?? "Active");
+  const [status, setStatus] = React.useState<"Active" | "Inactive" | "Blocked">(
+    profile?.status ?? "Active",
+  );
   const [isEditing, setIsEditing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
@@ -77,12 +99,21 @@ export function ProfilePage() {
   return (
     <div className="px-4 py-8 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto w-full max-w-3xl">
-        <form onSubmit={handleSave} className="overflow-hidden rounded-[2rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-xl">
+        <form
+          onSubmit={handleSave}
+          className="overflow-hidden rounded-[2rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-xl"
+        >
           <div className="p-8">
             {!isEditing ? (
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold tracking-tight">Personal information</h2>
-                <Button type="button" variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-xl font-semibold gap-2 border-primary/20 text-primary hover:bg-primary/5 h-9">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-xl font-semibold gap-2 border-primary/20 text-primary hover:bg-primary/5 h-9"
+                >
                   <Edit2 className="h-3.5 w-3.5" />
                   Edit
                 </Button>
@@ -101,7 +132,9 @@ export function ProfilePage() {
             ) : (
               <div className="mb-6">
                 <h2 className="text-xl font-bold tracking-tight">Edit information</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Update your personal details below.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Update your personal details below.
+                </p>
               </div>
             )}
 
@@ -114,14 +147,17 @@ export function ProfilePage() {
                   </div>
                   <div className="text-sm font-semibold text-foreground">{profile.name}</div>
                 </div>
-                
+
                 <div className="flex items-center justify-between py-4">
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone className="h-4 w-4" />
                     <span className="text-sm font-medium">Phone Number</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">{profile.countryCode} {profile.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1 $2 $3")}</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {profile.countryCode}{" "}
+                      {profile.phone.replace(/(\d{3})(\d{3})(\d+)/, "$1 $2 $3")}
+                    </span>
                     <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600">
                       <CheckCircle2 className="h-3 w-3" /> Verified
                     </span>
@@ -146,7 +182,9 @@ export function ProfilePage() {
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm font-medium">Joined Date</span>
                   </div>
-                  <div className="text-sm font-semibold text-foreground">{new Date(profile.joinedAt).toLocaleDateString()}</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    {new Date(profile.joinedAt).toLocaleDateString()}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between py-4">
@@ -154,12 +192,16 @@ export function ProfilePage() {
                     <ShieldCheck className="h-4 w-4" />
                     <span className="text-sm font-medium">Account Status</span>
                   </div>
-                  <span className={cn(
-                    "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm",
-                    profile.status === "Active" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
-                    profile.status === "Blocked" ? "bg-rose-500/10 text-rose-600 border border-rose-500/20" :
-                    "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                  )}>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm",
+                      profile.status === "Active"
+                        ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                        : profile.status === "Blocked"
+                          ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
+                          : "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                    )}
+                  >
                     {profile.status}
                   </span>
                 </div>
@@ -177,25 +219,33 @@ export function ProfilePage() {
                     <History className="h-4 w-4" />
                     <span className="text-sm font-medium">Last Activity</span>
                   </div>
-                  <div className="text-sm font-semibold text-foreground">Car Wash • 14 Aug 2026</div>
+                  <div className="text-sm font-semibold text-foreground">
+                    Car Wash • 14 Aug 2026
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="pname" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="pname"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     Full name
                   </Label>
-                  <Input 
-                    id="pname" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
+                  <Input
+                    id="pname"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     disabled={!isEditing}
                     className="h-12 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 focus-visible:border-primary font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pphone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="pphone"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     Phone
                   </Label>
                   <div className="flex gap-2">
@@ -215,21 +265,31 @@ export function ProfilePage() {
                       disabled={!isEditing}
                       className="h-12 flex-1 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 focus-visible:border-primary font-medium tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
                     />
-                    <Button type="button" variant="outline" onClick={handlePhoneChange} className="h-12 rounded-xl font-bold">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handlePhoneChange}
+                      className="h-12 rounded-xl font-bold"
+                    >
                       Verify
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Phone changes require OTP verification before activation.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Phone changes require OTP verification before activation.
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="pemail" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <Label
+                    htmlFor="pemail"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     Email
                   </Label>
-                  <Input 
-                    id="pemail" 
+                  <Input
+                    id="pemail"
                     type="email"
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     disabled={!isEditing}
                     className="h-12 rounded-xl bg-background/50 border-border/60 transition-all focus-visible:ring-primary/30 focus-visible:border-primary font-medium disabled:opacity-70 disabled:cursor-not-allowed"
                   />
@@ -239,12 +299,16 @@ export function ProfilePage() {
                     Account Status
                   </Label>
                   <div className="flex h-12 items-center rounded-xl bg-background/30 border border-border/60 px-3 shadow-sm cursor-not-allowed">
-                    <span className={cn(
-                      "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm",
-                      status === "Active" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" :
-                      status === "Blocked" ? "bg-rose-500/10 text-rose-600 border border-rose-500/20" :
-                      "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                    )}>
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm",
+                        status === "Active"
+                          ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                          : status === "Blocked"
+                            ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
+                            : "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                      )}
+                    >
                       {status}
                     </span>
                   </div>
@@ -252,13 +316,13 @@ export function ProfilePage() {
               </div>
             )}
           </div>
-          
+
           {isEditing && (
             <div className="flex justify-end border-t border-border/50 bg-accent/10 px-8 py-5 backdrop-blur-md">
               <div className="flex gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setIsEditing(false);
                     if (profile) {
@@ -267,12 +331,16 @@ export function ProfilePage() {
                       setPhone(profile.phone);
                       setCountryCode(profile.countryCode);
                     }
-                  }} 
+                  }}
                   className="rounded-xl px-6 h-11 font-bold border-border/60 hover:bg-background transition-all"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving} className="rounded-xl px-8 h-11 font-bold shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5">
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl px-8 h-11 font-bold shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5"
+                >
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

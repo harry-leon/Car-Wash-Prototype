@@ -57,7 +57,9 @@ export function HistoryPage() {
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Transaction History</h1>
+        <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+          Transaction History
+        </h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
           Audit log of every completed wash session.
         </p>
@@ -143,9 +145,13 @@ export function HistoryPage() {
                       </div>
                     </Td>
                     <Td>
-                      <span className="font-mono font-bold tracking-wider text-foreground">{t.plate}</span>
+                      <span className="font-mono font-bold tracking-wider text-foreground">
+                        {t.plate}
+                      </span>
                     </Td>
-                    <Td className="text-right font-bold text-foreground">{fmtMoney(t.finalAmount)}</Td>
+                    <Td className="text-right font-bold text-foreground">
+                      {fmtMoney(t.finalAmount)}
+                    </Td>
                     <Td className="text-right">
                       <span className="inline-flex items-center font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-md">
                         +{t.pointsEarned}
@@ -175,7 +181,8 @@ export function HistoryPage() {
                     Receipt {active.id}
                   </SheetTitle>
                   <SheetDescription className="font-medium mt-1 text-xs uppercase tracking-wider">
-                    {new Date(active.date).toLocaleString()} <span className="mx-2 opacity-50">•</span> {active.paymentMethod}
+                    {new Date(active.date).toLocaleString()}{" "}
+                    <span className="mx-2 opacity-50">•</span> {active.paymentMethod}
                   </SheetDescription>
                 </SheetHeader>
               </div>
@@ -183,18 +190,24 @@ export function HistoryPage() {
               <div className="p-6 flex-1 space-y-6">
                 <div className="rounded-2xl border border-border/50 bg-background/50 p-4 shadow-sm">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="font-bold text-base text-foreground">{active.customer.name}</span>
+                    <span className="font-bold text-base text-foreground">
+                      {active.customer.name}
+                    </span>
                     <TierBadge tier={active.customer.tier} />
                   </div>
                   <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                     <span>{active.vehicleType}</span>
                     <span className="w-1 h-1 rounded-full bg-border" />
-                    <span className="font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">{active.plate}</span>
+                    <span className="font-mono text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                      {active.plate}
+                    </span>
                   </div>
                 </div>
 
                 <div>
-                  <div className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">Services</div>
+                  <div className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">
+                    Services
+                  </div>
                   <div className="space-y-3 mt-4">
                     {active.services.map((s) => (
                       <div key={s.id} className="flex justify-between items-center text-sm">
@@ -208,7 +221,11 @@ export function HistoryPage() {
                 <div className="space-y-3 rounded-2xl border border-border/50 bg-accent/10 p-5 shadow-sm">
                   <Line label="Subtotal" value={fmtMoney(active.subtotal)} />
                   {active.tierDiscount > 0 && (
-                    <Line label="Tier discount" value={`-${fmtMoney(active.tierDiscount)}`} emerald />
+                    <Line
+                      label="Tier discount"
+                      value={`-${fmtMoney(active.tierDiscount)}`}
+                      emerald
+                    />
                   )}
                   {active.promoDiscount > 0 && (
                     <Line
@@ -226,7 +243,9 @@ export function HistoryPage() {
                   )}
                   <div className="pt-3 mt-3 border-t border-border/50 flex justify-between items-end">
                     <span className="font-bold text-foreground">Total paid</span>
-                    <span className="text-2xl font-black text-primary">{fmtMoney(active.finalAmount)}</span>
+                    <span className="text-2xl font-black text-primary">
+                      {fmtMoney(active.finalAmount)}
+                    </span>
                   </div>
                 </div>
 
@@ -235,7 +254,8 @@ export function HistoryPage() {
                     <Sparkles className="h-4 w-4" />
                   </div>
                   <div className="text-sm font-medium">
-                    Earned <strong className="font-bold">+{active.pointsEarned} pts</strong> on this transaction.
+                    Earned <strong className="font-bold">+{active.pointsEarned} pts</strong> on this
+                    transaction.
                   </div>
                 </div>
               </div>
@@ -259,7 +279,14 @@ function Line({ label, value, emerald }: { label: string; value: string; emerald
   return (
     <div className="flex justify-between items-center text-sm">
       <span className="font-medium text-muted-foreground">{label}</span>
-      <span className={cn("font-semibold", emerald ? "text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded" : "text-foreground")}>{value}</span>
+      <span
+        className={cn(
+          "font-semibold",
+          emerald ? "text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded" : "text-foreground",
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }

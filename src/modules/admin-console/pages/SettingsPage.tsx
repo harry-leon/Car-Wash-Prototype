@@ -1,11 +1,5 @@
 import * as React from "react";
-import {
-  Building2,
-  Coins,
-  Settings as SettingsIcon,
-  ShieldAlert,
-  XCircle,
-} from "lucide-react";
+import { Building2, Coins, Settings as SettingsIcon, ShieldAlert, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,9 +29,7 @@ export function SettingsPage() {
   };
 
   if (!hydrated) {
-    return (
-      <div className="p-10 text-center text-sm text-muted-foreground">Loading settings…</div>
-    );
+    return <div className="p-10 text-center text-sm text-muted-foreground">Loading settings…</div>;
   }
 
   return (
@@ -52,7 +44,8 @@ export function SettingsPage() {
               Workspace settings
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Tune business identity, loyalty conversion and cancellation enforcement. Saved values persist across sessions on this device.
+              Tune business identity, loyalty conversion and cancellation enforcement. Saved values
+              persist across sessions on this device.
             </p>
           </div>
           <div className="flex gap-2">
@@ -241,7 +234,8 @@ export function SettingsPage() {
               <div>
                 <div className="text-sm font-semibold">Enable auto-ban rule</div>
                 <div className="text-xs text-muted-foreground">
-                  When a customer hits the threshold within the rolling window, they are blocked for the configured ban period.
+                  When a customer hits the threshold within the rolling window, they are blocked for
+                  the configured ban period.
                 </div>
               </div>
               <Switch
@@ -306,7 +300,9 @@ export function SettingsPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Currently set to ban customers who cancel{" "}
-              <strong className="text-foreground">{draft.cancellationAutoBan.thresholdCount}</strong>{" "}
+              <strong className="text-foreground">
+                {draft.cancellationAutoBan.thresholdCount}
+              </strong>{" "}
               or more bookings within{" "}
               <strong className="text-foreground">{draft.cancellationAutoBan.windowDays}</strong>{" "}
               days for{" "}

@@ -5,7 +5,7 @@ import { LiveTracker } from "@/components/live-tracker";
 import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
-export const Route = createFileRoute("/customer/bookings/tracker")({
+export const Route = createFileRoute("/customer/history/tracker")({
   component: () => <BookingTrackerPage />,
 });
 
@@ -28,7 +28,9 @@ export function BookingTrackerPage() {
     <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Booking tracker</h1>
+          <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+            Booking tracker
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Follow the status chain from pending to checked-in without breaking the main flow.
           </p>
@@ -38,4 +40,3 @@ export function BookingTrackerPage() {
     </div>
   );
 }
-

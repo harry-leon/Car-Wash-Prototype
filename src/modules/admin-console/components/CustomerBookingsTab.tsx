@@ -45,9 +45,14 @@ export function CustomerBookingsTab({ bookings }: Props) {
             <TableRow key={booking.id}>
               <TableCell className="font-semibold">{booking.code}</TableCell>
               <TableCell>{booking.servicePackage}</TableCell>
-              <TableCell className="text-xs text-muted-foreground">{booking.scheduledTime}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {booking.scheduledTime}
+              </TableCell>
               <TableCell>
-                <Badge variant="outline" className={`border font-semibold ${STATUS_TONE[booking.status]}`}>
+                <Badge
+                  variant="outline"
+                  className={`border font-semibold ${STATUS_TONE[booking.status]}`}
+                >
                   {booking.status.replace("_", " ")}
                 </Badge>
               </TableCell>

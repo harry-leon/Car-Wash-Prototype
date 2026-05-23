@@ -1,9 +1,6 @@
 import type { CustomerTier } from "./customer.types";
 
-export type PromotionType =
-  | "ALL_MEMBERS"
-  | "SELECTED_TIERS"
-  | "NEW_CUSTOMERS";
+export type PromotionType = "ALL_MEMBERS" | "SELECTED_TIERS" | "NEW_CUSTOMERS";
 
 export interface Promotion {
   id: string;

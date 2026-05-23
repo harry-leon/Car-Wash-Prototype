@@ -1,12 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  CarFront,
-  CreditCard,
-  Droplets,
-  Lock,
-  ShieldCheck,
-  Timer,
-} from "lucide-react";
+import { CarFront, CreditCard, Droplets, Lock, ShieldCheck, Timer } from "lucide-react";
 import { AccessDenied } from "@/components/access-denied";
 import { Card } from "@/components/ui/card";
 import { canAccess } from "@/lib/access-control";
@@ -36,7 +29,9 @@ function RbacPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Permission Matrix</h1>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+              Permission Matrix
+            </h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
               Role-based capability snapshot for the protected AURA CAR CARE workspace.
             </p>
@@ -76,8 +71,9 @@ function RbacPage() {
 
               <div className="mt-6 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-5 text-sm font-medium text-muted-foreground leading-relaxed">
                 This page documents who can access each operational capability. To preview other
-                workspaces, use the <span className="font-bold text-foreground">Demo Role Switch</span>{" "}
-                in the sidebar instead of changing role inside the page.
+                workspaces, use the{" "}
+                <span className="font-bold text-foreground">Demo Role Switch</span> in the sidebar
+                instead of changing role inside the page.
               </div>
             </div>
           </Card>
@@ -115,7 +111,9 @@ function RbacPage() {
 
         <Card className="p-6 sm:p-8 rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-xl">
           <div className="mb-6 border-b border-border/50 pb-4">
-            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">Permission Matrix</h2>
+            <h2 className="text-lg font-bold uppercase tracking-wider text-foreground">
+              Permission Matrix
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground font-medium">
               Production-style access rules for the current prototype roles.
             </p>
@@ -143,13 +141,19 @@ function RbacPage() {
                     <tr key={capability as string} className="hover:bg-primary/5 transition-colors">
                       <td className="px-6 py-4 font-bold">{capability}</td>
                       <td className="px-6 py-4">
-                        <span className="text-emerald-600 font-bold bg-emerald-500/10 px-2 py-1 rounded-md">Yes</span>
+                        <span className="text-emerald-600 font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
+                          Yes
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {staffAllowed ? (
-                          <span className="text-emerald-600 font-bold bg-emerald-500/10 px-2 py-1 rounded-md">Yes</span>
+                          <span className="text-emerald-600 font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
+                            Yes
+                          </span>
                         ) : (
-                          <span className="text-muted-foreground font-bold bg-muted/50 px-2 py-1 rounded-md">No</span>
+                          <span className="text-muted-foreground font-bold bg-muted/50 px-2 py-1 rounded-md">
+                            No
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4">

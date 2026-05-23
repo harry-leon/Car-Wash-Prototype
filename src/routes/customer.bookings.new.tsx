@@ -5,10 +5,10 @@ import { canAccess } from "@/lib/access-control";
 import { useCarwashStore } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/customer/bookings/new")({
-  component: () => <NewBookingPage />,
+  component: () => <CustomerBookingNewPage />,
 });
 
-function NewBookingPage() {
+function CustomerBookingNewPage() {
   const { role } = useCarwashStore();
 
   if (!canAccess(role, ["Customer", "Admin"])) {

@@ -24,13 +24,15 @@ interface Props {
 }
 
 export function AdminBookingsFilters({ value, onChange }: Props) {
-  const reset = () =>
-    onChange({ status: "ALL", date: "", customerName: "" });
+  const reset = () => onChange({ status: "ALL", date: "", customerName: "" });
 
   return (
     <div className={styles.filtersWrap}>
       <div className="space-y-1.5">
-        <Label htmlFor="filter-name" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <Label
+          htmlFor="filter-name"
+          className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Customer name
         </Label>
         <div className="relative">
@@ -46,12 +48,17 @@ export function AdminBookingsFilters({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="filter-status" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <Label
+          htmlFor="filter-status"
+          className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Status
         </Label>
         <Select
           value={value.status}
-          onValueChange={(next) => onChange({ ...value, status: next as BookingsFilterState["status"] })}
+          onValueChange={(next) =>
+            onChange({ ...value, status: next as BookingsFilterState["status"] })
+          }
         >
           <SelectTrigger id="filter-status">
             <SelectValue placeholder="All status" />
@@ -69,7 +76,10 @@ export function AdminBookingsFilters({ value, onChange }: Props) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="filter-date" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <Label
+          htmlFor="filter-date"
+          className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Scheduled date
         </Label>
         <Input

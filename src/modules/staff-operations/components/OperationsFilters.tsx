@@ -1,5 +1,6 @@
 import type { OperationFilters, OperationHourOption, StaffOption } from "../types/operations.types";
 import { bookingStatusOptions } from "../mock/booking-status.mock";
+import { useLanguage } from "@/modules/public-auth/components/LanguageSwitcher";
 import {
   Select,
   SelectContent,
@@ -22,9 +23,11 @@ export function OperationsFilters({
   staffOptions,
   onChange,
 }: OperationsFiltersProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <FilterField label="Status">
+      <FilterField label={t("Status", "Trạng thái")}>
         <Select
           value={filters.status}
           onValueChange={(status) =>
@@ -36,10 +39,10 @@ export function OperationsFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="ALL">All statuses</SelectItem>
+              <SelectItem value="ALL">{t("All statuses", "Tất cả trạng thái")}</SelectItem>
               {bookingStatusOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label, option.labelVi)}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -47,7 +50,7 @@ export function OperationsFilters({
         </Select>
       </FilterField>
 
-      <FilterField label="Time">
+      <FilterField label={t("Time", "Buổi")}>
         <Select
           value={filters.time}
           onValueChange={(time) => onChange({ ...filters, time: time as OperationFilters["time"] })}
@@ -57,23 +60,23 @@ export function OperationsFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="ALL">All day</SelectItem>
-              <SelectItem value="MORNING">Morning</SelectItem>
-              <SelectItem value="AFTERNOON">Afternoon</SelectItem>
-              <SelectItem value="EVENING">Evening</SelectItem>
+              <SelectItem value="ALL">{t("All day", "Cả ngày")}</SelectItem>
+              <SelectItem value="MORNING">{t("Morning", "Buổi sáng")}</SelectItem>
+              <SelectItem value="AFTERNOON">{t("Afternoon", "Buổi chiều")}</SelectItem>
+              <SelectItem value="EVENING">{t("Evening", "Buổi tối")}</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
       </FilterField>
 
-      <FilterField label="Hour">
+      <FilterField label={t("Hour", "Khung giờ")}>
         <Select value={filters.hour} onValueChange={(hour) => onChange({ ...filters, hour })}>
           <SelectTrigger className="h-11 rounded-lg bg-background/70">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="ALL">All hours</SelectItem>
+              <SelectItem value="ALL">{t("All hours", "Tất cả giờ")}</SelectItem>
               {hourOptions.map((hour) => (
                 <SelectItem key={hour.value} value={hour.value}>
                   {hour.label}
@@ -84,7 +87,7 @@ export function OperationsFilters({
         </Select>
       </FilterField>
 
-      <FilterField label="Staff">
+      <FilterField label={t("Staff", "Nhân viên")}>
         <Select
           value={filters.staffId}
           onValueChange={(staffId) => onChange({ ...filters, staffId })}
@@ -94,7 +97,7 @@ export function OperationsFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="ALL">All staff</SelectItem>
+              <SelectItem value="ALL">{t("All staff", "Tất cả nhân viên")}</SelectItem>
               {staffOptions.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
                   {staff.name}

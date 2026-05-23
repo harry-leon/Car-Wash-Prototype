@@ -97,8 +97,7 @@ export function WashPackagesPage() {
     }
     const duplicate = services.some(
       (service) =>
-        service.name.trim().toLowerCase() === trimmedName.toLowerCase() &&
-        service.id !== editingId,
+        service.name.trim().toLowerCase() === trimmedName.toLowerCase() && service.id !== editingId,
     );
     if (duplicate) {
       toast.error("A package with this name already exists.");
@@ -138,6 +137,12 @@ export function WashPackagesPage() {
     setDeleteTarget(null);
   };
 
+  const toggleStatus = (service: Service) => {
+    const nextStatus = service.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    updateService(service.id, { status: nextStatus });
+    toast.success(`${service.name} marked as ${nextStatus === "ACTIVE" ? "active" : "inactive"}.`);
+  };
+
   return (
     <div className="p-4 md:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -150,7 +155,8 @@ export function WashPackagesPage() {
               Service catalogue
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-              Add, edit or retire wash packages. Changes apply immediately to the customer booking form and the operations console.
+              Add, edit or retire wash packages. Changes apply immediately to the customer booking
+              form and the operations console.
             </p>
           </div>
           <Button onClick={openCreate} className="gap-2">
@@ -169,33 +175,63 @@ export function WashPackagesPage() {
             </p>
           </Card>
         ) : (
-          <Card className="border-border/50 bg-card/60 p-0 shadow-lg backdrop-blur-xl">
+          <Card className="border-border/50 bg-card/70 p-0 shadow-lg backdrop-blur-xl">
             <div className="grid grid-cols-1 divide-y divide-border/50 md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-3">
               {services.map((service) => {
                 const Icon = ICONS[service.icon] ?? Sparkles;
+                const isActive = service.status === "ACTIVE";
                 return (
                   <div
                     key={service.id}
-                    className="flex flex-col gap-3 p-5 md:gap-4"
+                    className={`flex flex-col gap-3 p-5 md:gap-4 ${
+                      isActive ? "bg-primary/5" : "bg-muted/20"
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-sm">
+                        <div
+                          className={`flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm ${
+                            isActive
+                              ? "border-primary/25 bg-primary/10 text-primary"
+                              : "border-border/60 bg-muted/50 text-muted-foreground"
+                          }`}
+                        >
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-foreground">
                             {service.name}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs font-medium text-muted-foreground">
                             {formatMoney(service.price)}
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1 text-right text-xs text-muted-foreground">
-                        <span>{service.status === "ACTIVE" ? "Active" : "Inactive"}</span>
+                      <div className="flex flex-col items-end gap-2 text-right text-xs text-muted-foreground">
+                        <span
+                          className={`rounded-full border px-2 py-1 font-semibold ${
+                            isActive
+                              ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                              : "border-zinc-500/25 bg-zinc-500/10 text-zinc-600 dark:text-zinc-300"
+                          }`}
+                        >
+                          {isActive ? "Active" : "Inactive"}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`h-8 rounded-full px-3 text-xs font-semibold ${
+                            isActive
+                              ? "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                              : "border-sky-500/30 text-sky-600 hover:bg-sky-500/10"
+                          }`}
+                          onClick={() => toggleStatus(service)}
+                          aria-label={`${isActive ? "Disable" : "Enable"} ${service.name}`}
+                        >
+                          {isActive ? "Disable" : "Enable"}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -215,6 +251,11 @@ export function WashPackagesPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-background/80 p-3 text-xs text-muted-foreground shadow-sm dark:bg-background/60">
+                      {isActive
+                        ? "Visible to customer booking and staff operations."
+                        : "Hidden from customer booking while retained for admin use."}
                     </div>
                     <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
                       ID <span className="font-mono text-foreground">{service.id}</span>
@@ -241,7 +282,8 @@ export function WashPackagesPage() {
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit package" : "Add a wash package"}</DialogTitle>
             <DialogDescription>
-              Set the name, price (VND) and a display icon. Customers will see the package as soon as you save.
+              Set the name, price (VND) and a display icon. Customers will see the package as soon
+              as you save.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -270,7 +312,9 @@ export function WashPackagesPage() {
               <Label htmlFor="package-status">Status</Label>
               <Select
                 value={draft.status}
-                onValueChange={(value) => setDraft((prev) => ({ ...prev, status: value as "ACTIVE" | "INACTIVE" }))}
+                onValueChange={(value) =>
+                  setDraft((prev) => ({ ...prev, status: value as "ACTIVE" | "INACTIVE" }))
+                }
               >
                 <SelectTrigger id="package-status" className="w-full">
                   <SelectValue placeholder="Select status" />
@@ -328,7 +372,8 @@ export function WashPackagesPage() {
               {deleteTarget ? (
                 <>
                   Are you sure you want to delete{" "}
-                  <strong className="text-foreground">{deleteTarget.name}</strong>? Active bookings will block deletion.
+                  <strong className="text-foreground">{deleteTarget.name}</strong>? Active bookings
+                  will block deletion.
                 </>
               ) : null}
             </DialogDescription>

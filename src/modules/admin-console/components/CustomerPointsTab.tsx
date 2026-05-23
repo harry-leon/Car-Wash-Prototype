@@ -9,10 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type {
-  PointTransaction,
-  PointTransactionType,
-} from "../types/customer.types";
+import type { PointTransaction, PointTransactionType } from "../types/customer.types";
 
 const TYPE_TONE: Record<PointTransactionType, string> = {
   EARN: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
@@ -56,14 +53,22 @@ export function CustomerPointsTab({ transactions }: Props) {
             <TableRow key={tx.id}>
               <TableCell className="font-semibold">{tx.bookingCode}</TableCell>
               <TableCell>
-                <Badge variant="outline" className={`border font-semibold ${TYPE_TONE[tx.type]}`}>{tx.type}</Badge>
+                <Badge variant="outline" className={`border font-semibold ${TYPE_TONE[tx.type]}`}>
+                  {tx.type}
+                </Badge>
               </TableCell>
-              <TableCell className={`text-right font-semibold ${tx.amount >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+              <TableCell
+                className={`text-right font-semibold ${tx.amount >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+              >
                 {tx.amount >= 0 ? "+" : ""}
                 {tx.amount.toLocaleString("vi-VN")}
               </TableCell>
-              <TableCell className="text-right">{tx.availableAfter.toLocaleString("vi-VN")}</TableCell>
-              <TableCell className="text-right text-muted-foreground">{tx.lifetimeAfter.toLocaleString("vi-VN")}</TableCell>
+              <TableCell className="text-right">
+                {tx.availableAfter.toLocaleString("vi-VN")}
+              </TableCell>
+              <TableCell className="text-right text-muted-foreground">
+                {tx.lifetimeAfter.toLocaleString("vi-VN")}
+              </TableCell>
               <TableCell className="text-xs text-muted-foreground">{tx.createdAt}</TableCell>
             </TableRow>
           ))}

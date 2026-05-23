@@ -1,10 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 
-export function TierBadge({
-  tier,
-}: {
-  tier: "Member" | "Silver" | "Gold" | "Platinum" | "Guest";
-}) {
+export function TierBadge({ tier }: { tier: "Member" | "Silver" | "Gold" | "Platinum" | "Guest" }) {
   if (tier === "Platinum") {
     return (
       <Badge className="border-fuchsia-200 bg-fuchsia-100 text-fuchsia-800 hover:bg-fuchsia-100">
@@ -59,4 +55,3 @@ export function PageHeader({
     </div>
   );
 }
-

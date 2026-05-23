@@ -90,12 +90,19 @@ function TierRulesPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">Tier Rules Configuration</h1>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl text-foreground">
+              Tier Rules Configuration
+            </h1>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              Adjust thresholds and accrual multipliers. Changes are staged for the next monthly tier review.
+              Adjust thresholds and accrual multipliers. Changes are staged for the next monthly
+              tier review.
             </p>
           </div>
-          <Button onClick={handleSave} size="lg" className="rounded-xl shadow-lg shadow-primary/20 font-bold hover:shadow-xl hover:-translate-y-0.5 transition-all">
+          <Button
+            onClick={handleSave}
+            size="lg"
+            className="rounded-xl shadow-lg shadow-primary/20 font-bold hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          >
             <Save className="mr-2 h-4 w-4" /> Save & Update Rules
           </Button>
         </div>
@@ -105,17 +112,37 @@ function TierRulesPage() {
             const Icon = TIER_ICONS[t.name];
             const memberCount = customers.filter((c) => c.tier === t.name).length;
             return (
-              <Card key={t.name} className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl">
-                <div className={cn("absolute inset-x-0 top-0 h-1.5 w-full bg-gradient-to-r", tierStripeClass(t.name))} />
-                <div className={cn("absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-10 blur-3xl bg-gradient-to-r", tierStripeClass(t.name))} />
-                
+              <Card
+                key={t.name}
+                className="relative overflow-hidden rounded-[1.5rem] border border-border/50 bg-card/60 backdrop-blur-xl shadow-lg transition-all hover:shadow-xl"
+              >
+                <div
+                  className={cn(
+                    "absolute inset-x-0 top-0 h-1.5 w-full bg-gradient-to-r",
+                    tierStripeClass(t.name),
+                  )}
+                />
+                <div
+                  className={cn(
+                    "absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-10 blur-3xl bg-gradient-to-r",
+                    tierStripeClass(t.name),
+                  )}
+                />
+
                 <CardContent className="space-y-6 p-6 sm:p-8">
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-background/80 shadow-inner">
                         <Icon className="h-6 w-6" />
                       </div>
-                      <Badge className={cn("border shadow-sm px-3 py-1 font-bold tracking-wider", tierBadgeClass(t.name))}>{t.name}</Badge>
+                      <Badge
+                        className={cn(
+                          "border shadow-sm px-3 py-1 font-bold tracking-wider",
+                          tierBadgeClass(t.name),
+                        )}
+                      >
+                        {t.name}
+                      </Badge>
                     </div>
                   </div>
 
@@ -129,7 +156,9 @@ function TierRulesPage() {
 
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Minimum Point Threshold</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Minimum Point Threshold
+                      </Label>
                       <Input
                         type="number"
                         min={0}
@@ -140,7 +169,9 @@ function TierRulesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Point Accrual Multiplier</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Point Accrual Multiplier
+                      </Label>
                       <div className="flex items-center gap-3">
                         <Input
                           type="number"
@@ -155,7 +186,9 @@ function TierRulesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Booking Window (Days)</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Booking Window (Days)
+                      </Label>
                       <Input
                         type="number"
                         min={1}
@@ -166,7 +199,9 @@ function TierRulesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tier Discount Percent</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Tier Discount Percent
+                      </Label>
                       <div className="flex items-center gap-3">
                         <Input
                           type="number"
@@ -181,7 +216,9 @@ function TierRulesPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Perks Description</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Custom Perks Description
+                      </Label>
                       <Textarea
                         rows={4}
                         value={t.perks}

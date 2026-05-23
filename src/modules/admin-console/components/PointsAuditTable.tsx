@@ -8,10 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type {
-  PointTransaction,
-  PointTransactionType,
-} from "../types/customer.types";
+import type { PointTransaction, PointTransactionType } from "../types/customer.types";
 
 const TYPE_TONE: Record<PointTransactionType, string> = {
   EARN: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
@@ -50,14 +47,25 @@ export function PointsAuditTable({ rows }: Props) {
                 <TableCell className="font-semibold">{row.customerName}</TableCell>
                 <TableCell>{row.bookingCode}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={`border font-semibold ${TYPE_TONE[row.type]}`}>{row.type}</Badge>
+                  <Badge
+                    variant="outline"
+                    className={`border font-semibold ${TYPE_TONE[row.type]}`}
+                  >
+                    {row.type}
+                  </Badge>
                 </TableCell>
-                <TableCell className={`text-right font-semibold ${row.amount >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                <TableCell
+                  className={`text-right font-semibold ${row.amount >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+                >
                   {row.amount >= 0 ? "+" : ""}
                   {row.amount.toLocaleString("vi-VN")}
                 </TableCell>
-                <TableCell className="text-right">{row.availableAfter.toLocaleString("vi-VN")}</TableCell>
-                <TableCell className="text-right text-muted-foreground">{row.lifetimeAfter.toLocaleString("vi-VN")}</TableCell>
+                <TableCell className="text-right">
+                  {row.availableAfter.toLocaleString("vi-VN")}
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {row.lifetimeAfter.toLocaleString("vi-VN")}
+                </TableCell>
                 <TableCell className="text-xs text-muted-foreground">{row.createdAt}</TableCell>
               </TableRow>
             ))}
