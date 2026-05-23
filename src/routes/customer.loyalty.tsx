@@ -1,265 +1,362 @@
+import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Crown, Gift, Ticket, TrendingDown, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Copy, Crown, Gift, Lock, Ticket } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { getUsableVouchers, useCustomerBooking } from "@/modules/customer-booking/routes";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useCarwashStore, type Tier } from "@/lib/carwash-store";
 
 export const Route = createFileRoute("/customer/loyalty")({
-  component: () => <LoyaltyPage />,
+  component: CustomerLoyaltyPage,
 });
 
-function LoyaltyPage() {
-  const { customer, language, pointTransactions, redeemPointsForVoucher, vouchers } =
-    useCustomerBooking();
-  const [redeemPoints, setRedeemPoints] = useState(50);
-  const [message, setMessage] = useState("");
-  const copy =
-    language === "vi"
-      ? {
-          member: "Thành viên",
-          heroTitle: "Điểm được đổi thành voucher trước checkout",
-          heroText:
-            "Điểm khả dụng dùng để tạo voucher giảm giá. Điểm tích lũy không giảm và chỉ dùng để tính hạng thành viên.",
-          available: "Điểm khả dụng",
-          lifetime: "Điểm tích lũy",
-          active: "Voucher khả dụng",
-          rule: "Quy tắc đổi điểm",
-          generateTitle: "Tạo voucher",
-          generateText:
-            "Tối thiểu 50 điểm, tối đa 200 điểm. Một điểm tạo 1,000 VND giá trị voucher.",
-          points: "Điểm",
-          voucherValue: "giá trị voucher",
-          generate: "Tạo voucher",
-          generated: "đã tạo, giảm",
-          until: "đến",
-          unable: "Không thể tạo voucher.",
-          apply: "Áp dụng một ưu đãi",
-          usable: "Voucher có thể dùng",
-          ledger: "Sổ điểm",
-          transactions: "Giao dịch",
-        }
-      : {
-          member: "Member",
-          heroTitle: "Points become vouchers before checkout",
-          heroText:
-            "Available points can generate discount vouchers. Lifetime points never decrease and are used only to calculate membership tier.",
-          available: "Available points",
-          lifetime: "Lifetime points",
-          active: "Active vouchers",
-          rule: "Redeem rule",
-          generateTitle: "Generate a voucher",
-          generateText:
-            "Minimum 50 points, maximum 200 points. One point creates 1,000 VND voucher value.",
-          points: "Points",
-          voucherValue: "voucher value",
-          generate: "Generate voucher",
-          generated: "generated,",
-          until: "until",
-          unable: "Unable to generate voucher.",
-          apply: "Apply one promotion",
-          usable: "Usable vouchers",
-          ledger: "Point ledger",
-          transactions: "Transactions",
-        };
-  const usableVouchers = getUsableVouchers(vouchers, customer);
-  const tierTarget =
-    customer.tier === "Silver" ? 5000 : customer.tier === "Gold" ? 12000 : customer.lifetimePoints;
-  const tierBase = customer.tier === "Silver" ? 0 : customer.tier === "Gold" ? 5000 : 12000;
-  const progress =
-    customer.tier === "Diamond"
-      ? 100
-      : Math.min(
-          100,
-          Math.round(((customer.lifetimePoints - tierBase) / (tierTarget - tierBase)) * 100),
-        );
+const TIER_COLORS: Record<Tier, string> = {
+  Member: "#CD7F32",
+  Silver: "#A8A9AD",
+  Gold: "#FFD700",
+  Platinum: "#E5E4E2",
+};
 
-  const redeem = () => {
+export function CustomerLoyaltyPage() {
+  const {
+    currentCustomerId,
+    customers,
+    voucherTemplates,
+    customerVouchers,
+    redeemVoucherTemplate,
+  } = useCarwashStore();
+  const [tab, setTab] = React.useState("catalog");
+  const [mode, setMode] = React.useState<"all" | "redeemable">("all");
+  const [redeemingId, setRedeemingId] = React.useState<string | null>(null);
+
+  const customer = customers.find((item) => item.id === currentCustomerId) ?? customers[0];
+  const myVouchers = React.useMemo(
+    () => customerVouchers.filter((voucher) => voucher.customerId === customer.id),
+    [customer.id, customerVouchers],
+  );
+
+  const visibleTemplates = React.useMemo(() => {
+    const base = voucherTemplates.filter((template) => template.active || mode === "all");
+    if (mode === "all") return base;
+    return base.filter(
+      (template) =>
+        tierRank(customer.tier) >= tierRank(template.minTier) &&
+        customer.points >= template.pointCost,
+    );
+  }, [customer.points, customer.tier, mode, voucherTemplates]);
+
+  const nextTier = getNextTier(customer.tier);
+  const nextTierGoal = nextTier ? tierThreshold(nextTier) : customer.points;
+  const currentTierFloor = tierThreshold(customer.tier);
+  const progress = nextTier
+    ? Math.min(
+        100,
+        Math.round(
+          ((customer.points - currentTierFloor) / (nextTierGoal - currentTierFloor)) * 100,
+        ),
+      )
+    : 100;
+  const pointsNeeded = nextTier ? Math.max(0, nextTierGoal - customer.points) : 0;
+
+  const handleRedeem = async (templateId: string) => {
     try {
-      const voucher = redeemPointsForVoucher(redeemPoints);
-      setMessage(
-        language === "vi"
-          ? `${voucher.code} ${copy.generated} ${voucher.discountAmount.toLocaleString()} VND ${copy.until} ${voucher.expiresAt}.`
-          : `${voucher.code} ${copy.generated} ${voucher.discountAmount.toLocaleString()} VND off ${copy.until} ${voucher.expiresAt}.`,
-      );
+      setRedeemingId(templateId);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const voucher = redeemVoucherTemplate(customer.id, templateId);
+      toast.success(`${voucher.name} redeemed. Code ${voucher.code}`);
+      setTab("my-vouchers");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.unable);
+      toast.error(error instanceof Error ? error.message : "Unable to redeem voucher.");
+    } finally {
+      setRedeemingId(null);
     }
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <Card className="overflow-hidden rounded-2xl border-border/50 bg-card/60 p-6 shadow-xl backdrop-blur-xl md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
-                <Crown className="h-3.5 w-3.5" />{" "}
-                {language === "vi"
-                  ? `${copy.member} ${customer.tier}`
-                  : `${customer.tier} ${copy.member}`}
-              </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-foreground">
-                {copy.heroTitle}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground">
-                {copy.heroText}
-              </p>
-              <div className="mt-6 h-2 overflow-hidden rounded-full bg-accent">
+    <TooltipProvider>
+      <div className="p-4 md:p-8 lg:p-10">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <Card className="rounded-xl shadow-md">
+            <CardContent className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+              <div className="space-y-4">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-700"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <Metric label={copy.available} value={customer.availablePoints.toLocaleString()} />
-              <Metric label={copy.lifetime} value={customer.lifetimePoints.toLocaleString()} />
-              <Metric label={copy.active} value={String(usableVouchers.length)} />
-            </div>
-          </div>
-        </Card>
-
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <Card className="rounded-2xl border-border/50 bg-card/60 p-6 shadow-lg backdrop-blur-xl">
-            <div className="flex items-start gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                <Gift className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {copy.rule}
-                </div>
-                <h2 className="mt-1 text-xl font-black tracking-tight">{copy.generateTitle}</h2>
-                <p className="mt-1 text-sm font-medium text-muted-foreground">
-                  {copy.generateText}
-                </p>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-[120px_1fr]">
-              <label className="grid gap-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {copy.points}
-                </span>
-                <input
-                  className="h-11 rounded-xl border border-border/60 bg-background/70 px-3 text-sm font-bold outline-none ring-primary/20 transition focus:ring-4"
-                  type="number"
-                  min={50}
-                  max={200}
-                  step={10}
-                  value={redeemPoints}
-                  onChange={(event) => setRedeemPoints(Number(event.target.value))}
-                />
-              </label>
-              <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3 text-sm font-bold text-primary">
-                {(redeemPoints * 1000).toLocaleString()} VND {copy.voucherValue}
-              </div>
-            </div>
-            <Button className="mt-4 h-11 w-full rounded-xl font-bold" onClick={redeem}>
-              {copy.generate}
-            </Button>
-            {message ? (
-              <p className="mt-3 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-700">
-                {message}
-              </p>
-            ) : null}
-          </Card>
-
-          <Card className="rounded-2xl border-border/50 bg-card/60 p-6 shadow-lg backdrop-blur-xl">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {copy.apply}
-                </div>
-                <h2 className="text-xl font-black tracking-tight">{copy.usable}</h2>
-              </div>
-              <Ticket className="h-8 w-8 text-primary" />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {usableVouchers.map((voucher) => (
-                <div
-                  key={voucher.id}
-                  className="rounded-xl border border-border/60 bg-background/60 p-4 shadow-sm"
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-900"
+                  style={{ backgroundColor: `${TIER_COLORS[customer.tier]}33` }}
                 >
+                  <Crown className="h-3.5 w-3.5" style={{ color: TIER_COLORS[customer.tier] }} />
+                  {customer.tier} rank
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                    Loyalty ranks and voucher redemption
+                  </h1>
+                  <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
+                    Your points unlock higher ranks and reusable voucher templates. Redeemed voucher
+                    codes stay in one place for checkout.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-background/70 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-black text-foreground">{voucher.code}</div>
-                    <div className="rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">
-                      {voucher.source.replaceAll("_", " ")}
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Current points
+                      </div>
+                      <div className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                        {customer.points.toLocaleString("vi-VN")}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Wallet
+                      </div>
+                      <div className="mt-1 text-lg font-semibold text-foreground">
+                        {formatMoney(customer.walletBalance ?? 0)}
+                      </div>
                     </div>
                   </div>
-                  <p className="mt-2 text-sm font-medium text-muted-foreground">{voucher.label}</p>
-                  <div className="mt-3 flex items-end justify-between gap-3 border-t border-border/50 pt-3">
-                    <strong className="text-primary">
-                      -{voucher.discountAmount.toLocaleString()} VND
-                    </strong>
-                    <small className="font-semibold text-muted-foreground">
-                      {copy.until} {voucher.expiresAt}
-                    </small>
+                  <Progress value={progress} className="mt-4 h-2" />
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    {nextTier
+                      ? `${pointsNeeded.toLocaleString("vi-VN")} points to ${nextTier}`
+                      : "Top tier reached"}
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+              </div>
 
-        <Card className="rounded-2xl border-border/50 bg-card/60 shadow-lg backdrop-blur-xl">
-          <div className="border-b border-border/50 p-6">
-            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {copy.ledger}
-            </div>
-            <h2 className="mt-1 text-xl font-black tracking-tight">{copy.transactions}</h2>
-          </div>
-          <ul className="divide-y divide-border/50">
-            {pointTransactions.map((transaction) => (
-              <li key={transaction.id} className="flex items-center gap-4 p-5">
-                <div
-                  className={cn(
-                    "grid h-10 w-10 place-items-center rounded-full",
-                    transaction.points >= 0
-                      ? "bg-emerald-500/10 text-emerald-600"
-                      : "bg-rose-500/10 text-rose-600",
-                  )}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                <Metric label="Rank" value={customer.tier} />
+                <Metric label="Redeemed vouchers" value={`${myVouchers.length}`} />
+                <Metric
+                  label="Redeemable now"
+                  value={`${
+                    voucherTemplates.filter(
+                      (template) =>
+                        template.active &&
+                        tierRank(customer.tier) >= tierRank(template.minTier) &&
+                        customer.points >= template.pointCost,
+                    ).length
+                  }`}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
+              <TabsTrigger value="catalog">Voucher catalog</TabsTrigger>
+              <TabsTrigger value="my-vouchers">My vouchers</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="catalog" className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={mode === "all" ? "default" : "outline"}
+                  onClick={() => setMode("all")}
                 >
-                  {transaction.points >= 0 ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-foreground">
-                    {transaction.description}
-                  </div>
-                  <div className="mt-1 text-xs font-medium text-muted-foreground">
-                    {new Date(transaction.createdAt).toLocaleString()} / {transaction.type}
-                  </div>
-                </div>
-                <div
-                  className={cn(
-                    "font-black tabular-nums",
-                    transaction.points >= 0 ? "text-emerald-600" : "text-rose-600",
-                  )}
+                  All vouchers
+                </Button>
+                <Button
+                  variant={mode === "redeemable" ? "default" : "outline"}
+                  onClick={() => setMode("redeemable")}
                 >
-                  {transaction.points > 0 ? "+" : ""}
-                  {transaction.points.toLocaleString()}
+                  Redeemable
+                </Button>
+              </div>
+              {visibleTemplates.length === 0 ? (
+                <EmptyState message="No voucher templates available for this filter." />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {visibleTemplates.map((template) => {
+                    const rankLocked = tierRank(customer.tier) < tierRank(template.minTier);
+                    const pointLocked = customer.points < template.pointCost;
+                    const disabled = rankLocked || pointLocked || !template.active;
+                    return (
+                      <Card key={template.id} className="rounded-xl shadow-md">
+                        <CardContent className="space-y-4 p-6">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-lg font-semibold text-foreground">
+                                {template.name}
+                              </div>
+                              <div className="mt-1 text-sm text-muted-foreground">
+                                {template.discountLabel}
+                              </div>
+                            </div>
+                            <Gift className="h-5 w-5 text-primary" />
+                          </div>
+
+                          <div className="grid gap-3 text-sm text-muted-foreground">
+                            <InfoRow label="Point cost" value={`${template.pointCost} pts`} />
+                            <InfoRow label="Minimum rank" value={template.minTier} />
+                            <InfoRow label="Expiry" value={`${template.expiryDays} days`} />
+                            <InfoRow
+                              label="Status"
+                              value={template.active ? "Active" : "Inactive"}
+                            />
+                          </div>
+
+                          {rankLocked || pointLocked ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                  <Lock className="h-3.5 w-3.5" />
+                                  Locked
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {rankLocked
+                                  ? `Requires ${template.minTier} tier`
+                                  : "Not enough points yet"}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : null}
+
+                          <Button
+                            className="w-full"
+                            disabled={disabled || redeemingId === template.id}
+                            onClick={() => handleRedeem(template.id)}
+                          >
+                            {redeemingId === template.id ? "Đang đổi..." : "Đổi ngay"}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="my-vouchers" className="space-y-4">
+              {myVouchers.length === 0 ? (
+                <EmptyState message="No redeemed vouchers yet. Redeem one from the catalog to generate a code." />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {myVouchers.map((voucher) => (
+                    <Card key={voucher.id} className="rounded-xl shadow-md">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center justify-between gap-3 text-base">
+                          <span>{voucher.name}</span>
+                          <StatusBadge status={voucher.status} />
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Voucher code
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <div className="font-mono text-base font-semibold text-foreground">
+                              {voucher.code}
+                            </div>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={async () => {
+                                await navigator.clipboard.writeText(voucher.code);
+                                toast.success("Voucher code copied.");
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <InfoRow label="Discount" value={voucher.discountLabel} />
+                        <InfoRow
+                          label="Redeemed"
+                          value={new Date(voucher.redeemedAt).toLocaleDateString()}
+                        />
+                        <InfoRow label="Expiry" value={voucher.expiresAt} />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/60 p-4 shadow-sm">
-      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 text-2xl font-black tracking-tight text-foreground">{value}</div>
+    <Card className="rounded-xl shadow-md">
+      <CardContent className="p-6">
+        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+        <div className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span>{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <Card className="rounded-xl shadow-md">
+      <CardContent className="p-10 text-center text-sm text-muted-foreground">
+        {message}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }: { status: "ACTIVE" | "USED" | "EXPIRED" }) {
+  if (status === "USED") {
+    return (
+      <Badge className="bg-slate-100 text-slate-700">
+        <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+        Used
+      </Badge>
+    );
+  }
+  if (status === "EXPIRED") {
+    return <Badge className="bg-rose-100 text-rose-700">Expired</Badge>;
+  }
+  return (
+    <Badge className="bg-emerald-100 text-emerald-700">
+      <Ticket className="mr-1 h-3.5 w-3.5" />
+      Active
+    </Badge>
+  );
+}
+
+function tierThreshold(tier: Tier) {
+  if (tier === "Platinum") return 4000;
+  if (tier === "Gold") return 1500;
+  if (tier === "Silver") return 500;
+  return 0;
+}
+
+function getNextTier(tier: Tier): Tier | null {
+  if (tier === "Member") return "Silver";
+  if (tier === "Silver") return "Gold";
+  if (tier === "Gold") return "Platinum";
+  return null;
+}
+
+function tierRank(tier: Tier) {
+  return ["Member", "Silver", "Gold", "Platinum"].indexOf(tier);
+}
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount);
 }

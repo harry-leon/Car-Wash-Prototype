@@ -1,7 +1,7 @@
 import * as React from "react";
 import {
+  assignStaffToConfirmedBooking,
   getStaffAvailability,
-  requireAvailableStaff,
   type StaffAvailability,
 } from "@/lib/staff-availability";
 
@@ -18,8 +18,11 @@ export type BookingStatus =
   | "Cancelled"
   | "No-show";
 export type WashStatus = "Queued" | "In Progress" | "Ready for Checkout" | "Completed";
-export type NotificationType = "Booking" | "Reminder" | "Loyalty" | "Promotion";
+export type NotificationType = "Booking" | "Reminder" | "Loyalty" | "Promotion" | "Support";
 export type RewardType = "discount" | "free wash" | "add-on";
+export type RefundStatus = "NONE" | "PENDING" | "COMPLETED";
+export type ReviewAlertStatus = "OPEN" | "ACKNOWLEDGED";
+export type VoucherLifecycleStatus = "ACTIVE" | "USED" | "EXPIRED";
 
 export interface Vehicle {
   id: string;
@@ -38,6 +41,7 @@ export interface CustomerRecord {
   tier: Tier;
   points: number;
   status: CustomerStatus;
+  walletBalance: number;
   joinedAt: string;
   phoneVerifiedAt: string;
   bookingSuspendedUntil?: string;
@@ -82,6 +86,7 @@ export interface Booking {
   vehicleType: VehicleType;
   services: string[];
   totalPrice: number;
+  paid?: boolean;
   scheduledAt: string;
   dateISO: string;
   timeSlot: string;
@@ -100,6 +105,51 @@ export interface Booking {
   checkoutPointsRedeemed?: number;
   checkoutPromoCode?: string;
   cancelledAt?: string;
+  cancelledBy?: "Customer" | "Admin";
+  cancelReason?: string;
+  refundAmount?: number;
+  refundStatus?: RefundStatus;
+  assignedStaffId?: string;
+  assignedStaffName?: string;
+  reminderSent?: boolean;
+  pickedUpAt?: string;
+}
+
+export interface ReviewRecord {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  customerName: string;
+  staffId: string;
+  staffName: string;
+  starRating: number;
+  comment?: string;
+  createdAt: string;
+  isFlagged: boolean;
+  alertStatus: ReviewAlertStatus;
+}
+
+export interface VoucherTemplateRecord {
+  id: string;
+  name: string;
+  discountLabel: string;
+  pointCost: number;
+  minTier: Tier;
+  active: boolean;
+  expiryDays: number;
+}
+
+export interface CustomerVoucherRecord {
+  id: string;
+  customerId: string;
+  templateId: string;
+  name: string;
+  discountLabel: string;
+  code: string;
+  pointCost: number;
+  status: VoucherLifecycleStatus;
+  redeemedAt: string;
+  expiresAt: string;
 }
 
 export interface SessionDraft {
@@ -219,6 +269,90 @@ export interface NotificationItem {
   title: string;
   message: string;
   timestamp: Date;
+  customerId?: string;
+  bookingId?: string;
+}
+
+export interface SupportChatMessage {
+  id: string;
+  senderRole: Role | "System";
+  senderName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface SupportChatThread {
+  id: string;
+  customerId: string;
+  customerName: string;
+  status: "OPEN";
+  createdAt: string;
+  updatedAt: string;
+  unreadForCustomer: number;
+  unreadForStaff: number;
+  messages: SupportChatMessage[];
+}
+
+function createSupportGreetingMessage(createdAt: string): SupportChatMessage {
+  return {
+    id: crypto.randomUUID(),
+    senderRole: "System",
+    senderName: "WashPro Support",
+    body: "Xin chào bạn, bạn cần hỗ trợ hay muốn chọn dịch vụ nào hôm nay?",
+    createdAt,
+  };
+}
+
+function normalizeSupportThreads(value: unknown): SupportChatThread[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((thread) => {
+      if (!thread || typeof thread !== "object") return null;
+      const record = thread as Partial<SupportChatThread> & {
+        messages?: unknown;
+      };
+      const nowIso = new Date().toISOString();
+      const rawMessages = Array.isArray(record.messages) ? record.messages : [];
+      const messages = rawMessages
+        .map((message) => {
+          if (!message || typeof message !== "object") return null;
+          const item = message as Partial<SupportChatMessage>;
+          if (typeof item.body !== "string" || typeof item.senderName !== "string") return null;
+          return {
+            id: typeof item.id === "string" ? item.id : crypto.randomUUID(),
+            senderRole:
+              item.senderRole === "Customer" ||
+              item.senderRole === "Staff" ||
+              item.senderRole === "Admin" ||
+              item.senderRole === "System"
+                ? item.senderRole
+                : "System",
+            senderName: item.senderName,
+            body: item.body,
+            createdAt: typeof item.createdAt === "string" ? item.createdAt : nowIso,
+          } satisfies SupportChatMessage;
+        })
+        .filter((message): message is SupportChatMessage => Boolean(message));
+
+      if (typeof record.customerId !== "string" || typeof record.customerName !== "string") {
+        return null;
+      }
+
+      return {
+        id: typeof record.id === "string" ? record.id : crypto.randomUUID(),
+        customerId: record.customerId,
+        customerName: record.customerName,
+        status: "OPEN" as const,
+        createdAt: typeof record.createdAt === "string" ? record.createdAt : nowIso,
+        updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : nowIso,
+        unreadForCustomer:
+          typeof record.unreadForCustomer === "number" ? record.unreadForCustomer : 0,
+        unreadForStaff: typeof record.unreadForStaff === "number" ? record.unreadForStaff : 0,
+        messages: messages.length > 0 ? messages : [createSupportGreetingMessage(nowIso)],
+      } satisfies SupportChatThread;
+    })
+    .filter((thread): thread is SupportChatThread => Boolean(thread));
 }
 
 export interface AuthAccount {
@@ -317,6 +451,10 @@ interface PersistedStore {
   lastTransaction: Transaction | null;
   ledger: LedgerEntry[];
   tierHistory: TierHistoryEntry[];
+  reviews: ReviewRecord[];
+  voucherTemplates: VoucherTemplateRecord[];
+  customerVouchers: CustomerVoucherRecord[];
+  supportThreads: SupportChatThread[];
   notifications: Array<Omit<NotificationItem, "timestamp"> & { timestamp: string }>;
   adjustments: Array<Omit<Adjustment, "timestamp"> & { timestamp: string }>;
   pendingRegistration: PendingRegistration | null;
@@ -354,6 +492,10 @@ interface Store {
   lastTransaction: Transaction | null;
   ledger: LedgerEntry[];
   tierHistory: TierHistoryEntry[];
+  reviews: ReviewRecord[];
+  voucherTemplates: VoucherTemplateRecord[];
+  customerVouchers: CustomerVoucherRecord[];
+  supportThreads: SupportChatThread[];
   notifications: NotificationItem[];
   adjustments: Adjustment[];
   pendingRegistration: PendingRegistration | null;
@@ -419,6 +561,12 @@ interface Store {
     pointsEarned: number;
     completedAt: string;
   };
+  confirmVehiclePickup: (bookingId: string) => {
+    bookingId: string;
+    bookingCode: string;
+    pickedUpAt: string;
+    waitMinutes: number;
+  };
   assignStaffToSession: (sessionId: string, staffId: string) => void;
   createOrUpdateSessionDraft: (draft: SessionDraft | null) => void;
   prepareSessionForBooking: (bookingId: string) => string;
@@ -436,6 +584,34 @@ interface Store {
   addPromotion: (promotion: Omit<Promotion, "id">) => void;
   updatePromotion: (id: string, patch: Partial<Omit<Promotion, "id">>) => void;
   togglePromotion: (id: string) => void;
+  cancelBookingWithRefund: (
+    bookingId: string,
+    actor: "Customer" | "Admin",
+    reason: string,
+  ) => { refundAmount: number; refundStatus: RefundStatus };
+  markRefundCompleted: (bookingId: string) => number;
+  submitReview: (input: {
+    bookingId: string;
+    starRating: number;
+    comment?: string;
+  }) => ReviewRecord;
+  acknowledgeReview: (reviewId: string) => void;
+  addVoucherTemplate: (input: Omit<VoucherTemplateRecord, "id">) => VoucherTemplateRecord;
+  updateVoucherTemplate: (id: string, patch: Partial<Omit<VoucherTemplateRecord, "id">>) => void;
+  toggleVoucherTemplate: (id: string) => void;
+  redeemVoucherTemplate: (customerId: string, templateId: string) => CustomerVoucherRecord;
+  simulateCustomerSpend: (customerId: string, amountVnd: number) => void;
+  ensureSupportThread: (customerId: string) => SupportChatThread;
+  sendSupportMessage: (input: {
+    customerId: string;
+    senderRole: Role | "System";
+    senderName: string;
+    body: string;
+  }) => SupportChatThread;
+  markSupportThreadRead: (
+    customerId: string,
+    viewer: Extract<Role, "Customer" | "Staff" | "Admin">,
+  ) => void;
   pushNotification: (notification: Omit<NotificationItem, "id" | "timestamp">) => void;
   addAdjustment: (adjustment: {
     executive: string;
@@ -570,6 +746,45 @@ const rewardSeed: Reward[] = [
   { id: "r3", name: "50K Wash Voucher", cost: 300, icon: "Ticket", type: "discount" },
 ];
 
+const voucherTemplateSeed: VoucherTemplateRecord[] = [
+  {
+    id: "vt-basic-10",
+    name: "10% Off Wash",
+    discountLabel: "10% off",
+    pointCost: 120,
+    minTier: "Member",
+    active: true,
+    expiryDays: 14,
+  },
+  {
+    id: "vt-flat-30k",
+    name: "30,000 VND Off",
+    discountLabel: "30,000 VND off",
+    pointCost: 250,
+    minTier: "Silver",
+    active: true,
+    expiryDays: 14,
+  },
+  {
+    id: "vt-free-wash",
+    name: "Free Basic Wash",
+    discountLabel: "Free wash up to 150,000 VND",
+    pointCost: 800,
+    minTier: "Gold",
+    active: true,
+    expiryDays: 7,
+  },
+  {
+    id: "vt-vip-50",
+    name: "VIP 50% Off",
+    discountLabel: "50% off",
+    pointCost: 1500,
+    minTier: "Platinum",
+    active: false,
+    expiryDays: 7,
+  },
+];
+
 const customerSeed: CustomerRecord[] = [
   {
     id: "c1",
@@ -580,6 +795,7 @@ const customerSeed: CustomerRecord[] = [
     tier: "Silver",
     points: 860,
     status: "Active",
+    walletBalance: 0,
     joinedAt: "2025-02-15",
     phoneVerifiedAt: "2025-02-15T09:00:00.000Z",
   },
@@ -592,6 +808,7 @@ const customerSeed: CustomerRecord[] = [
     tier: "Gold",
     points: 1820,
     status: "Active",
+    walletBalance: 0,
     joinedAt: "2024-10-03",
     phoneVerifiedAt: "2024-10-03T10:15:00.000Z",
   },
@@ -604,6 +821,7 @@ const customerSeed: CustomerRecord[] = [
     tier: "Platinum",
     points: 4520,
     status: "Active",
+    walletBalance: 0,
     joinedAt: "2024-05-01",
     phoneVerifiedAt: "2024-05-01T08:00:00.000Z",
   },
@@ -680,10 +898,14 @@ const bookingSeed: Booking[] = [
     vehicleType: "Sedan",
     services: ["Basic Wash", "Interior Vacuum"],
     totalPrice: 180000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(1)), "09:00 AM"),
     dateISO: localDateISO(plusDays(1)),
     timeSlot: "09:00 AM",
     status: "Confirmed",
+    refundStatus: "NONE",
+    assignedStaffId: "s1",
+    assignedStaffName: "Tran Bao Nam",
     createdAt: now.toISOString(),
     notes: "Please keep the rear child seat dry.",
   },
@@ -696,10 +918,14 @@ const bookingSeed: Booking[] = [
     vehicleType: "SUV",
     services: ["Premium Detail"],
     totalPrice: 280000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(2)), "02:00 PM"),
     dateISO: localDateISO(plusDays(2)),
     timeSlot: "02:00 PM",
     status: "Pending",
+    refundStatus: "NONE",
+    assignedStaffId: "s3",
+    assignedStaffName: "Nguyen Van Hung",
     createdAt: now.toISOString(),
     notes: "Customer will confirm the premium slot after lunch.",
   },
@@ -712,10 +938,14 @@ const bookingSeed: Booking[] = [
     vehicleType: "Truck",
     services: ["Premium Detail"],
     totalPrice: 280000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(0)), "08:25 PM"),
     dateISO: localDateISO(plusDays(0)),
     timeSlot: "08:25 PM",
     status: "Checked-in",
+    refundStatus: "NONE",
+    assignedStaffId: "s3",
+    assignedStaffName: "Nguyen Van Hung",
     createdAt: now.toISOString(),
     notes: "Customer asked staff to double-check the pickup bed cover.",
     checkInAt: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
@@ -730,10 +960,14 @@ const bookingSeed: Booking[] = [
     vehicleType: "SUV",
     services: ["Ceramic Coating"],
     totalPrice: 450000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(0)), "07:47 PM"),
     dateISO: localDateISO(plusDays(0)),
     timeSlot: "07:47 PM",
     status: "Checked-in",
+    refundStatus: "NONE",
+    assignedStaffId: "s4",
+    assignedStaffName: "Pham Minh Duc",
     createdAt: now.toISOString(),
     notes: "Avoid strong fragrance inside the cabin.",
     checkInAt: new Date(Date.now() - 44 * 60 * 1000).toISOString(),
@@ -748,16 +982,21 @@ const bookingSeed: Booking[] = [
     vehicleType: "SUV",
     services: ["Premium Detail"],
     totalPrice: 280000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(0)), "06:37 PM"),
     dateISO: localDateISO(plusDays(0)),
     timeSlot: "06:37 PM",
     status: "Completed",
+    refundStatus: "NONE",
+    assignedStaffId: "s1",
+    assignedStaffName: "Tran Bao Nam",
     createdAt: now.toISOString(),
     notes: "Customer will pick up with a family member.",
     checkInAt: new Date(Date.now() - 114 * 60 * 1000).toISOString(),
     washStatus: "Completed",
     completedAt: new Date(Date.now() - 82 * 60 * 1000).toISOString(),
     checkoutPointsEarned: 42,
+    reminderSent: true,
   },
   {
     id: "B006",
@@ -768,10 +1007,15 @@ const bookingSeed: Booking[] = [
     vehicleType: "Truck",
     services: ["Basic Wash"],
     totalPrice: 120000,
+    paid: true,
     scheduledAt: formatSchedule(localDateISO(plusDays(1)), "10:27 PM"),
     dateISO: localDateISO(plusDays(1)),
     timeSlot: "10:27 PM",
     status: "Cancelled",
+    refundStatus: "COMPLETED",
+    refundAmount: 120000,
+    cancelledBy: "Customer",
+    cancelReason: "Customer cancelled due to travel schedule change.",
     createdAt: now.toISOString(),
     notes: "Customer cancelled due to travel schedule change.",
   },
@@ -812,6 +1056,37 @@ const ledgerSeed: LedgerEntry[] = [
   },
 ];
 
+const reviewSeed: ReviewRecord[] = [
+  {
+    id: "review-001",
+    bookingId: "B005",
+    customerId: "c1",
+    customerName: "Tran Minh Anh",
+    staffId: "s1",
+    staffName: "Tran Bao Nam",
+    starRating: 2,
+    comment: "The exterior finish still had water marks on one side.",
+    createdAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    isFlagged: true,
+    alertStatus: "OPEN",
+  },
+];
+
+const customerVoucherSeed: CustomerVoucherRecord[] = [
+  {
+    id: "cv-001",
+    customerId: "c2",
+    templateId: "vt-flat-30k",
+    name: "30,000 VND Off",
+    discountLabel: "30,000 VND off",
+    code: "AURA-30K-SAMPLE",
+    pointCost: 250,
+    status: "ACTIVE",
+    redeemedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    expiresAt: addDays(localDateISO(new Date()), 12),
+  },
+];
+
 const tierHistorySeed: TierHistoryEntry[] = [
   {
     id: "th1",
@@ -840,6 +1115,8 @@ const notificationsSeed: NotificationItem[] = [
     title: "Booking Confirmed",
     message: "Booking B001 has been confirmed for 09:00 AM tomorrow.",
     timestamp: new Date(Date.now() - 10 * 60 * 1000),
+    customerId: "c1",
+    bookingId: "B001",
   },
   {
     id: "n2",
@@ -847,8 +1124,12 @@ const notificationsSeed: NotificationItem[] = [
     title: "1-Hour Reminder",
     message: "Vehicle 51G-123.45 is scheduled in 1 hour.",
     timestamp: new Date(Date.now() - 65 * 60 * 1000),
+    customerId: "c1",
+    bookingId: "B001",
   },
 ];
+
+const supportThreadSeed: SupportChatThread[] = [];
 
 const adjustmentSeed: Adjustment[] = [
   {
@@ -923,7 +1204,7 @@ const defaultSettings: AppSettings = {
   },
 };
 
-const STORAGE_KEY = "carwash-prototype-state-v3";
+const STORAGE_KEY = "carwash-prototype-state-v4";
 const SHOP_CAPACITY = 3;
 const OTP_TTL_MS = 60 * 1000;
 
@@ -975,6 +1256,17 @@ function parseBookingDate(booking: Pick<Booking, "dateISO" | "timeSlot">) {
 
 function nowLocalDateISO() {
   return localDateISO(new Date());
+}
+
+function isSessionCountedForToday(session: WashSessionRecord, todayISO: string) {
+  if (session.status === "Completed") {
+    return (
+      (session.completedAt && localDateISO(new Date(session.completedAt)) === todayISO) ||
+      localDateISO(new Date(session.startedAt)) === todayISO
+    );
+  }
+
+  return localDateISO(new Date(session.startedAt)) === todayISO;
 }
 
 function addDays(dateISO: string, days: number) {
@@ -1156,6 +1448,21 @@ function tierRank(tier: Tier) {
   return ["Member", "Silver", "Gold", "Platinum"].indexOf(tier);
 }
 
+function refundRateForBooking(booking: Booking) {
+  const bookingTime = parseBookingDate(booking).getTime();
+  const hoursBefore = (bookingTime - Date.now()) / 3600000;
+  if (hoursBefore > 24) return 1;
+  if (hoursBefore >= 2) return 0.5;
+  return 0;
+}
+
+function generateVoucherCode(templateId: string) {
+  return `${templateId
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase()
+    .slice(0, 6)}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
 function subtotalForServices(services: Service[]) {
   return services.reduce((sum, service) => sum + service.price, 0);
 }
@@ -1207,6 +1514,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   );
   const [ledger, setLedger] = React.useState<LedgerEntry[]>(ledgerSeed);
   const [tierHistory, setTierHistory] = React.useState<TierHistoryEntry[]>(tierHistorySeed);
+  const [reviews, setReviews] = React.useState<ReviewRecord[]>(reviewSeed);
+  const [voucherTemplates, setVoucherTemplates] =
+    React.useState<VoucherTemplateRecord[]>(voucherTemplateSeed);
+  const [customerVouchers, setCustomerVouchers] =
+    React.useState<CustomerVoucherRecord[]>(customerVoucherSeed);
+  const [supportThreads, setSupportThreads] =
+    React.useState<SupportChatThread[]>(supportThreadSeed);
   const [notifications, setNotifications] = React.useState<NotificationItem[]>(notificationsSeed);
   const [adjustments, setAdjustments] = React.useState<Adjustment[]>(adjustmentSeed);
   const [pendingRegistration, setPendingRegistration] = React.useState<PendingRegistration | null>(
@@ -1238,7 +1552,12 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setServices(persisted.services ?? serviceSeed);
     setPromotions(persisted.promotions ?? promotionSeed);
     setCurrentCustomerId(persisted.currentCustomerId ?? "c1");
-    setCustomers(persisted.customers ?? customerSeed);
+    setCustomers(
+      (persisted.customers ?? customerSeed).map((customer) => ({
+        ...customer,
+        walletBalance: customer.walletBalance ?? 0,
+      })),
+    );
     const restoredStaffMembers = persisted.staffMembers ?? staffSeed;
     const restoredStaffId = persisted.currentStaffId ?? "s1";
     const restoredActiveStaff =
@@ -1318,6 +1637,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     setLastTransaction(persisted.lastTransaction ?? transactionSeed[0]);
     setLedger(persisted.ledger ?? ledgerSeed);
     setTierHistory(persisted.tierHistory ?? tierHistorySeed);
+    setReviews(persisted.reviews ?? reviewSeed);
+    setVoucherTemplates(persisted.voucherTemplates ?? voucherTemplateSeed);
+    setCustomerVouchers(persisted.customerVouchers ?? customerVoucherSeed);
+    setSupportThreads(normalizeSupportThreads(persisted.supportThreads));
     setNotifications(
       (persisted.notifications ?? notificationsSeed).map((notification) => ({
         ...notification,
@@ -1382,6 +1705,132 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         { ...notification, id: crypto.randomUUID(), timestamp: new Date() },
         ...prev,
       ]);
+    },
+    [],
+  );
+
+  const ensureSupportThread = React.useCallback(
+    (customerId: string) => {
+      const customer = customers.find((item) => item.id === customerId);
+      if (!customer) {
+        throw new Error("Customer not found.");
+      }
+
+      const existing = supportThreads.find((thread) => thread.customerId === customerId);
+      if (existing) {
+        return existing;
+      }
+
+      const nowIso = new Date().toISOString();
+      const thread: SupportChatThread = {
+        id: crypto.randomUUID(),
+        customerId,
+        customerName: customer.name,
+        status: "OPEN",
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        unreadForCustomer: 0,
+        unreadForStaff: 0,
+        messages: [createSupportGreetingMessage(nowIso)],
+      };
+
+      setSupportThreads((prev) => [thread, ...prev]);
+      return thread;
+    },
+    [customers, supportThreads],
+  );
+
+  const sendSupportMessage = React.useCallback(
+    (input: {
+      customerId: string;
+      senderRole: Role | "System";
+      senderName: string;
+      body: string;
+    }) => {
+      const customer = customers.find((item) => item.id === input.customerId);
+      if (!customer) {
+        throw new Error("Customer not found.");
+      }
+
+      const cleanBody = input.body.trim();
+      if (!cleanBody) {
+        throw new Error("Message cannot be empty.");
+      }
+
+      const nowIso = new Date().toISOString();
+      const message: SupportChatMessage = {
+        id: crypto.randomUUID(),
+        senderRole: input.senderRole,
+        senderName: input.senderName,
+        body: cleanBody,
+        createdAt: nowIso,
+      };
+
+      let nextThread: SupportChatThread | null = null;
+
+      setSupportThreads((prev) => {
+        const existing =
+          prev.find((thread) => thread.customerId === input.customerId) ??
+          ({
+            id: crypto.randomUUID(),
+            customerId: input.customerId,
+            customerName: customer.name,
+            status: "OPEN",
+            createdAt: nowIso,
+            updatedAt: nowIso,
+            unreadForCustomer: 0,
+            unreadForStaff: 0,
+            messages: [createSupportGreetingMessage(nowIso)],
+          } as SupportChatThread);
+
+        nextThread = {
+          ...existing,
+          updatedAt: nowIso,
+          unreadForCustomer: input.senderRole === "Customer" ? 0 : existing.unreadForCustomer + 1,
+          unreadForStaff: input.senderRole === "Customer" ? existing.unreadForStaff + 1 : 0,
+          messages: [...existing.messages, message],
+        };
+
+        return [
+          nextThread,
+          ...prev.filter((thread) => thread.customerId !== input.customerId),
+        ] as SupportChatThread[];
+      });
+
+      pushNotification(
+        input.senderRole === "Customer"
+          ? {
+              type: "Support",
+              title: "New customer message",
+              message: `${customer.name}: ${cleanBody}`,
+            }
+          : {
+              type: "Support",
+              title: "Staff replied",
+              message: `${input.senderName}: ${cleanBody}`,
+              customerId: input.customerId,
+            },
+      );
+
+      return nextThread ?? ensureSupportThread(input.customerId);
+    },
+    [customers, ensureSupportThread, pushNotification],
+  );
+
+  const markSupportThreadRead = React.useCallback(
+    (customerId: string, viewer: Extract<Role, "Customer" | "Staff" | "Admin">) => {
+      setSupportThreads((prev) =>
+        prev.map((thread) =>
+          thread.customerId === customerId
+            ? {
+                ...thread,
+                unreadForCustomer: viewer === "Customer" ? 0 : thread.unreadForCustomer,
+                unreadForStaff:
+                  viewer === "Staff" || viewer === "Admin" ? 0 : thread.unreadForStaff,
+              }
+            : thread,
+        ),
+      );
     },
     [],
   );
@@ -1471,7 +1920,33 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
   }, [currentStaffId, staffMembers]);
 
   const resolveFreeStaff = React.useCallback(() => {
-    return requireAvailableStaff(staffMembers, washSessions);
+    const todayISO = nowLocalDateISO();
+    const assignment = assignStaffToConfirmedBooking(
+      "runtime-booking-assignment",
+      staffMembers.map((staff) => {
+        const activeSession = washSessions.find(
+          (session) => session.staffId === staff.id && session.status !== "Completed",
+        );
+
+        return {
+          staffId: staff.id,
+          name: staff.name,
+          status: staff.status === "Active" ? "active" : "inactive",
+          dailyWashCount: washSessions.filter(
+            (session) =>
+              session.staffId === staff.id && isSessionCountedForToday(session, todayISO),
+          ).length,
+          availability: !activeSession,
+        } as const;
+      }),
+    );
+
+    const staff = staffMembers.find((member) => member.id === assignment.assignedStaffId);
+    if (!staff) {
+      throw new Error("Assigned staff could not be resolved from the current roster.");
+    }
+
+    return staff;
   }, [staffMembers, washSessions]);
 
   const updateCurrentProfile = React.useCallback(
@@ -1955,6 +2430,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         type: "Booking",
         title: "Booking Confirmed",
         message: `${booking.id} for ${booking.vehiclePlate} is confirmed.`,
+        customerId: customer.id,
+        bookingId: booking.id,
       });
       return booking.id;
     },
@@ -2023,6 +2500,86 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     [bookings, customers, pushNotification, settings.cancellationAutoBan],
   );
 
+  const cancelBookingWithRefund = React.useCallback(
+    (bookingId: string, actor: "Customer" | "Admin", reason: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      if (!booking) {
+        throw new Error("Booking not found.");
+      }
+      if (!(booking.status === "Pending" || booking.status === "Confirmed")) {
+        throw new Error("Only pending or confirmed bookings can be cancelled.");
+      }
+
+      const cleanReason = reason.trim();
+      if (cleanReason.length < 10) {
+        throw new Error("Cancellation reason must be at least 10 characters.");
+      }
+
+      const refundAmount = Math.round(booking.totalPrice * refundRateForBooking(booking));
+      const refundStatus: RefundStatus = refundAmount > 0 ? "PENDING" : "NONE";
+
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === bookingId
+            ? {
+                ...item,
+                status: "Cancelled",
+                cancelledAt: new Date().toISOString(),
+                cancelledBy: actor,
+                cancelReason: cleanReason,
+                refundAmount,
+                refundStatus,
+              }
+            : item,
+        ),
+      );
+
+      pushNotification({
+        type: "Booking",
+        title: actor === "Admin" ? "Booking force cancelled" : "Booking cancelled",
+        message: `${booking.id} cancelled. Reason: ${cleanReason}. Refund ${refundAmount.toLocaleString()} VND.`,
+        customerId: booking.customerId,
+        bookingId: booking.id,
+      });
+
+      return { refundAmount, refundStatus };
+    },
+    [bookings, pushNotification],
+  );
+
+  const markRefundCompleted = React.useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      if (!booking) {
+        throw new Error("Booking not found.");
+      }
+      if (booking.refundStatus !== "PENDING") {
+        throw new Error("Only pending refunds can be completed.");
+      }
+
+      setBookings((prev) =>
+        prev.map((item) => (item.id === bookingId ? { ...item, refundStatus: "COMPLETED" } : item)),
+      );
+      setCustomers((prev) =>
+        prev.map((customer) =>
+          customer.id === booking.customerId
+            ? { ...customer, walletBalance: customer.walletBalance + (booking.refundAmount ?? 0) }
+            : customer,
+        ),
+      );
+      pushNotification({
+        type: "Booking",
+        title: "Refund completed",
+        message: `${booking.id} refund of ${(booking.refundAmount ?? 0).toLocaleString()} VND was returned to your wallet.`,
+        customerId: booking.customerId,
+        bookingId: booking.id,
+      });
+
+      return booking.refundAmount ?? 0;
+    },
+    [bookings, pushNotification],
+  );
+
   const setBookingReminder = React.useCallback((id: string, minutes: number | null) => {
     setBookings((prev) =>
       prev.map((booking) =>
@@ -2071,7 +2628,14 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setBookings((prev) =>
         prev.map((item) =>
           item.id === bookingId
-            ? { ...item, status: "Checked-in", checkInAt: checkedInAt, washStatus: "In Progress" }
+            ? {
+                ...item,
+                status: "Checked-in",
+                checkInAt: checkedInAt,
+                washStatus: "In Progress",
+                assignedStaffId: staff.id,
+                assignedStaffName: staff.name,
+              }
             : item,
         ),
       );
@@ -2151,7 +2715,14 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setBookings((prev) =>
         prev.map((item) =>
           item.id === bookingId
-            ? { ...item, status: "Checked-in", checkInAt, washStatus: "Queued" }
+            ? {
+                ...item,
+                status: "Checked-in",
+                checkInAt,
+                washStatus: "Queued",
+                assignedStaffId: staff.id,
+                assignedStaffName: staff.name,
+              }
             : item,
         ),
       );
@@ -2214,6 +2785,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
                 status: "Checked-in",
                 checkInAt: item.checkInAt ?? startedAt,
                 washStatus: "In Progress",
+                assignedStaffId: staff.id,
+                assignedStaffName: staff.name,
               }
             : item,
         ),
@@ -2275,6 +2848,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
                 status: "Completed",
                 washStatus: "Completed",
                 completedAt,
+                reminderSent: item.reminderSent ?? false,
                 checkoutPointsEarned: pointsEarned,
               }
             : item,
@@ -2318,6 +2892,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         type: "Loyalty",
         title: "Wash Completed",
         message: `${booking.id} completed and ${pointsEarned} points were credited.`,
+        customerId: booking.customerId,
+        bookingId: booking.id,
       });
       setSessionDraft(null);
       return {
@@ -2328,6 +2904,52 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       };
     },
     [bookings, customers, pushNotification, services, tiers, washSessions],
+  );
+
+  const confirmVehiclePickup = React.useCallback(
+    (bookingId: string) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      if (!booking) {
+        throw new Error("Booking not found.");
+      }
+      if (booking.status !== "Completed") {
+        throw new Error("Pickup can only be confirmed after wash completion.");
+      }
+      if (booking.pickedUpAt) {
+        throw new Error("Vehicle pickup is already confirmed.");
+      }
+
+      const pickedUpAt = new Date().toISOString();
+      const waitMinutes = booking.completedAt
+        ? Math.max(
+            0,
+            Math.round(
+              (new Date(pickedUpAt).getTime() - new Date(booking.completedAt).getTime()) / 60000,
+            ),
+          )
+        : 0;
+
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === bookingId ? { ...item, pickedUpAt, reminderSent: waitMinutes > 30 } : item,
+        ),
+      );
+      pushNotification({
+        type: "Booking",
+        title: "Vehicle pickup confirmed",
+        message: `${booking.id} was picked up ${waitMinutes} minutes after wash completion.`,
+        customerId: booking.customerId,
+        bookingId: booking.id,
+      });
+
+      return {
+        bookingId,
+        bookingCode: booking.id,
+        pickedUpAt,
+        waitMinutes,
+      };
+    },
+    [bookings, pushNotification],
   );
 
   const createWalkInBooking = React.useCallback(
@@ -2365,7 +2987,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setBookings((prev) =>
         prev.map((booking) =>
           booking.id === id
-            ? { ...booking, checkInAt: checkedInAt, washStatus: "In Progress" }
+            ? {
+                ...booking,
+                checkInAt: checkedInAt,
+                washStatus: "In Progress",
+                assignedStaffId: staff.id,
+                assignedStaffName: staff.name,
+              }
             : booking,
         ),
       );
@@ -2431,6 +3059,183 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     [customers],
   );
 
+  const submitReview = React.useCallback(
+    ({
+      bookingId,
+      starRating,
+      comment,
+    }: {
+      bookingId: string;
+      starRating: number;
+      comment?: string;
+    }) => {
+      const booking = bookings.find((item) => item.id === bookingId);
+      if (!booking) {
+        throw new Error("Booking not found.");
+      }
+      if (booking.status !== "Completed") {
+        throw new Error("Reviews are only available for completed bookings.");
+      }
+      if (reviews.some((review) => review.bookingId === bookingId)) {
+        throw new Error("Each booking can only be reviewed once.");
+      }
+      if (starRating < 1 || starRating > 5) {
+        throw new Error("Star rating must be between 1 and 5.");
+      }
+
+      const customer = customers.find((item) => item.id === booking.customerId);
+      const session = washSessions.find((item) => item.bookingId === bookingId);
+      const staffId = booking.assignedStaffId ?? session?.staffId;
+      const staffName = booking.assignedStaffName ?? session?.staffName;
+
+      if (!staffId || !staffName) {
+        throw new Error("A completed booking must have an assigned staff member.");
+      }
+
+      const review: ReviewRecord = {
+        id: crypto.randomUUID(),
+        bookingId,
+        customerId: booking.customerId,
+        customerName: customer?.name ?? booking.customerName ?? "Customer",
+        staffId,
+        staffName,
+        starRating,
+        comment: comment?.trim() || undefined,
+        createdAt: new Date().toISOString(),
+        isFlagged: starRating <= 2,
+        alertStatus: starRating <= 2 ? "OPEN" : "ACKNOWLEDGED",
+      };
+
+      setReviews((prev) => [review, ...prev]);
+      return review;
+    },
+    [bookings, customers, reviews, washSessions],
+  );
+
+  const acknowledgeReview = React.useCallback((reviewId: string) => {
+    setReviews((prev) =>
+      prev.map((review) =>
+        review.id === reviewId ? { ...review, alertStatus: "ACKNOWLEDGED" } : review,
+      ),
+    );
+  }, []);
+
+  const addVoucherTemplate = React.useCallback((input: Omit<VoucherTemplateRecord, "id">) => {
+    const nextTemplate = { ...input, id: crypto.randomUUID() };
+    setVoucherTemplates((prev) => [nextTemplate, ...prev]);
+    return nextTemplate;
+  }, []);
+
+  const updateVoucherTemplate = React.useCallback(
+    (id: string, patch: Partial<Omit<VoucherTemplateRecord, "id">>) => {
+      setVoucherTemplates((prev) =>
+        prev.map((template) => (template.id === id ? { ...template, ...patch } : template)),
+      );
+    },
+    [],
+  );
+
+  const toggleVoucherTemplate = React.useCallback((id: string) => {
+    setVoucherTemplates((prev) =>
+      prev.map((template) =>
+        template.id === id ? { ...template, active: !template.active } : template,
+      ),
+    );
+  }, []);
+
+  const redeemVoucherTemplate = React.useCallback(
+    (customerId: string, templateId: string) => {
+      const customer = customers.find((item) => item.id === customerId);
+      const template = voucherTemplates.find((item) => item.id === templateId);
+      if (!customer || !template) {
+        throw new Error("Customer or voucher template not found.");
+      }
+      if (!template.active) {
+        throw new Error("This voucher template is inactive.");
+      }
+      if (tierRank(customer.tier) < tierRank(template.minTier)) {
+        throw new Error("Customer tier is too low for this voucher.");
+      }
+      if (customer.points < template.pointCost) {
+        throw new Error("Customer does not have enough points.");
+      }
+
+      const voucher: CustomerVoucherRecord = {
+        id: crypto.randomUUID(),
+        customerId,
+        templateId,
+        name: template.name,
+        discountLabel: template.discountLabel,
+        code: generateVoucherCode(template.id),
+        pointCost: template.pointCost,
+        status: "ACTIVE",
+        redeemedAt: new Date().toISOString(),
+        expiresAt: addDays(nowLocalDateISO(), template.expiryDays),
+      };
+
+      setCustomerVouchers((prev) => [voucher, ...prev]);
+      setCustomers((prev) =>
+        prev.map((item) =>
+          item.id === customerId
+            ? {
+                ...item,
+                points: item.points - template.pointCost,
+                tier: tierFor(item.points - template.pointCost, tiers),
+              }
+            : item,
+        ),
+      );
+      setLedger((prev) => [
+        {
+          id: crypto.randomUUID(),
+          customerId,
+          date: nowLocalDateISO(),
+          type: "Spent",
+          delta: -template.pointCost,
+          description: `Redeemed ${template.name}`,
+        },
+        ...prev,
+      ]);
+
+      return voucher;
+    },
+    [customers, tiers, voucherTemplates],
+  );
+
+  const simulateCustomerSpend = React.useCallback(
+    (customerId: string, amountVnd: number) => {
+      const customer = customers.find((item) => item.id === customerId);
+      if (!customer) {
+        throw new Error("Customer not found.");
+      }
+      if (amountVnd <= 0) {
+        throw new Error("Spend amount must be greater than 0.");
+      }
+      const earnedPoints = Math.floor(amountVnd / 1000);
+      const nextPoints = customer.points + earnedPoints;
+      setCustomers((prev) =>
+        prev.map((item) =>
+          item.id === customerId
+            ? { ...item, points: nextPoints, tier: tierFor(nextPoints, tiers) }
+            : item,
+        ),
+      );
+      setLedger((prev) => [
+        {
+          id: crypto.randomUUID(),
+          customerId,
+          date: nowLocalDateISO(),
+          type: "Earned",
+          delta: earnedPoints,
+          description: `Simulated spend ${amountVnd.toLocaleString()} VND`,
+          expiresAt: addDays(nowLocalDateISO(), 365),
+        },
+        ...prev,
+      ]);
+    },
+    [customers, tiers],
+  );
+
   const assignStaffToSession = React.useCallback(
     (sessionId: string, staffId: string) => {
       const session = washSessions.find((item) => item.id === sessionId);
@@ -2455,6 +3260,13 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       setWashSessions((prev) =>
         prev.map((item) =>
           item.id === sessionId ? { ...item, staffId: staff.id, staffName: staff.name } : item,
+        ),
+      );
+      setBookings((prev) =>
+        prev.map((item) =>
+          item.id === session.bookingId
+            ? { ...item, assignedStaffId: staff.id, assignedStaffName: staff.name }
+            : item,
         ),
       );
       setSessionDraft((prev) =>
@@ -2617,6 +3429,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
         type: "Loyalty",
         title: "Checkout Completed",
         message: `${tx.id} completed and ${pointsEarned} points were credited.`,
+        customerId: tx.customer.id,
+        bookingId: tx.bookingId,
       });
       setSessionDraft(null);
       return tx;
@@ -2704,6 +3518,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
             type: "Loyalty",
             title: "Points Expiry Warning",
             message: `${snapshot.expiringIn30Days} points for ${customer.name} will expire within 30 days.`,
+            customerId: customer.id,
           });
           expirationEvents.add(key);
           didMutate = true;
@@ -2716,6 +3531,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
             type: "Loyalty",
             title: "Points Expiry Warning",
             message: `${snapshot.expiringIn7Days} points for ${customer.name} will expire within 7 days.`,
+            customerId: customer.id,
           });
           expirationEvents.add(key);
           didMutate = true;
@@ -2767,6 +3583,8 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
             type: "Reminder",
             title: `${booking.reminderMinutesBefore}-Minute Reminder`,
             message: `${booking.id} for ${booking.vehiclePlate} starts at ${booking.timeSlot}.`,
+            customerId: booking.customerId,
+            bookingId: booking.id,
           });
         }
       }
@@ -2798,6 +3616,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
       lastTransaction,
       ledger,
       tierHistory,
+      reviews,
+      voucherTemplates,
+      customerVouchers,
+      supportThreads,
       notifications: notifications.map((notification) => ({
         ...notification,
         timestamp: notification.timestamp.toISOString(),
@@ -2827,6 +3649,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     lastTransaction,
     ledger,
     notifications,
+    reviews,
+    voucherTemplates,
+    customerVouchers,
+    supportThreads,
     pendingRegistration,
     pendingPhoneChange,
     pendingTierRules,
@@ -2879,6 +3705,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     lastTransaction,
     ledger,
     tierHistory,
+    reviews,
+    voucherTemplates,
+    customerVouchers,
+    supportThreads,
     notifications,
     adjustments,
     pendingRegistration,
@@ -2920,6 +3750,7 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     checkInOperationalBooking,
     startOperationalWash,
     completeOperationalWash,
+    confirmVehiclePickup,
     assignStaffToSession,
     createOrUpdateSessionDraft: (draft) => {
       if (!draft) {
@@ -2983,6 +3814,10 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
     completeCheckout,
     updateCustomerPoints,
     redeemReward,
+    cancelBookingWithRefund,
+    markRefundCompleted,
+    submitReview,
+    acknowledgeReview,
     updateTiers: (next) => setPendingTierRules(next),
     addService: (service) => {
       const created: Service = {
@@ -3027,6 +3862,14 @@ export function CarwashStoreProvider({ children }: { children: React.ReactNode }
           promotion.id === id ? { ...promotion, active: !promotion.active } : promotion,
         ),
       ),
+    addVoucherTemplate,
+    updateVoucherTemplate,
+    toggleVoucherTemplate,
+    redeemVoucherTemplate,
+    simulateCustomerSpend,
+    ensureSupportThread,
+    sendSupportMessage,
+    markSupportThreadRead,
     pushNotification,
     addAdjustment: (adjustment) => {
       const target = customers.find((customer) => customer.id === adjustment.customerId);

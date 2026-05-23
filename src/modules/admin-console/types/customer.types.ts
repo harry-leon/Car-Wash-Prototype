@@ -1,4 +1,4 @@
-export type CustomerTier = "MEMBER" | "SILVER" | "GOLD" | "DIAMOND";
+export type CustomerTier = "MEMBER" | "SILVER" | "GOLD" | "DIAMOND" | "N/A";
 export type CustomerRole = "CUSTOMER" | "ADMIN" | "STAFF";
 export type CustomerStatus = "ACTIVE" | "SUSPENDED";
 
@@ -13,6 +13,7 @@ export interface CustomerRow {
   role: CustomerRole;
   status: CustomerStatus;
   joinedAt: string;
+  accountType: "CUSTOMER" | "STAFF" | "ADMIN";
 }
 
 export interface CustomerVehicle {

@@ -21,7 +21,7 @@ import {
   Activity,
   Lock,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCarwashStore, type Tier } from "@/lib/carwash-store";
@@ -55,6 +55,25 @@ function getGreeting(language: "en" | "vi") {
   }
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatRemainingTime(ms: number, language: "en" | "vi") {
+  const safeMs = Math.max(0, ms);
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (language === "vi") {
+    if (minutes <= 0) return `${seconds} giay`;
+    return `${minutes} phut ${seconds.toString().padStart(2, "0")}s`;
+  }
+
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes} mins ${seconds.toString().padStart(2, "0")}s`;
+}
+
 function CustomerHome() {
   const navigate = useNavigate();
   const portalStore = useCarwashStore();
@@ -69,11 +88,11 @@ function CustomerHome() {
     setBookingDraft,
     vehicles,
   } = useCustomerBooking();
-  
+
   const portalCustomer = portalStore.customers.find(
     (customer) => customer.id === portalStore.currentCustomerId,
   );
-  
+
   const customer = portalCustomer
     ? {
         ...bookingCustomer,
@@ -89,6 +108,12 @@ function CustomerHome() {
   const [redeemPoints, setRedeemPoints] = useState(50);
   const [redeemMessage, setRedeemMessage] = useState("");
   const [showBarcode, setShowBarcode] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timerId);
+  }, []);
 
   const copy =
     language === "vi"
@@ -138,7 +163,7 @@ function CustomerHome() {
           activePlan: "Gói hiện tại",
           downgradeLocked: "Không thể giảm gói",
           upgrade: "Nâng cấp",
-          
+
           // New keys
           pointsPresetLabel: "Chọn mức điểm nhanh:",
           voucherDiscountText: "Voucher ưu đãi Aura Care",
@@ -249,6 +274,32 @@ function CustomerHome() {
     ? comboPackages.find((comboPackage) => comboPackage.id === activeCombo.comboPackageId)
     : undefined;
   const inProgress = bookings.find((booking) => booking.status === "IN_PROGRESS");
+  const activeWashSession = [...portalStore.washSessions]
+    .filter(
+      (session) =>
+        session.customerId === portalStore.currentCustomerId && session.status !== "Completed",
+    )
+    .sort((a, b) => {
+      const priority = (status: string) => {
+        if (status === "In Progress") return 0;
+        if (status === "Queued") return 1;
+        if (status === "Ready for Checkout") return 2;
+        return 3;
+      };
+
+      const priorityDiff = priority(a.status) - priority(b.status);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime();
+    })[0];
+
+  const trackedBooking =
+    (activeWashSession?.bookingId
+      ? bookings.find((booking) => booking.id === activeWashSession.bookingId)
+      : undefined) ??
+    (activeWashSession
+      ? bookings.find((booking) => booking.vehicle.licensePlate === activeWashSession.plate)
+      : undefined) ??
+    inProgress;
   const activeBookingCount = bookings.filter((booking) =>
     activeStatuses.includes(booking.status),
   ).length;
@@ -314,19 +365,22 @@ function CustomerHome() {
     switch (tier) {
       case "Diamond":
         return {
-          cardBg: "bg-gradient-to-br from-[#063047] via-[#10567e] to-[#041a29] border border-cyan-400/50 shadow-[0_20px_50px_-15px_rgba(6,182,212,0.45)] text-cyan-50",
+          cardBg:
+            "bg-gradient-to-br from-[#063047] via-[#10567e] to-[#041a29] border border-cyan-400/50 shadow-[0_20px_50px_-15px_rgba(6,182,212,0.45)] text-cyan-50",
           glowDot: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.7)] animate-pulse",
           chipGradient: "from-cyan-200 to-sky-400",
         };
       case "Gold":
         return {
-          cardBg: "bg-gradient-to-br from-[#2b1800] via-[#cfa025] to-[#473000] border border-yellow-500/40 shadow-[0_20px_50px_-15px_rgba(234,179,8,0.4)] text-yellow-50",
+          cardBg:
+            "bg-gradient-to-br from-[#2b1800] via-[#cfa025] to-[#473000] border border-yellow-500/40 shadow-[0_20px_50px_-15px_rgba(234,179,8,0.4)] text-yellow-50",
           glowDot: "bg-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.7)]",
           chipGradient: "from-amber-200 to-yellow-500",
         };
       default: // Silver
         return {
-          cardBg: "bg-gradient-to-br from-[#1e293b] via-[#64748b] to-[#0f172a] border border-slate-400/30 shadow-[0_20px_50px_-15px_rgba(100,116,139,0.35)] text-slate-100",
+          cardBg:
+            "bg-gradient-to-br from-[#1e293b] via-[#64748b] to-[#0f172a] border border-slate-400/30 shadow-[0_20px_50px_-15px_rgba(100,116,139,0.35)] text-slate-100",
           glowDot: "bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.7)]",
           chipGradient: "from-slate-300 to-slate-500",
         };
@@ -348,13 +402,69 @@ function CustomerHome() {
         );
   const nextTierName = customer.tier === "Silver" ? "Gold" : "Diamond";
   const pointsToNext = Math.max(0, tierTarget - customer.lifetimePoints);
-
-  // Wash progress steps data
+  const trackedDurationMinutes = Math.max(
+    5,
+    activeWashSession?.services.reduce((sum, service) => sum + (service.durationMinutes ?? 0), 0) ??
+      0,
+    (trackedBooking?.package.durationMinutes ?? 0) +
+      (trackedBooking?.addOns ?? []).reduce((sum, addOn) => sum + addOn.durationMinutes, 0),
+  );
+  const trackedStatus =
+    activeWashSession?.status ??
+    (trackedBooking?.status === "CHECKED_IN"
+      ? "Queued"
+      : trackedBooking?.status === "IN_PROGRESS"
+        ? "In Progress"
+        : null);
+  const trackedStartedAtMs = new Date(
+    activeWashSession?.startedAt ?? trackedBooking?.createdAt ?? now,
+  ).getTime();
+  const elapsedMs = Math.max(0, now - trackedStartedAtMs);
+  const estimatedTotalMs = trackedDurationMinutes * 60 * 1000;
+  const phaseRatio = clamp(elapsedMs / estimatedTotalMs, 0, 1);
+  const progressStepIndex =
+    trackedStatus === "Queued"
+      ? 0
+      : trackedStatus === "In Progress"
+        ? phaseRatio >= 0.72
+          ? 2
+          : 1
+        : trackedStatus === "Ready for Checkout"
+          ? 3
+          : 0;
+  const trackerProgressPercent =
+    trackedStatus === "Queued"
+      ? 18
+      : trackedStatus === "In Progress"
+        ? Math.round(clamp(25 + phaseRatio * 60, 25, 92))
+        : trackedStatus === "Ready for Checkout"
+          ? 100
+          : 0;
+  const remainingMs =
+    trackedStatus === "Ready for Checkout" ? 0 : Math.max(0, estimatedTotalMs - elapsedMs);
+  const trackerVehiclePlate =
+    trackedBooking?.vehicle.licensePlate ?? activeWashSession?.plate ?? "--";
+  const trackerServiceName =
+    trackedBooking?.package.name ??
+    activeWashSession?.services.map((service) => service.name).join(", ") ??
+    copy.inWash;
   const washProgressSteps = [
-    { label: copy.checkedInStage, completed: true, active: false },
-    { label: copy.washingStage, completed: true, active: true },
-    { label: copy.detailingStage, completed: false, active: false },
-    { label: copy.readyStage, completed: false, active: false },
+    {
+      label: copy.checkedInStage,
+      completed: progressStepIndex > 0,
+      active: progressStepIndex === 0,
+    },
+    { label: copy.washingStage, completed: progressStepIndex > 1, active: progressStepIndex === 1 },
+    {
+      label: copy.detailingStage,
+      completed: progressStepIndex > 2,
+      active: progressStepIndex === 2,
+    },
+    {
+      label: copy.readyStage,
+      completed: trackedStatus === "Ready for Checkout",
+      active: progressStepIndex === 3,
+    },
   ];
 
   const getPackageTag = (pkgId: string) => {
@@ -374,7 +484,9 @@ function CustomerHome() {
   return (
     <div className="relative min-h-screen px-4 py-8 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-hidden bg-background">
       {/* Dynamic Keyframes Styling Inject */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes shimmer {
           0% { transform: translateX(-150%) skewX(-15deg); }
           100% { transform: translateX(150%) skewX(-15deg); }
@@ -389,7 +501,9 @@ function CustomerHome() {
         .animate-pulse-glow {
           animation: pulseGlow 2s infinite ease-in-out;
         }
-      `}} />
+      `,
+        }}
+      />
 
       {/* Decorative ambient background blur blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/8 blur-[130px] pointer-events-none" />
@@ -397,10 +511,8 @@ function CustomerHome() {
       <div className="absolute top-[35%] right-[15%] w-[35%] h-[35%] rounded-full bg-indigo-500/4 blur-[110px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl space-y-8 relative z-10">
-        
         {/* Welcome Section & Member card Grid */}
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] items-stretch">
-          
           {/* Welcome and Action Dashboard */}
           <Card className="flex flex-col justify-between overflow-hidden rounded-[24px] border-border/40 bg-card/65 p-6 shadow-xl backdrop-blur-xl md:p-8">
             <div className="space-y-6">
@@ -456,24 +568,25 @@ function CustomerHome() {
                   {copy.quickActions}
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  
                   {/* Shortcut 1: Book Wash */}
-                  <button 
-                    onClick={() => startSingleBooking()} 
+                  <button
+                    onClick={() => startSingleBooking()}
                     className="group flex flex-col justify-between p-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary to-blue-600 text-primary-foreground text-left shadow-md transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-primary/10 active:scale-100"
                   >
                     <Plus className="h-6 w-6 opacity-90 transition-transform group-hover:rotate-90 duration-300" />
                     <span className="text-sm font-black mt-6 tracking-tight">{copy.book}</span>
                   </button>
-                  
+
                   {/* Shortcut 2: Vehicles */}
-                  <Link 
-                    to="/customer/vehicles" 
+                  <Link
+                    to="/customer/vehicles"
                     className="flex flex-col justify-between p-4 rounded-xl border border-border/60 bg-background/50 hover:bg-background/80 text-foreground text-left shadow-sm transition-all duration-300 hover:scale-[1.03] hover:border-primary/45 active:scale-100"
                   >
                     <CarFront className="h-6 w-6 text-primary" />
                     <div className="mt-4">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">{copy.manageVehicles}</div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">
+                        {copy.manageVehicles}
+                      </div>
                       <div className="text-sm font-black mt-1 tracking-tight truncate">
                         {defaultVehicle ? defaultVehicle.licensePlate : copy.noVehicle}
                       </div>
@@ -481,13 +594,15 @@ function CustomerHome() {
                   </Link>
 
                   {/* Shortcut 3: History */}
-                  <Link 
-                    to="/customer/history" 
+                  <Link
+                    to="/customer/history"
                     className="flex flex-col justify-between p-4 rounded-xl border border-border/60 bg-background/50 hover:bg-background/80 text-foreground text-left shadow-sm transition-all duration-300 hover:scale-[1.03] hover:border-primary/45 active:scale-100"
                   >
                     <History className="h-6 w-6 text-primary" />
                     <div className="mt-4">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">{copy.activeBookings}</div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">
+                        {copy.activeBookings}
+                      </div>
                       <div className="text-sm font-black mt-1 tracking-tight">
                         {activeBookingCount > 0 ? `${activeBookingCount} booked` : copy.history}
                       </div>
@@ -495,33 +610,37 @@ function CustomerHome() {
                   </Link>
 
                   {/* Shortcut 4: Loyalty Rewards */}
-                  <Link 
-                    to="/customer/loyalty" 
+                  <Link
+                    to="/customer/loyalty"
                     className="flex flex-col justify-between p-4 rounded-xl border border-border/60 bg-background/50 hover:bg-background/80 text-foreground text-left shadow-sm transition-all duration-300 hover:scale-[1.03] hover:border-primary/45 active:scale-100"
                   >
                     <Coins className="h-6 w-6 text-primary" />
                     <div className="mt-4">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">{copy.available}</div>
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase leading-none">
+                        {copy.available}
+                      </div>
                       <div className="text-sm font-black mt-1 tracking-tight truncate">
                         {customer.availablePoints.toLocaleString()} PTS
                       </div>
                     </div>
                   </Link>
-
                 </div>
               </div>
-
             </div>
           </Card>
 
           {/* Premium Membership Card Visual and Intro video */}
           <Card className="flex flex-col justify-between items-center overflow-hidden rounded-[24px] border-border/40 bg-card/65 p-6 shadow-xl backdrop-blur-xl md:p-8 gap-6">
-            
             {/* The Digital Membership Card stub */}
-            <div className={cn("w-full aspect-[1.586/1] rounded-2xl relative p-5 flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300 hover:scale-[1.03] cursor-default", tierDetails.cardBg)}>
+            <div
+              className={cn(
+                "w-full aspect-[1.586/1] rounded-2xl relative p-5 flex flex-col justify-between overflow-hidden shadow-2xl transition-all duration-300 hover:scale-[1.03] cursor-default",
+                tierDetails.cardBg,
+              )}
+            >
               {/* Card shimmer reflection */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none -translate-x-full animate-shimmer" />
-              
+
               <div className="flex justify-between items-start z-10">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5 font-black tracking-widest text-xs uppercase">
@@ -532,7 +651,7 @@ function CustomerHome() {
                     AURA CAR CARE
                   </div>
                 </div>
-                
+
                 {/* Microchip icon layout */}
                 <div className="h-7 w-10 rounded bg-gradient-to-br from-yellow-600 via-yellow-450 to-yellow-500 opacity-80 shadow-md flex items-center justify-center overflow-hidden relative">
                   <div className="absolute inset-1 grid grid-cols-3 gap-0.5 border border-yellow-750/30 rounded opacity-65">
@@ -555,7 +674,7 @@ function CustomerHome() {
                   {customer.fullName}
                 </div>
                 <div className="font-mono text-xs opacity-80 tracking-widest">
-                  ••••  ••••  ••••  {customer.id.substring(customer.id.length - 4).toUpperCase()}
+                  •••• •••• •••• {customer.id.substring(customer.id.length - 4).toUpperCase()}
                 </div>
               </div>
 
@@ -566,7 +685,8 @@ function CustomerHome() {
                     {copy.available}
                   </div>
                   <div className="text-2xl font-black tracking-tight mt-0.5 flex items-baseline gap-1">
-                    {customer.availablePoints.toLocaleString()} <span className="text-[10px] font-bold">PTS</span>
+                    {customer.availablePoints.toLocaleString()}{" "}
+                    <span className="text-[10px] font-bold">PTS</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -605,21 +725,20 @@ function CustomerHome() {
                 </h3>
               </div>
             </Card>
-
           </Card>
         </section>
 
         {/* Live Wash Activity Tracker */}
-        {inProgress ? (
+        {trackedBooking || activeWashSession ? (
           <Card className="rounded-[24px] border-primary/25 bg-gradient-to-r from-primary/[0.04] via-emerald-500/[0.02] to-background/50 p-6 shadow-xl backdrop-blur-xl relative overflow-hidden">
             {/* Glowing left line */}
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary to-emerald-500" />
 
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pl-2">
               <div className="flex items-center gap-4 flex-1">
-                {/* 60% circular status indicator */}
+                {/* Real-time circular status indicator */}
                 <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-emerald-500/20 bg-background text-lg font-black text-primary relative">
-                  60%
+                  {trackerProgressPercent}%
                   <div className="absolute -inset-1 rounded-full border-2 border-emerald-500/40 animate-ping opacity-45 pointer-events-none" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -628,16 +747,23 @@ function CustomerHome() {
                     {copy.activityTracker}
                   </div>
                   <h2 className="text-xl font-black tracking-tight mt-0.5 flex items-center gap-2 text-foreground">
-                    {inProgress.vehicle.licensePlate} 
-                    <span className="text-xs font-bold text-muted-foreground">({inProgress.package.name})</span>
+                    {trackerVehiclePlate}
+                    <span className="text-xs font-bold text-muted-foreground">
+                      ({trackerServiceName})
+                    </span>
                   </h2>
                   <p className="text-sm font-medium text-muted-foreground mt-0.5">
-                    {copy.estimatedTime}: <b className="text-foreground">12 {copy.minutes}</b>
+                    {copy.estimatedTime}:{" "}
+                    <b className="text-foreground">{formatRemainingTime(remainingMs, language)}</b>
                   </p>
                 </div>
               </div>
-              
-              <Button asChild variant="outline" className="rounded-xl font-bold border-border/80 hover:bg-muted shrink-0 shadow-sm">
+
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-xl font-bold border-border/80 hover:bg-muted shrink-0 shadow-sm"
+              >
                 <Link to="/customer/history">{copy.viewDetails}</Link>
               </Button>
             </div>
@@ -645,24 +771,30 @@ function CustomerHome() {
             {/* Interactive Progress Line */}
             <div className="mt-8 mb-2 px-4">
               <div className="relative flex justify-between items-center w-full max-w-4xl mx-auto">
-                
                 {/* Connector Lines */}
                 <div className="absolute left-0 right-0 top-4 -translate-y-1/2 h-1 bg-muted/65 rounded-full z-0" />
-                <div 
-                  className="absolute left-0 top-4 -translate-y-1/2 h-1 bg-gradient-to-r from-primary to-emerald-500 rounded-full transition-all duration-700 z-0" 
-                  style={{ width: '50%' }} 
+                <div
+                  className="absolute left-0 top-4 -translate-y-1/2 h-1 bg-gradient-to-r from-primary to-emerald-500 rounded-full transition-all duration-700 z-0"
+                  style={{ width: `${trackerProgressPercent}%` }}
                 />
 
                 {/* Steps Mapping */}
                 {washProgressSteps.map((step, idx) => {
                   return (
                     <div key={idx} className="flex flex-col items-center relative z-10">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-300",
-                        step.completed && !step.active && "bg-emerald-500 border-emerald-400 text-white",
-                        step.active && "bg-primary border-primary-foreground text-white animate-pulse shadow-[0_0_12px_rgba(0,102,255,0.6)] scale-110",
-                        !step.completed && !step.active && "bg-background border-border text-muted-foreground"
-                      )}>
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all duration-300",
+                          step.completed &&
+                            !step.active &&
+                            "bg-emerald-500 border-emerald-400 text-white",
+                          step.active &&
+                            "bg-primary border-primary-foreground text-white animate-pulse shadow-[0_0_12px_rgba(0,102,255,0.6)] scale-110",
+                          !step.completed &&
+                            !step.active &&
+                            "bg-background border-border text-muted-foreground",
+                        )}
+                      >
                         {step.completed && !step.active ? (
                           <CheckCircle className="h-4 w-4" />
                         ) : step.active ? (
@@ -671,12 +803,14 @@ function CustomerHome() {
                           idx + 1
                         )}
                       </div>
-                      <span className={cn(
-                        "mt-2 text-[10px] md:text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap",
-                        step.completed && !step.active && "text-emerald-600",
-                        step.active && "text-primary font-black",
-                        !step.completed && !step.active && "text-muted-foreground"
-                      )}>
+                      <span
+                        className={cn(
+                          "mt-2 text-[10px] md:text-xs font-bold uppercase tracking-wider text-center whitespace-nowrap",
+                          step.completed && !step.active && "text-emerald-600",
+                          step.active && "text-primary font-black",
+                          !step.completed && !step.active && "text-muted-foreground",
+                        )}
+                      >
                         {step.label}
                       </span>
                     </div>
@@ -684,13 +818,11 @@ function CustomerHome() {
                 })}
               </div>
             </div>
-
           </Card>
         ) : null}
 
         {/* Voucher Redemption Panel & Active Combo Grid */}
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] items-stretch">
-          
           {/* Coupon Redemption ticket layout */}
           <Card className="rounded-[24px] border-border/40 bg-card/65 p-6 shadow-xl backdrop-blur-xl flex flex-col justify-between">
             <div className="space-y-4">
@@ -702,8 +834,12 @@ function CustomerHome() {
                   <div className="text-xs font-black uppercase tracking-wider text-muted-foreground">
                     {copy.pointsVoucher}
                   </div>
-                  <h2 className="mt-1 text-xl font-black tracking-tight text-foreground">{copy.generateVoucher}</h2>
-                  <p className="mt-1 text-xs font-semibold leading-relaxed text-muted-foreground">{copy.pointsHint}</p>
+                  <h2 className="mt-1 text-xl font-black tracking-tight text-foreground">
+                    {copy.generateVoucher}
+                  </h2>
+                  <p className="mt-1 text-xs font-semibold leading-relaxed text-muted-foreground">
+                    {copy.pointsHint}
+                  </p>
                 </div>
               </div>
 
@@ -722,9 +858,9 @@ function CustomerHome() {
                         onClick={() => setRedeemPoints(presetVal)}
                         className={cn(
                           "px-3 py-1.5 rounded-lg text-xs font-black border tracking-wider transition-all duration-200 active:scale-95",
-                          isSelect 
-                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20" 
-                            : "bg-background/60 hover:bg-background border-border/70 text-foreground"
+                          isSelect
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                            : "bg-background/60 hover:bg-background border-border/70 text-foreground",
                         )}
                       >
                         {presetVal} pts
@@ -753,7 +889,10 @@ function CustomerHome() {
                 <div className="rounded-xl border border-border/75 bg-background/50 px-4 py-3 text-sm font-black text-primary text-center">
                   {(redeemPoints * 1000).toLocaleString()} VND
                 </div>
-                <Button className="h-11 rounded-xl font-bold shadow-md shadow-primary/10 transition-transform active:scale-[0.98]" onClick={redeemVoucher}>
+                <Button
+                  className="h-11 rounded-xl font-bold shadow-md shadow-primary/10 transition-transform active:scale-[0.98]"
+                  onClick={redeemVoucher}
+                >
                   {copy.generate}
                 </Button>
               </div>
@@ -765,7 +904,8 @@ function CustomerHome() {
                     {copy.voucherDiscountText}
                   </div>
                   <div className="text-2xl font-black tracking-tight text-foreground leading-none">
-                    -{(redeemPoints * 1000).toLocaleString()} <span className="text-sm font-bold">VND</span>
+                    -{(redeemPoints * 1000).toLocaleString()}{" "}
+                    <span className="text-sm font-bold">VND</span>
                   </div>
                   <div className="text-[9px] text-muted-foreground font-bold flex items-center gap-1 pt-1.5 leading-none">
                     <Clock className="h-3 w-3 text-muted-foreground" /> {copy.voucherExpiry}
@@ -795,7 +935,6 @@ function CustomerHome() {
                   </div>
                 </div>
               </div>
-
             </div>
 
             {redeemMessage ? (
@@ -831,17 +970,23 @@ function CustomerHome() {
 
               {activeCombo ? (
                 <div className="space-y-4">
-                  
                   {/* Combo usages information */}
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div className="bg-background/50 border border-border/60 rounded-xl p-3 shadow-inner">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Washes Remaining</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Washes Remaining
+                      </div>
                       <div className="text-xl font-black text-primary mt-1">
-                        {activeCombo.remainingUses} <span className="text-xs text-muted-foreground">/ {activeCombo.totalUses} left</span>
+                        {activeCombo.remainingUses}{" "}
+                        <span className="text-xs text-muted-foreground">
+                          / {activeCombo.totalUses} left
+                        </span>
                       </div>
                     </div>
                     <div className="bg-background/50 border border-border/60 rounded-xl p-3 shadow-inner">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Valid Until</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Valid Until
+                      </div>
                       <div className="text-sm font-black text-foreground mt-2 truncate">
                         {activeCombo.validUntil}
                       </div>
@@ -849,15 +994,17 @@ function CustomerHome() {
                   </div>
 
                   <p className="text-xs font-semibold leading-relaxed text-muted-foreground">
-                    Linked vehicle license plate: <b className="text-foreground">{linkedVehicle?.licensePlate ?? "N/A"}</b>. Use wash credits at checkout.
+                    Linked vehicle license plate:{" "}
+                    <b className="text-foreground">{linkedVehicle?.licensePlate ?? "N/A"}</b>. Use
+                    wash credits at checkout.
                   </p>
 
                   {/* QR Barcode Section toggle */}
                   <div className="border-t border-border/50 pt-4 space-y-3">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setShowBarcode(!showBarcode)} 
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowBarcode(!showBarcode)}
                       className="h-10 w-full rounded-xl font-bold flex items-center justify-center gap-1.5 border-border/70 shadow-sm"
                     >
                       <QrCode className="h-4 w-4 text-primary" />
@@ -869,14 +1016,14 @@ function CustomerHome() {
                         {/* Styled mock Barcode lines */}
                         <div className="flex items-center gap-[3px] min-h-[50px] w-full max-w-[280px] bg-white p-2 rounded">
                           {bars.map((char, idx) => (
-                            <div 
-                              key={`${char}-${idx}`} 
+                            <div
+                              key={`${char}-${idx}`}
                               className={cn(
                                 "h-10 bg-slate-950 rounded-[1px] flex-1",
                                 idx % 3 === 0 && "h-11 w-1.5",
                                 idx % 4 === 0 && "w-[3px]",
-                                idx % 5 === 0 && "h-8"
-                              )} 
+                                idx % 5 === 0 && "h-8",
+                              )}
                             />
                           ))}
                         </div>
@@ -889,7 +1036,6 @@ function CustomerHome() {
                       </div>
                     )}
                   </div>
-
                 </div>
               ) : (
                 <div className="pt-2">
@@ -919,10 +1065,16 @@ function CustomerHome() {
               <div className="text-xs font-black uppercase tracking-wider text-primary">
                 {copy.washPlan}
               </div>
-              <h2 className="text-2xl font-black tracking-tight text-foreground">{copy.packagesTitle}</h2>
+              <h2 className="text-2xl font-black tracking-tight text-foreground">
+                {copy.packagesTitle}
+              </h2>
               <p className="text-sm font-medium text-muted-foreground">{copy.packagesText}</p>
             </div>
-            <Button asChild variant="outline" className="rounded-xl font-bold border-border/80 shadow-sm hover:bg-muted">
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-xl font-bold border-border/80 shadow-sm hover:bg-muted"
+            >
               <Link to="/customer/bookings">{copy.openBooking}</Link>
             </Button>
           </div>
@@ -939,10 +1091,12 @@ function CustomerHome() {
                       <Droplets className="h-5.5 w-5.5 transition-transform group-hover:scale-110 duration-300" />
                     </div>
                     {/* Visual recommended badge */}
-                    <span className={cn(
-                      "text-[9px] font-black uppercase tracking-widest border rounded-full px-2.5 py-1",
-                      getPackageTagClass(servicePackage.id)
-                    )}>
+                    <span
+                      className={cn(
+                        "text-[9px] font-black uppercase tracking-widest border rounded-full px-2.5 py-1",
+                        getPackageTagClass(servicePackage.id),
+                      )}
+                    >
                       {getPackageTag(servicePackage.id)}
                     </span>
                   </div>
@@ -962,7 +1116,10 @@ function CustomerHome() {
                     </span>
                     <ul className="space-y-1.5">
                       {servicePackage.highlights?.map((highlight) => (
-                        <li key={highlight} className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                        <li
+                          key={highlight}
+                          className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"
+                        >
                           <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                           <span className="truncate">{highlight}</span>
                         </li>
@@ -974,15 +1131,20 @@ function CustomerHome() {
                 <div className="mt-5 space-y-4 pt-4 border-t border-border/40">
                   <div className="flex items-end justify-between">
                     <div>
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Price</div>
+                      <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
+                        Price
+                      </div>
                       <div className="font-black text-primary text-base mt-1">
                         {servicePackage.price.toLocaleString()} <span className="text-xs">VND</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Duration</div>
+                      <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
+                        Duration
+                      </div>
                       <div className="text-xs font-bold text-foreground mt-1 flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-muted-foreground" /> {servicePackage.durationMinutes} {copy.minutes}
+                        <Clock className="h-3 w-3 text-muted-foreground" />{" "}
+                        {servicePackage.durationMinutes} {copy.minutes}
                       </div>
                     </div>
                   </div>
@@ -1005,7 +1167,9 @@ function CustomerHome() {
             <div className="text-xs font-black uppercase tracking-wider text-primary">
               {copy.comboPlans}
             </div>
-            <h2 className="text-2xl font-black tracking-tight text-foreground">{copy.upgradeTitle}</h2>
+            <h2 className="text-2xl font-black tracking-tight text-foreground">
+              {copy.upgradeTitle}
+            </h2>
             <p className="text-sm font-medium text-muted-foreground">{copy.upgradeText}</p>
           </div>
 
@@ -1023,9 +1187,10 @@ function CustomerHome() {
                   key={comboPackage.id}
                   className={cn(
                     "flex flex-col justify-between rounded-2xl border-border/40 bg-card/65 p-5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl",
-                    isActive && "border-primary/45 bg-primary/[0.03] shadow-md ring-1 ring-primary/20",
+                    isActive &&
+                      "border-primary/45 bg-primary/[0.03] shadow-md ring-1 ring-primary/20",
                     !isActive && !canUpgrade && "opacity-65 cursor-not-allowed",
-                    !isActive && canUpgrade && "hover:border-primary/25"
+                    !isActive && canUpgrade && "hover:border-primary/25",
                   )}
                 >
                   <div>
@@ -1040,7 +1205,9 @@ function CustomerHome() {
                       )}
                     </div>
 
-                    <h3 className="mt-3 text-lg font-black text-foreground leading-tight">{comboPackage.name}</h3>
+                    <h3 className="mt-3 text-lg font-black text-foreground leading-tight">
+                      {comboPackage.name}
+                    </h3>
                     <p className="mt-2 text-xs font-semibold leading-relaxed text-muted-foreground min-h-[50px]">
                       {comboPackage.description}
                     </p>
@@ -1049,13 +1216,17 @@ function CustomerHome() {
                   <div className="mt-5 pt-4 border-t border-border/40 space-y-4">
                     <div className="flex justify-between items-end">
                       <div>
-                        <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Price</div>
+                        <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
+                          Price
+                        </div>
                         <div className="font-black text-foreground text-sm mt-1">
                           {comboPackage.price.toLocaleString()} <span className="text-xs">VND</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Savings</div>
+                        <div className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
+                          Savings
+                        </div>
                         <div className="text-[10px] font-bold text-emerald-600 mt-1">
                           {comboPackage.savingsText}
                         </div>
@@ -1065,7 +1236,9 @@ function CustomerHome() {
                     {canUpgrade ? (
                       <div className="text-[10px] font-bold text-muted-foreground leading-none pb-1 flex flex-col gap-1">
                         <span>{copy.upgradeAmountLabel}</span>
-                        <span className="text-primary font-black text-xs">+{upgradeAmount.toLocaleString()} VND</span>
+                        <span className="text-primary font-black text-xs">
+                          +{upgradeAmount.toLocaleString()} VND
+                        </span>
                       </div>
                     ) : null}
 
@@ -1073,7 +1246,7 @@ function CustomerHome() {
                       className={cn(
                         "h-10 w-full rounded-xl font-bold flex items-center justify-center gap-1 shadow-md transition-all active:scale-[0.98]",
                         canUpgrade && "shadow-primary/5",
-                        !canUpgrade && "cursor-not-allowed"
+                        !canUpgrade && "cursor-not-allowed",
                       )}
                       variant={canUpgrade ? "default" : "secondary"}
                       disabled={!canUpgrade}
@@ -1096,7 +1269,6 @@ function CustomerHome() {
             })}
           </div>
         </section>
-
       </div>
     </div>
   );

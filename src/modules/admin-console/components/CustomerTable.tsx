@@ -21,6 +21,7 @@ export const TIER_TONE: Record<CustomerTier, string> = {
   SILVER: "bg-slate-400/10 text-slate-700 border-slate-400/30 dark:text-slate-300",
   GOLD: "bg-amber-400/10 text-amber-700 border-amber-400/30 dark:text-amber-300",
   DIAMOND: "bg-sky-400/10 text-sky-700 border-sky-400/30 dark:text-sky-300",
+  "N/A": "bg-muted text-muted-foreground border-border",
 };
 
 export const ROLE_TONE: Record<CustomerRole, string> = {
@@ -45,7 +46,7 @@ export function CustomerTable({ rows, onOpenDetail }: Props) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Customer name</TableHead>
+            <TableHead>Account name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Tier</TableHead>
@@ -60,7 +61,7 @@ export function CustomerTable({ rows, onOpenDetail }: Props) {
           {rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={9} className="py-10 text-center text-sm text-muted-foreground">
-                No customers match the current filters.
+                No accounts match the current filters.
               </TableCell>
             </TableRow>
           ) : (

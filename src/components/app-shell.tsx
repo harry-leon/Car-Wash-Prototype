@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -19,7 +20,7 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getHomePath } from "@/lib/auth";
 import { type Role, useCarwashStore } from "@/lib/carwash-store";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ import {
   ThemeSwitcher,
   useLanguage,
 } from "@/modules/public-auth/components/LanguageSwitcher";
+import { SupportChatWidget } from "@/components/support-chat-widget";
 
 type NavItem = {
   to: string;
@@ -114,7 +116,7 @@ const ADMIN_NAV: NavGroup[] = [
         exact: true,
       },
       { to: "/admin/bookings", label: "Bookings", labelVi: "Lịch đặt", icon: ClipboardList },
-      { to: "/admin/customers", label: "Customers", labelVi: "Khách hàng", icon: Users },
+      { to: "/admin/customers", label: "Accounts", labelVi: "Tài khoản", icon: Users },
       { to: "/admin/packages", label: "Wash Packages", labelVi: "Gói rửa xe", icon: Droplets },
       { to: "/admin/loyalty", label: "Loyalty", labelVi: "Tích điểm", icon: Gift },
       { to: "/admin/promotions", label: "Promotions", labelVi: "Khuyến mãi", icon: Sparkles },
@@ -130,6 +132,17 @@ function navForRole(role: Role) {
   return CUSTOMER_NAV;
 }
 
+function formatNotificationTime(timestamp: Date) {
+  const diffMs = Date.now() - timestamp.getTime();
+  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d`;
+  return timestamp.toLocaleDateString("vi-VN");
+}
+
 export function AppShell({ role }: { role: Role }) {
   const { lang, t } = useLanguage();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -137,6 +150,8 @@ export function AppShell({ role }: { role: Role }) {
   const { loginAs, logout } = useCarwashStore();
   const { setLanguage: setCustomerBookingLanguage } = useCustomerBooking();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [customerNotificationsOpen, setCustomerNotificationsOpen] = useState(false);
+  const customerNotificationsRef = useRef<HTMLDivElement | null>(null);
   const navGroups = navForRole(role);
 
   useEffect(() => {
@@ -152,6 +167,12 @@ export function AppShell({ role }: { role: Role }) {
 
   const store = useCarwashStore();
   const currentCustomer = store.customers.find((c) => c.id === store.currentCustomerId);
+  const customerNotifications = useMemo(() => {
+    if (role !== "Customer" || !store.currentCustomerId) return [];
+    return store.notifications
+      .filter((notification) => notification.customerId === store.currentCustomerId)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [role, store.currentCustomerId, store.notifications]);
   const profileName =
     role === "Customer" && currentCustomer ? currentCustomer.name : `${role} User`;
   const profileTag =
@@ -210,6 +231,21 @@ export function AppShell({ role }: { role: Role }) {
     headerSubtitle = "System overview and configurations";
     headerSubtitleVi = "Tổng quan hệ thống và cấu hình";
   }
+
+  useEffect(() => {
+    if (!customerNotificationsOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!customerNotificationsRef.current?.contains(event.target as Node)) {
+        setCustomerNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [customerNotificationsOpen]);
+
+  useEffect(() => {
+    setCustomerNotificationsOpen(false);
+  }, [pathname, role]);
 
   return (
     <div className="flex min-h-screen bg-background text-foreground relative selection:bg-primary/30">
@@ -413,23 +449,94 @@ export function AppShell({ role }: { role: Role }) {
               </div>
 
               {role === "Customer" && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate({
-                      to: "/customer/bookings",
-                    })
-                  }
-                  className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  title={t("Booking reminders", "Nhắc lịch đặt")}
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff3b30] text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
-                    2
-                  </span>
-                </button>
-              )}
+                <div className="relative" ref={customerNotificationsRef}>
+                  <button
+                    type="button"
+                    onClick={() => setCustomerNotificationsOpen((open) => !open)}
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+                    title={t("Customer notifications", "Th?ng b?o kh?ch h?ng")}
+                    aria-label={t("Customer notifications", "Th?ng b?o kh?ch h?ng")}
+                    aria-expanded={customerNotificationsOpen}
+                  >
+                    <Bell className="h-5 w-5" />
+                    {customerNotifications.length > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+                        {customerNotifications.length > 9 ? "9+" : customerNotifications.length}
+                      </span>
+                    )}
+                  </button>
 
+                  {customerNotificationsOpen && (
+                    <div className="absolute right-0 top-12 z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border/60 bg-background/95 shadow-2xl backdrop-blur-xl">
+                      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                        <div>
+                          <div className="text-sm font-bold text-foreground">
+                            {t("Notifications", "Th?ng b?o")}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {customerNotifications.length} {t("items", "m?c")}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomerNotificationsOpen(false);
+                            navigate({ to: "/customer/history" });
+                          }}
+                          className="rounded-lg px-2.5 py-1 text-xs font-semibold text-primary transition hover:bg-primary/10"
+                        >
+                          {t("View history", "Xem l?ch s?")}
+                        </button>
+                      </div>
+
+                      {customerNotifications.length === 0 ? (
+                        <div className="px-4 py-8 text-center">
+                          <div className="text-sm font-semibold text-foreground">
+                            {t("No notifications yet", "Ch?a c? th?ng b?o")}
+                          </div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {t(
+                              "Booking updates and refund messages will appear here.",
+                              "C?p nh?t l?ch h?n v? ho?n ti?n s? hi?n ? ??y.",
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="max-h-[420px] overflow-y-auto">
+                          {customerNotifications.slice(0, 8).map((notification) => (
+                            <button
+                              key={notification.id}
+                              type="button"
+                              onClick={() => {
+                                setCustomerNotificationsOpen(false);
+                                navigate({ to: "/customer/history" });
+                              }}
+                              className="flex w-full items-start gap-3 border-b border-border/40 px-4 py-3 text-left transition hover:bg-accent/40 last:border-b-0"
+                            >
+                              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Bell className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="text-sm font-semibold text-foreground">
+                                    {notification.title}
+                                  </div>
+                                  <div className="shrink-0 text-[11px] text-muted-foreground">
+                                    {formatNotificationTime(notification.timestamp)}
+                                  </div>
+                                </div>
+                                <div className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                                  {notification.message}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="h-10 w-px bg-border/60 hidden sm:block" />
 
               <button
@@ -468,6 +575,7 @@ export function AppShell({ role }: { role: Role }) {
           <Outlet />
         </main>
       </div>
+      <SupportChatWidget key={role} role={role} />
     </div>
   );
 }

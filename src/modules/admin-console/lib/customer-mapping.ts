@@ -1,4 +1,12 @@
-import type { Booking, CustomerRecord, LedgerEntry, Tier, Vehicle } from "@/lib/carwash-store";
+import type {
+  AuthAccount,
+  Booking,
+  CustomerRecord,
+  LedgerEntry,
+  StaffRecord,
+  Tier,
+  Vehicle,
+} from "@/lib/carwash-store";
 import type {
   CustomerBookingItem,
   CustomerRow,
@@ -66,7 +74,56 @@ export function storeCustomersToRows(
     role: "CUSTOMER",
     status: statusToDisplay(customer.status),
     joinedAt: customer.joinedAt,
+    accountType: "CUSTOMER",
   }));
+}
+
+export function storeAccountsToRows(
+  customers: CustomerRecord[],
+  staffMembers: StaffRecord[],
+  authAccounts: AuthAccount[],
+  ledger: LedgerEntry[],
+): CustomerRow[] {
+  const customerRows = storeCustomersToRows(customers, ledger);
+
+  const staffRows = staffMembers.map((staff) => {
+    const authAccount = authAccounts.find(
+      (account) =>
+        account.staffId === staff.id ||
+        (account.role === staff.role && account.staffId === staff.id),
+    );
+    return {
+      id: staff.id,
+      name: staff.name,
+      email: authAccount?.emailOrPhone.includes("@") ? authAccount.emailOrPhone : "N/A",
+      phone: authAccount?.emailOrPhone.includes("@") ? "N/A" : (authAccount?.emailOrPhone ?? "N/A"),
+      tier: "N/A" as const,
+      availablePoints: 0,
+      lifetimePoints: 0,
+      role: staff.role === "Admin" ? "ADMIN" : "STAFF",
+      status: staff.status === "Active" ? "ACTIVE" : "SUSPENDED",
+      joinedAt: "System account",
+      accountType: staff.role === "Admin" ? "ADMIN" : "STAFF",
+    };
+  });
+
+  const adminRows = authAccounts
+    .filter((account) => account.role === "Admin")
+    .map((account) => ({
+      id: account.id,
+      name: "Admin User",
+      email: account.emailOrPhone.includes("@") ? account.emailOrPhone : "N/A",
+      phone: account.emailOrPhone.includes("@") ? "N/A" : account.emailOrPhone,
+      tier: "N/A" as const,
+      availablePoints: 0,
+      lifetimePoints: 0,
+      role: "ADMIN" as const,
+      status: "ACTIVE" as const,
+      joinedAt: "System account",
+      accountType: "ADMIN" as const,
+    }));
+
+  return [...customerRows, ...staffRows, ...adminRows];
 }
 
 export function vehicleToDisplay(vehicle: Vehicle): CustomerVehicle {

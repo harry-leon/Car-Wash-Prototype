@@ -1,175 +1,78 @@
 import * as React from "react";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { AdminBookingsFilters, type BookingsFilterState } from "../components/AdminBookingsFilters";
-import { AdminBookingsTable } from "../components/AdminBookingsTable";
-import { BookingDetailDrawer } from "../components/BookingDetailDrawer";
-import type { AdminBookingRow, BookingStatus } from "../types/dashboard.types";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  type Booking as StoreBooking,
-  type BookingStatus as StoreBookingStatus,
-  useCarwashStore,
-} from "@/lib/carwash-store";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useCarwashStore } from "@/lib/carwash-store";
 
-const INITIAL_FILTERS: BookingsFilterState = {
-  status: "ALL",
-  date: "",
-  customerName: "",
-};
-const PAGE_SIZE = 10;
-
-const STORE_TO_DASHBOARD_STATUS: Record<StoreBookingStatus, BookingStatus> = {
-  Pending: "CONFIRMED",
-  Confirmed: "CONFIRMED",
-  "Checked-in": "CHECKED_IN",
-  Completed: "COMPLETED",
-  Cancelled: "CANCELLED",
-  "No-show": "NO_SHOW",
-};
-
-const DASHBOARD_TO_STORE_STATUS: Record<BookingStatus, StoreBookingStatus | null> = {
-  CONFIRMED: "Confirmed",
-  CHECKED_IN: "Checked-in",
-  IN_PROGRESS: null,
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  NO_SHOW: "No-show",
-};
-
-function toAdminRow(booking: StoreBooking): AdminBookingRow {
-  const status: BookingStatus =
-    booking.washStatus === "In Progress" && booking.status === "Checked-in"
-      ? "IN_PROGRESS"
-      : STORE_TO_DASHBOARD_STATUS[booking.status];
-
-  return {
-    id: booking.id,
-    code: booking.id,
-    customerName: booking.customerName ?? "—",
-    vehiclePlate: booking.vehiclePlate,
-    servicePackage: booking.services.join(", "),
-    scheduledTime: booking.scheduledAt,
-    status,
-  };
-}
+const PAGE_SIZE = 8;
 
 export function AdminBookingsPage() {
-  const {
-    bookings,
-    updateBookingStatus,
-    washSessions,
-    staffMembers,
-    assignStaffToSession,
-    hydrated,
-  } = useCarwashStore();
-  const [filters, setFilters] = React.useState<BookingsFilterState>(INITIAL_FILTERS);
-  const [pageIndex, setPageIndex] = React.useState(0);
-  const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null);
+  const { bookings, cancelBookingWithRefund, markRefundCompleted } = useCarwashStore();
+  const [page, setPage] = React.useState(1);
+  const [cancelTarget, setCancelTarget] = React.useState<string | null>(null);
+  const [reason, setReason] = React.useState("");
+  const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const rows = React.useMemo(
     () =>
-      [...bookings]
-        .sort(
-          (a, b) =>
-            new Date(`${b.dateISO} ${b.timeSlot}`).getTime() -
-            new Date(`${a.dateISO} ${a.timeSlot}`).getTime(),
-        )
-        .map((booking) => {
-          const session = washSessions.find((item) => item.bookingId === booking.id);
-          const status: BookingStatus =
-            booking.washStatus === "In Progress" && booking.status === "Checked-in"
-              ? "IN_PROGRESS"
-              : STORE_TO_DASHBOARD_STATUS[booking.status];
-
-          return {
-            id: booking.id,
-            code: booking.id,
-            customerName: booking.customerName ?? "—",
-            vehiclePlate: booking.vehiclePlate,
-            servicePackage: booking.services.join(", "),
-            scheduledTime: booking.scheduledAt,
-            status,
-            staffName: session?.staffName ?? "Not assigned",
-            assignedStaffId: session?.staffId,
-            checkInTime: booking.checkInAt
-              ? new Date(booking.checkInAt).toLocaleString()
-              : "Not checked in",
-          };
-        }),
-    [bookings, washSessions],
+      [...bookings].sort(
+        (a, b) =>
+          new Date(`${b.dateISO} ${b.timeSlot}`).getTime() -
+          new Date(`${a.dateISO} ${a.timeSlot}`).getTime(),
+      ),
+    [bookings],
   );
 
-  const filtered = React.useMemo(() => {
-    const filterDate = filters.date;
-    return rows.filter((row) => {
-      if (filters.status !== "ALL" && row.status !== filters.status) return false;
-      if (filterDate) {
-        const original = bookings.find((booking) => booking.id === row.id);
-        if (!original || original.dateISO !== filterDate) return false;
-      }
-      if (
-        filters.customerName &&
-        !row.customerName.toLowerCase().includes(filters.customerName.toLowerCase())
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [rows, filters, bookings]);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const bookingToCancel = rows.find((booking) => booking.id === cancelTarget) ?? null;
 
-  React.useEffect(() => {
-    setPageIndex(0);
-  }, [filters]);
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  React.useEffect(() => {
-    if (pageIndex >= pageCount) {
-      setPageIndex(pageCount - 1);
-    }
-  }, [pageCount, pageIndex]);
-
-  const pageRows = React.useMemo(
-    () => filtered.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE),
-    [filtered, pageIndex],
-  );
-
-  const selectedBooking = React.useMemo(
-    () => bookings.find((booking) => booking.id === selectedBookingId) ?? null,
-    [bookings, selectedBookingId],
-  );
-
-  const selectedSession = React.useMemo(
-    () => washSessions.find((session) => session.bookingId === selectedBookingId) ?? null,
-    [washSessions, selectedBookingId],
-  );
-
-  const handleAssignStaff = (staffId: string) => {
-    if (!selectedSession) {
-      toast.error("No active session available to assign staff.");
-      return;
-    }
+  const handleForceCancel = async () => {
+    if (!bookingToCancel) return;
     try {
-      assignStaffToSession(selectedSession.id, staffId);
-      toast.success("Staff assignment updated.");
+      setBusyId(`cancel:${bookingToCancel.id}`);
+      await delay();
+      const result = cancelBookingWithRefund(bookingToCancel.id, "Admin", reason);
+      toast.success(`Force cancelled. Refund ${formatMoney(result.refundAmount)}.`);
+      setCancelTarget(null);
+      setReason("");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to assign staff.");
+      toast.error(error instanceof Error ? error.message : "Unable to force cancel booking.");
+    } finally {
+      setBusyId(null);
     }
   };
 
-  const handleChangeStatus = (id: string, next: BookingStatus) => {
-    const storeStatus = DASHBOARD_TO_STORE_STATUS[next];
-    if (!storeStatus) {
-      toast.info("In-progress is set automatically when a wash starts.");
-      return;
-    }
+  const handleRefundComplete = async (bookingId: string) => {
     try {
-      updateBookingStatus(id, storeStatus);
-      toast.success(`Updated ${id} → ${next.replace("_", " ")}`);
+      setBusyId(`refund:${bookingId}`);
+      await delay();
+      const amount = markRefundCompleted(bookingId);
+      toast.success(`Refund completed for ${formatMoney(amount)}.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update booking.");
+      toast.error(error instanceof Error ? error.message : "Unable to complete refund.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -178,74 +81,226 @@ export function AdminBookingsPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur-md">
-            <ClipboardList className="h-3.5 w-3.5" /> Bookings
+            <ClipboardList className="h-3.5 w-3.5" /> Admin bookings
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            All bookings
+            Cancellation and refund control
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
-            Inspect every booking in the system, filter by status/date/customer and override status
-            when needed. List stays in sync with the live store.
+            Force cancel bookings, inspect who cancelled them, and complete pending wallet refunds.
           </p>
         </div>
 
-        <Card className="border-border/50 bg-card/60 p-4 shadow-lg backdrop-blur-xl md:p-6">
-          <AdminBookingsFilters value={filters} onChange={setFilters} />
-          <div className="mt-3 flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing <strong className="text-foreground">{pageRows.length}</strong> of{" "}
-              {filtered.length} bookings
-            </span>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/70 px-3 py-2 text-[11px] font-semibold text-muted-foreground">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={pageIndex === 0}
-                onClick={() => setPageIndex((value) => Math.max(0, value - 1))}
-                className="h-8 px-3"
-              >
-                Prev
-              </Button>
-              <span>
-                Page {pageIndex + 1} / {pageCount}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={pageIndex >= pageCount - 1}
-                onClick={() => setPageIndex((value) => Math.min(pageCount - 1, value + 1))}
-                className="h-8 px-3"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <Card className="rounded-xl shadow-md">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Booking</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Schedule</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Cancelled by</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Refund</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageRows.map((booking) => {
+                  const canCancel = booking.status === "Pending" || booking.status === "Confirmed";
+                  return (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <div className="font-semibold">{booking.id}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {booking.services.join(", ")}
+                        </div>
+                      </TableCell>
+                      <TableCell>{booking.customerName ?? "—"}</TableCell>
+                      <TableCell>
+                        {booking.dateISO} {booking.timeSlot}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={booking.status} />
+                      </TableCell>
+                      <TableCell>{booking.cancelledBy ?? "—"}</TableCell>
+                      <TableCell className="max-w-[220px] truncate">
+                        {booking.cancelReason ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div>{formatMoney(booking.refundAmount ?? 0)}</div>
+                          <RefundBadge status={booking.refundStatus ?? "NONE"} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={!canCancel}
+                            onClick={() => setCancelTarget(booking.id)}
+                          >
+                            Force Cancel
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              booking.refundStatus !== "PENDING" ||
+                              busyId === `refund:${booking.id}`
+                            }
+                            onClick={() => handleRefundComplete(booking.id)}
+                          >
+                            {busyId === `refund:${booking.id}` ? (
+                              <LoaderCircle className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Mark Refund Complete"
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
 
-        {!hydrated ? (
-          <Card className="border-border/50 bg-card/60 p-10 text-center text-sm text-muted-foreground backdrop-blur-xl">
-            Loading bookings…
-          </Card>
-        ) : (
-          <>
-            <AdminBookingsTable
-              rows={pageRows}
-              onChangeStatus={handleChangeStatus}
-              onRowClick={(id) => setSelectedBookingId(id)}
-            />
-            <BookingDetailDrawer
-              open={Boolean(selectedBooking)}
-              onOpenChange={(open) => {
-                if (!open) setSelectedBookingId(null);
-              }}
-              booking={selectedBooking}
-              session={selectedSession ?? undefined}
-              staffMembers={staffMembers}
-              onAssignStaff={handleAssignStaff}
-            />
-          </>
-        )}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/50 px-4 py-3 text-xs text-muted-foreground">
+              <span>
+                Showing{" "}
+                <strong className="text-foreground">
+                  {rows.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1}
+                </strong>
+                -
+                <strong className="text-foreground">
+                  {Math.min(rows.length, safePage * PAGE_SIZE)}
+                </strong>{" "}
+                of {rows.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                >
+                  Prev
+                </Button>
+                <span className="font-semibold text-foreground">
+                  {safePage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      <Dialog
+        open={Boolean(bookingToCancel)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelTarget(null);
+            setReason("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Force cancel booking</DialogTitle>
+            <DialogDescription>
+              Admin cancellation also requires a reason of at least 10 characters.
+            </DialogDescription>
+          </DialogHeader>
+          {bookingToCancel ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border/60 bg-background/70 p-4 text-sm">
+                <div className="font-semibold text-foreground">{bookingToCancel.id}</div>
+                <div className="mt-1 text-muted-foreground">{bookingToCancel.customerName}</div>
+                <div className="mt-1 text-muted-foreground">
+                  Refund preview:{" "}
+                  {formatMoney(
+                    Math.round(bookingToCancel.totalPrice * refundRate(bookingToCancel)),
+                  )}
+                </div>
+              </div>
+              <Textarea
+                rows={5}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder="Explain why this booking must be force cancelled."
+              />
+              <div className="text-right text-xs text-muted-foreground">
+                {reason.trim().length}/10
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelTarget(null)}>
+              Back
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={
+                reason.trim().length < 10 ||
+                !bookingToCancel ||
+                busyId === `cancel:${bookingToCancel?.id}`
+              }
+              onClick={handleForceCancel}
+            >
+              {busyId === `cancel:${bookingToCancel?.id}` ? "Cancelling..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const tone =
+    status === "Completed"
+      ? "bg-emerald-100 text-emerald-700"
+      : status === "Cancelled"
+        ? "bg-rose-100 text-rose-700"
+        : status === "Checked-in"
+          ? "bg-amber-100 text-amber-700"
+          : "bg-blue-100 text-blue-700";
+  return <Badge className={tone}>{status}</Badge>;
+}
+
+function RefundBadge({ status }: { status: "NONE" | "PENDING" | "COMPLETED" }) {
+  if (status === "COMPLETED")
+    return <Badge className="bg-emerald-100 text-emerald-700">Completed</Badge>;
+  if (status === "PENDING") return <Badge className="bg-amber-100 text-amber-700">Pending</Badge>;
+  return <Badge className="bg-slate-100 text-slate-600">None</Badge>;
+}
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function refundRate(booking: { dateISO: string; timeSlot: string }) {
+  const hoursBefore =
+    (new Date(`${booking.dateISO} ${booking.timeSlot}`).getTime() - Date.now()) / 3600000;
+  if (hoursBefore > 24) return 1;
+  if (hoursBefore >= 2) return 0.5;
+  return 0;
+}
+
+function delay() {
+  return new Promise((resolve) => setTimeout(resolve, 200));
 }

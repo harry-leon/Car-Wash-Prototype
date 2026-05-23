@@ -1,9 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  assignStaffToConfirmedBooking,
   getAvailableStaff,
   getStaffAvailability,
+  NO_AVAILABLE_STAFF_REASON,
   requireAvailableStaff,
+  StaffAssignmentError,
 } from "./staff-availability.ts";
 
 const staff = [
@@ -46,5 +49,55 @@ test("blocks check-in when every active employee is busy", () => {
         { id: "ws2", staffId: "s3", status: "Ready for Checkout" },
       ]),
     /No available staff/,
+  );
+});
+
+test("assigns the eligible staff member with the lowest wash count", () => {
+  const result = assignStaffToConfirmedBooking("B100", [
+    { staffId: "s1", name: "A", status: "active", dailyWashCount: 3, availability: true },
+    { staffId: "s2", name: "B", status: "active", dailyWashCount: 2, availability: true },
+    { staffId: "s3", name: "C", status: "active", dailyWashCount: 1, availability: true },
+  ]);
+
+  assert.deepEqual(result, {
+    assignedStaffId: "s3",
+    assignedStaffName: "C",
+    washCountAtAssignment: 1,
+    selectionMethod: "lowest_count",
+    eligibleStaffCount: 3,
+    reason: "SUCCESS",
+  });
+});
+
+test("randomly breaks ties among the lowest-count eligible staff", () => {
+  const result = assignStaffToConfirmedBooking(
+    "B101",
+    [
+      { staffId: "s1", name: "A", status: "active", dailyWashCount: 3, availability: true },
+      { staffId: "s2", name: "B", status: "active", dailyWashCount: 2, availability: true },
+      { staffId: "s3", name: "C", status: "active", dailyWashCount: 2, availability: true },
+    ],
+    () => 0.75,
+  );
+
+  assert.deepEqual(result, {
+    assignedStaffId: "s3",
+    assignedStaffName: "C",
+    washCountAtAssignment: 2,
+    selectionMethod: "random_tiebreak",
+    eligibleStaffCount: 3,
+    reason: "SUCCESS",
+  });
+});
+
+test("throws NO_AVAILABLE_STAFF when no active available staff exists", () => {
+  assert.throws(
+    () =>
+      assignStaffToConfirmedBooking("B102", [
+        { staffId: "s1", name: "A", status: "busy", dailyWashCount: 2, availability: false },
+        { staffId: "s2", name: "B", status: "inactive", dailyWashCount: 0, availability: true },
+      ]),
+    (error: unknown) =>
+      error instanceof StaffAssignmentError && error.reason === NO_AVAILABLE_STAFF_REASON,
   );
 });

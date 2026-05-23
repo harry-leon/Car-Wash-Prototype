@@ -1,273 +1,285 @@
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, CheckCircle2, Clock3, ClipboardList, Play } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2, Clock3, ClipboardList, LoaderCircle, TimerReset, Truck } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/modules/public-auth/components/LanguageSwitcher";
-import { BookingStatusBadge } from "../components/BookingStatusBadge";
-import { OperationsFilters } from "../components/OperationsFilters";
-import { OperationsTable } from "../components/OperationsTable";
-import {
-  filterOperationBookings,
-  getOperationHourOptionsByLocale,
-  useOperationBookings,
-  useOperationStaffOptions,
-} from "../mock/operations.mock";
-import type { OperationFilters } from "../types/operations.types";
-import styles from "../styles/operations-board.module.css";
-
-const defaultFilters: OperationFilters = {
-  status: "ALL",
-  time: "ALL",
-  hour: "ALL",
-  staffId: "ALL",
-};
-
-const PAGE_SIZE = 5;
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCarwashStore } from "@/lib/carwash-store";
 
 export function OperationsBoardPage() {
-  const bookings = useOperationBookings();
-  const staffOptions = useOperationStaffOptions();
-  const navigate = useNavigate();
-  const { lang, t } = useLanguage();
-  const [filters, setFilters] = React.useState<OperationFilters>(defaultFilters);
-  const [page, setPage] = React.useState(1);
-  const locale = lang === "vi" ? "vi-VN" : "en-US";
+  const { bookings, currentStaffId, staffMembers, completeOperationalWash, confirmVehiclePickup } =
+    useCarwashStore();
+  const [busyAction, setBusyAction] = React.useState<string | null>(null);
+  const [, forceTick] = React.useState(0);
 
   React.useEffect(() => {
-    setPage(1);
-  }, [filters]);
+    const timer = window.setInterval(() => forceTick((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
-  const visibleBookings = React.useMemo(
-    () => filterOperationBookings(bookings, filters),
-    [bookings, filters],
+  const currentStaff = staffMembers.find((staff) => staff.id === currentStaffId) ?? staffMembers[0];
+  const myBookings = React.useMemo(
+    () =>
+      bookings.filter(
+        (booking) =>
+          booking.assignedStaffId === currentStaff.id ||
+          (booking.status === "Checked-in" && !booking.assignedStaffId),
+      ),
+    [bookings, currentStaff.id],
   );
 
-  const metrics = React.useMemo(
-    () => ({
-      total: bookings.length,
-      confirmed: bookings.filter((booking) => booking.status === "CONFIRMED").length,
-      checkedIn: bookings.filter((booking) => booking.status === "CHECKED_IN").length,
-      inProgress: bookings.filter((booking) => booking.status === "IN_PROGRESS").length,
-      completed: bookings.filter((booking) => booking.status === "COMPLETED").length,
-    }),
-    [bookings],
+  const inProgress = myBookings.filter((booking) => booking.washStatus === "In Progress");
+  const readyForPickup = myBookings.filter(
+    (booking) => booking.status === "Completed" && booking.completedAt && !booking.pickedUpAt,
   );
 
-  const hourOptions = React.useMemo(
-    () => getOperationHourOptionsByLocale(bookings, locale),
-    [bookings, locale],
-  );
-  const totalPages = Math.max(1, Math.ceil(visibleBookings.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pagedBookings = React.useMemo(
-    () => visibleBookings.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [safePage, visibleBookings],
-  );
-
-  const openBooking = (id: string) => {
-    navigate({ to: "/staff/checkin/$id", params: { id } });
+  const runAction = async (bookingId: string, action: "complete" | "pickup") => {
+    try {
+      setBusyAction(`${action}:${bookingId}`);
+      await delay();
+      if (action === "complete") {
+        const result = completeOperationalWash(bookingId);
+        toast.success(`${result.bookingCode} wash completed.`);
+      } else {
+        const result = confirmVehiclePickup(bookingId);
+        toast.success(`${result.bookingCode} picked up after ${result.waitMinutes} min.`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Staff action failed.");
+    } finally {
+      setBusyAction(null);
+    }
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <section className={`${styles.boardHeader} p-5 md:p-6`}>
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div>
-              <div className={styles.kicker}>
-                <ClipboardList />
-                {t("Staff Operations", "Vận hành nhân viên")}
-              </div>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                {t("Today's booking queue", "Hàng đợi booking hôm nay")}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                {t(
-                  "Check in arrivals and move vehicles through the wash workflow.",
-                  "Check-in khách đến và đưa xe qua từng bước trong quy trình rửa.",
-                )}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <BookingStatusBadge status="CONFIRMED" />
-              <BookingStatusBadge status="CHECKED_IN" />
-              <BookingStatusBadge status="IN_PROGRESS" />
-              <BookingStatusBadge status="COMPLETED" />
-            </div>
+    <div className="p-4 md:p-8 lg:p-10">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur-md">
+            <ClipboardList className="h-3.5 w-3.5" /> Staff operations
           </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Wash completion and pickup tracking
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground md:text-base">
+            Complete active washes, confirm vehicle pickup, and watch live elapsed wait timers in
+            one place.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard label="Assigned staff" value={currentStaff.name} />
+          <MetricCard label="In progress" value={`${inProgress.length}`} />
+          <MetricCard label="Waiting pickup" value={`${readyForPickup.length}`} />
+        </div>
+
+        <section className="space-y-4">
+          <SectionTitle
+            title="Active washes"
+            description="Vehicles currently being washed by staff."
+          />
+          {inProgress.length === 0 ? (
+            <EmptyState message="No in-progress washes right now." />
+          ) : (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {inProgress.map((booking) => (
+                <Card key={booking.id} className="rounded-xl shadow-md">
+                  <CardContent className="space-y-4 p-6">
+                    <BookingHeader booking={booking} />
+                    <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
+                      <InfoRow label="Customer" value={booking.customerName ?? "—"} />
+                      <InfoRow label="Service" value={booking.services.join(", ")} />
+                      <InfoRow
+                        label="Started"
+                        value={
+                          booking.checkInAt ? new Date(booking.checkInAt).toLocaleString() : "—"
+                        }
+                      />
+                      <InfoRow label="Paid" value={formatMoney(booking.totalPrice)} />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => runAction(booking.id, "complete")}
+                      disabled={busyAction === `complete:${booking.id}`}
+                    >
+                      {busyAction === `complete:${booking.id}` ? (
+                        <>
+                          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                          Hoàn tất rửa xe
+                        </>
+                      ) : (
+                        "Hoàn tất rửa xe"
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
 
-        <div className={styles.metricStrip}>
-          <MetricCard
-            label={t("Today", "Hôm nay")}
-            value={metrics.total}
-            icon={Clock3}
-            tone="today"
+        <section className="space-y-4">
+          <SectionTitle
+            title="Waiting for pickup"
+            description="Completed washes with a live elapsed timer until the customer collects the vehicle."
           />
-          <MetricCard
-            label={t("Confirmed", "Đã xác nhận")}
-            value={metrics.confirmed}
-            icon={ClipboardList}
-            tone="confirmed"
-          />
-          <MetricCard
-            label={t("Checked in", "Đã check-in")}
-            value={metrics.checkedIn}
-            icon={CheckCircle2}
-            tone="checkedIn"
-          />
-          <MetricCard
-            label={t("In progress", "Đang rửa")}
-            value={metrics.inProgress}
-            icon={Play}
-            tone="inProgress"
-          />
-          <MetricCard
-            label={t("Completed", "Hoàn tất")}
-            value={metrics.completed}
-            icon={CheckCircle2}
-            tone="completed"
-          />
-        </div>
+          {readyForPickup.length === 0 ? (
+            <EmptyState message="No completed washes are waiting for pickup." />
+          ) : (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {readyForPickup.map((booking) => {
+                const waitMinutes = booking.completedAt
+                  ? Math.max(
+                      0,
+                      Math.round((Date.now() - new Date(booking.completedAt).getTime()) / 60000),
+                    )
+                  : 0;
+                const tone =
+                  waitMinutes > 30
+                    ? "border-rose-200 bg-rose-50"
+                    : waitMinutes >= 15
+                      ? "border-amber-200 bg-amber-50"
+                      : "border-emerald-200 bg-emerald-50";
 
-        <Card className={styles.filterCard}>
-          <CardContent className="p-5">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-base font-bold text-foreground">
-                    {t("Queue filters", "Bộ lọc hàng đợi")}
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {t(
-                      `Showing ${visibleBookings.length} of ${bookings.length} bookings.`,
-                      `Hiển thị ${visibleBookings.length} / ${bookings.length} booking.`,
-                    )}
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFilters(defaultFilters)}
-                  className="h-9 rounded-lg font-bold"
-                >
-                  {t("Reset", "Đặt lại")}
-                </Button>
-              </div>
-              <OperationsFilters
-                filters={filters}
-                hourOptions={hourOptions}
-                staffOptions={staffOptions}
-                onChange={setFilters}
-              />
+                return (
+                  <Card key={booking.id} className="rounded-xl shadow-md">
+                    <CardContent className="space-y-4 p-6">
+                      <BookingHeader booking={booking} />
+                      <div className={`rounded-xl border p-4 ${tone}`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                              Live waiting timer
+                            </div>
+                            <div className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+                              {waitMinutes} min
+                            </div>
+                          </div>
+                          <ClockToneBadge waitMinutes={waitMinutes} />
+                        </div>
+                      </div>
+                      <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
+                        <InfoRow
+                          label="Wash done at"
+                          value={new Date(booking.completedAt!).toLocaleString()}
+                        />
+                        <InfoRow
+                          label="Reminder sent"
+                          value={booking.reminderSent ? "Yes" : "No"}
+                        />
+                        <InfoRow label="Vehicle" value={booking.vehiclePlate} />
+                        <InfoRow label="Customer" value={booking.customerName ?? "—"} />
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => runAction(booking.id, "pickup")}
+                        disabled={busyAction === `pickup:${booking.id}`}
+                      >
+                        {busyAction === `pickup:${booking.id}` ? (
+                          <>
+                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                            Xác nhận lấy xe
+                          </>
+                        ) : (
+                          "Xác nhận lấy xe"
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          </CardContent>
-        </Card>
-
-        <OperationsTable bookings={pagedBookings} onOpenBooking={openBooking} />
-        <PagerBar
-          lang={lang}
-          page={safePage}
-          totalPages={totalPages}
-          totalRows={visibleBookings.length}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
-          onPrev={() => setPage((current) => Math.max(1, current - 1))}
-          onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
-        />
+          )}
+        </section>
       </div>
     </div>
   );
 }
 
-function PagerBar({
-  lang,
-  page,
-  totalPages,
-  totalRows,
-  pageSize,
-  onPageChange,
-  onPrev,
-  onNext,
-}: {
-  lang: "en" | "vi";
-  page: number;
-  totalPages: number;
-  totalRows: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
-  const start = totalRows === 0 ? 0 : (page - 1) * pageSize + 1;
-  const end = Math.min(totalRows, page * pageSize);
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
-  const isVi = lang === "vi";
-
+function SectionTitle({ title, description }: { title: string; description: string }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card/85 px-4 py-3 shadow-md backdrop-blur-xl dark:bg-card/95">
-      <span className="text-xs text-muted-foreground">
-        {isVi ? "Hiển thị " : "Showing "}
-        <strong className="text-foreground">{start}</strong>-
-        <strong className="text-foreground">{end}</strong>
-        {isVi ? ` trên ${totalRows} booking` : ` of ${totalRows} bookings`}
-      </span>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onPrev} disabled={page <= 1}>
-          <ChevronLeft className="mr-1 h-3.5 w-3.5" />
-          {isVi ? "Trước" : "Prev"}
-        </Button>
-        <div className="flex items-center gap-1">
-          {pages.map((pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              onClick={() => onPageChange(pageNumber)}
-              className={
-                pageNumber === page
-                  ? "flex h-8 min-w-8 items-center justify-center rounded-lg bg-primary px-2 text-xs font-bold text-primary-foreground shadow-sm"
-                  : "flex h-8 min-w-8 items-center justify-center rounded-lg border border-border/70 bg-background/70 px-2 text-xs font-semibold text-foreground transition-colors hover:bg-accent"
-              }
-              aria-current={pageNumber === page ? "page" : undefined}
-            >
-              {pageNumber}
-            </button>
-          ))}
-        </div>
-        <Button variant="outline" size="sm" onClick={onNext} disabled={page >= totalPages}>
-          {isVi ? "Sau" : "Next"}
-          <ChevronRight className="ml-1 h-3.5 w-3.5" />
-        </Button>
-      </div>
+    <div>
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-  tone,
+function BookingHeader({
+  booking,
 }: {
-  label: string;
-  value: number;
-  icon: typeof ClipboardList;
-  tone: "today" | "confirmed" | "checkedIn" | "inProgress" | "completed";
+  booking: { id: string; vehicleName: string; vehiclePlate: string; status: string };
 }) {
   return (
-    <div
-      className={`${styles.metricCard} ${styles[`metricCard${tone[0].toUpperCase()}${tone.slice(1)}`]}`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className={styles.metricValue}>{value}</div>
-          <div className={styles.metricLabel}>{label}</div>
-        </div>
-        <div className={styles.metricIconWrap}>
-          <Icon className={styles.metricIcon} />
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <div className="text-lg font-semibold text-foreground">{booking.id}</div>
+        <div className="mt-1 text-sm text-muted-foreground">
+          {booking.vehicleName} / {booking.vehiclePlate}
         </div>
       </div>
+      <Badge className="bg-blue-100 text-blue-700">{booking.status}</Badge>
     </div>
   );
+}
+
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="rounded-xl shadow-md">
+      <CardContent className="p-6">
+        <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+        <div className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function ClockToneBadge({ waitMinutes }: { waitMinutes: number }) {
+  if (waitMinutes > 30) {
+    return <Badge className="bg-rose-100 text-rose-700">Over 30 min</Badge>;
+  }
+  if (waitMinutes >= 15) {
+    return <Badge className="bg-amber-100 text-amber-700">15-30 min</Badge>;
+  }
+  return <Badge className="bg-emerald-100 text-emerald-700">Under 15 min</Badge>;
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <Card className="rounded-xl shadow-md">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <TimerReset className="h-4 w-4 text-primary" />
+          Queue clear
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">{message}</CardContent>
+    </Card>
+  );
+}
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function delay() {
+  return new Promise((resolve) => setTimeout(resolve, 200));
 }
